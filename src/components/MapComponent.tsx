@@ -45,10 +45,7 @@ export const MapComponent = createCanvasComponent<TransitMap>({
         ctx.save();
         ctx.translate(offsetX, offsetY);
         ctx.scale(zoom, zoom);
-        transitMap.draw(ctx);
-        if (selected) {
-          selected.drawSelected(ctx);
-        }
+        transitMap.draw(ctx, selected);
         ctx.restore();
       },
       mouseDown(e, { mouseX, mouseY }) {

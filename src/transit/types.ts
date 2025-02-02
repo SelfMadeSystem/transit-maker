@@ -16,6 +16,8 @@ export interface Selectable {
   drawSelected(ctx: CanvasRenderingContext2D): void;
 }
 
+const LabelFont = "10px sans-serif";
+
 export class Label implements Drawable, Selectable, Movable {
   // TODO: Add support for:
   // - text formatting (e.g. bold for important/transfer stations)
@@ -37,6 +39,7 @@ export class Label implements Drawable, Selectable, Movable {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
+    ctx.font = LabelFont;
     ctx.fillStyle = "white";
     const x = this.x + this.stop.location.x;
     const y = this.y + this.stop.location.y;
@@ -50,7 +53,7 @@ export class Label implements Drawable, Selectable, Movable {
   }
 
   getDimensions(ctx: CanvasRenderingContext2D) {
-    ctx.font = "12px sans-serif";
+    ctx.font = LabelFont;
     if (this.cacheKey !== this.text) {
       this.cacheKey = this.text;
     }
@@ -124,9 +127,6 @@ export class TransitStop implements Drawable, Selectable, Movable {
     ctx.arc(this.location.x, this.location.y, 5, 0, 2 * Math.PI);
     ctx.fill();
     ctx.stroke();
-    for (const label of this.labels) {
-      label.draw(ctx);
-    }
   }
 
   drawSelected(ctx: CanvasRenderingContext2D) {
@@ -149,7 +149,7 @@ export class TransitStop implements Drawable, Selectable, Movable {
   }
 }
 
-export class TransitConnection {
+export class TransitConnection implements Drawable, Selectable {
   // TODO: Add support for:
   // - split routes (e.g. REM connection between Bois-Franc, Marie-Curie,
   //   Des Sources, and Sunnybrooke; yes, that's a single connection)
@@ -177,10 +177,32 @@ export class TransitConnection {
 
   draw(ctx: CanvasRenderingContext2D) {
     ctx.strokeStyle = this.route.color;
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(this.from.location.x, this.from.location.y);
     ctx.lineTo(this.to.location.x, this.to.location.y);
     ctx.stroke();
+  }
+
+  drawSelected(ctx: CanvasRenderingContext2D): void {
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(this.from.location.x, this.from.location.y);
+    ctx.lineTo(this.to.location.x, this.to.location.y);
+    ctx.stroke();
+  }
+
+  isOver(x: number, y: number) {
+    const x1 = this.from.location.x;
+    const y1 = this.from.location.y;
+    const x2 = this.to.location.x;
+    const y2 = this.to.location.y;
+    const distance = Math.abs(
+      (y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1
+    );
+    const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+    return distance / length < 5;
   }
 }
 
@@ -272,17 +294,34 @@ export class TransitMap {
         }
       }
     }
+    for (const connection of this.connections) {
+      if (connection.isOver(x, y)) {
+        return connection;
+      }
+    }
     return null;
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
+  draw(ctx: CanvasRenderingContext2D, selected: SelectableItem | null) {
     for (const connection of this.connections) {
+      if (selected === connection) {
+        connection.drawSelected(ctx);
+      }
       connection.draw(ctx);
     }
     for (const stop of this.stops) {
+      if (selected === stop) {
+        stop.drawSelected(ctx);
+      }
       stop.draw(ctx);
+      for (const label of stop.labels) {
+        if (selected === label) {
+          label.drawSelected(ctx);
+        }
+        label.draw(ctx);
+      }
     }
   }
 }
 
-export type SelectableItem = TransitStop | Label;
+export type SelectableItem = Label | TransitStop | TransitConnection;
