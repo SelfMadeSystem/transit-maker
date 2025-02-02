@@ -1,4 +1,4 @@
-import { angleDelta } from "../utils/mathUtils";
+import { angleDelta, mod } from "../utils/mathUtils";
 
 export type GeoLocation = {
   x: number;
@@ -135,7 +135,7 @@ export class Label implements Drawable, Selectable, Movable {
 }
 
 export class TransitStop
-  implements Drawable, Selectable, Movable, RightClickable
+  implements Drawable, Selectable, Movable, RightClickable, DoubleClickable
 {
   // TODO: Add support for:
   // - multiple labels
@@ -153,7 +153,11 @@ export class TransitStop
   public routes: Set<TransitRoute>;
   public connections: Set<TransitConnection>;
 
-  constructor(labels: Label[], location: GeoLocation, routes: TransitRoute[]) {
+  constructor(
+    labels: Label[],
+    location: GeoLocation,
+    routes: Iterable<TransitRoute>
+  ) {
     this.labels = new Set(labels);
     for (const label of this.labels) {
       label.stop = this;
@@ -206,10 +210,12 @@ export class TransitStop
     let { x, y } = l;
 
     if (shiftKey) {
+      const ANGLE_STEP = Math.PI / 18;
       let closestStop: TransitStop | null = null;
       let closestDistance = 0;
       let closestAngle = 0;
       let actualDistance = 0;
+      console.log("snap");
       // Snap angle to closest stop
       outer: for (const connection of this.connections) {
         const otherStop = connection.getOtherStop(this);
@@ -228,7 +234,7 @@ export class TransitStop
             otherStop2.location.x - otherStop.location.x
           );
           const diff = angleDelta(angle, angle2);
-          if (Math.abs(diff) < Math.PI / 18) {
+          if (Math.abs(diff) < ANGLE_STEP) {
             // They're close to parallel
             const distance = Math.hypot(
               otherStop.location.x - x,
@@ -245,7 +251,7 @@ export class TransitStop
             actualDistance = distance;
             break outer;
           }
-          if (Math.abs(Math.abs(diff) - Math.PI / 2) < Math.PI / 18) {
+          if (Math.abs(mod(diff - Math.PI / 2, Math.PI)) < ANGLE_STEP) {
             // They're close to perpendicular
             const distance = Math.hypot(
               otherStop.location.x - x,
@@ -293,7 +299,7 @@ export class TransitStop
             Math.atan2(otherStop.location.y - y, otherStop.location.x - x)
           );
 
-          if (angle < Math.PI / 18 || angle > (Math.PI * 17) / 18) {
+          if (angle < ANGLE_STEP || angle > Math.PI - ANGLE_STEP) {
             // Horizontal
             const distance = Math.hypot(
               otherStop.location.x - x,
@@ -316,7 +322,10 @@ export class TransitStop
             break;
           }
 
-          if (angle > (Math.PI * 7) / 18 && angle < (Math.PI * 11) / 18) {
+          if (
+            angle > Math.PI / 2 - ANGLE_STEP &&
+            angle < Math.PI / 2 + ANGLE_STEP
+          ) {
             // Vertical
             const distance = Math.hypot(
               otherStop.location.x - x,
@@ -371,6 +380,18 @@ export class TransitStop
 
   rightClick(map: TransitMap): void {
     map.removeStop(this);
+  }
+
+  doubleClick(map: TransitMap): void {
+    map.createStop(
+      "Unnamed Stop",
+      {
+        x: this.location.x + 10,
+        y: this.location.y + 10,
+      },
+      this.routes.values().next().value!,
+      this
+    );
   }
 
   clone(): TransitStop {
