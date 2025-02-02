@@ -1,5 +1,6 @@
 import {
   GeoLocation,
+  Label,
   LocationWithKeys,
   SelectableItem,
   TransitMap,
@@ -34,6 +35,13 @@ export const MapComponent = createCanvasComponent<TransitMap>({
       selected = stop;
       if (stop && "getLocation" in stop) {
         ogPos = stop.getLocation();
+      }
+    }
+
+    function renameLabel(label: Label) {
+      const newName = prompt("Enter new name", label.text);
+      if (newName) {
+        label.text = newName;
       }
     }
 
@@ -77,6 +85,8 @@ export const MapComponent = createCanvasComponent<TransitMap>({
 
         if (selectable && "doubleClick" in selectable) {
           selectable.doubleClick(transitMap);
+        } else if (selectable instanceof Label) {
+          renameLabel(selectable);
         }
       },
       mouseMove(e, { mouseX, mouseY }) {
