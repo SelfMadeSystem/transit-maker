@@ -66,6 +66,7 @@ export class Label implements Drawable, Selectable, Movable {
     const y =
       this.y + this.stop.location.y - dimensions.actualBoundingBoxAscent;
     ctx.strokeStyle = "white";
+    ctx.lineWidth = 1;
     ctx.strokeRect(
       x,
       y,
@@ -123,6 +124,7 @@ export class TransitStop implements Drawable, Selectable, Movable {
   draw(ctx: CanvasRenderingContext2D) {
     ctx.fillStyle = "black";
     ctx.strokeStyle = "white";
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(this.location.x, this.location.y, 5, 0, 2 * Math.PI);
     ctx.fill();
@@ -131,6 +133,7 @@ export class TransitStop implements Drawable, Selectable, Movable {
 
   drawSelected(ctx: CanvasRenderingContext2D) {
     ctx.strokeStyle = "white";
+    ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(this.location.x, this.location.y, 8, 0, 2 * Math.PI);
     ctx.stroke();
@@ -194,15 +197,27 @@ export class TransitConnection implements Drawable, Selectable {
   }
 
   isOver(x: number, y: number) {
+    const width = 5;
     const x1 = this.from.location.x;
     const y1 = this.from.location.y;
     const x2 = this.to.location.x;
     const y2 = this.to.location.y;
+
+    const withinBoundingBox =
+      Math.min(x1, x2) <= x + width &&
+      x <= Math.max(x1, x2) + width &&
+      Math.min(y1, y2) <= y + width &&
+      y <= Math.max(y1, y2) + width;
+
+    if (!withinBoundingBox) {
+      return false;
+    }
+
     const distance = Math.abs(
       (y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1
     );
     const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-    return distance / length < 5;
+    return distance / length < width;
   }
 }
 
