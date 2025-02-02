@@ -43,16 +43,28 @@ export class Label implements Drawable, Selectable, Movable {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
-    ctx.font = LabelFont;
-    ctx.fillStyle = "white";
-    const x = this.x + this.stop.location.x;
-    const y = this.y + this.stop.location.y;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(this.text, x, y);
-
-    if (this.cacheKey !== this.text) {
-      this.cachedDimensions = this.getDimensions(ctx);
+    {
+      this.getDimensions(ctx);
+      // const dimensions = this.getDimensions(ctx);
+      // const x = this.x + this.stop.location.x - dimensions.width / 2;
+      // const y =
+      //   this.y + this.stop.location.y - dimensions.actualBoundingBoxAscent;
+      // ctx.fillStyle = "black";
+      // ctx.fillRect(
+      //   x - 2,
+      //   y - 2,
+      //   dimensions.width + 4,
+      //   dimensions.actualBoundingBoxAscent * 2 + 4
+      // );
+    }
+    {
+      ctx.font = LabelFont;
+      ctx.fillStyle = "white";
+      const x = this.x + this.stop.location.x;
+      const y = this.y + this.stop.location.y;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(this.text, x, y);
     }
   }
 
@@ -72,10 +84,10 @@ export class Label implements Drawable, Selectable, Movable {
     ctx.strokeStyle = "white";
     ctx.lineWidth = 1;
     ctx.strokeRect(
-      x,
-      y,
-      dimensions.width,
-      dimensions.actualBoundingBoxAscent * 2
+      x - 2,
+      y - 2,
+      dimensions.width + 4,
+      dimensions.actualBoundingBoxAscent * 2 + 4
     );
   }
 
