@@ -127,6 +127,22 @@ export const MapComponent = createCanvasComponent<TransitMap>({
       mouseUp() {
         panning = false;
       },
+      keyDown(e) {
+        if (selected) {
+          switch (e.key) {
+            case "Delete":
+            case "Backspace":
+              transitMap.remove(selected);
+              setSelection(null);
+              break;
+            case "Enter":
+              if (selected instanceof Label) {
+                renameLabel(selected);
+              }
+              break;
+          }
+        }
+      },
       wheel(_, { deltaY, mouseX, mouseY }) {
         const delta = deltaY / 1000;
         zoom = Math.max(0.1, zoom * (1 + delta));

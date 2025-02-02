@@ -20,7 +20,11 @@ export interface Movable {
   moveTo(l: LocationWithKeys): void;
 }
 
-export interface Selectable {
+export interface Removable {
+  remove(map: TransitMap): void;
+}
+
+export interface Selectable extends Removable {
   isOver(x: number, y: number): boolean;
   drawSelected(ctx: CanvasRenderingContext2D): void;
 }
@@ -129,6 +133,10 @@ export class Label implements Drawable, Selectable, Movable {
     this.y = y;
   }
 
+  remove(): void {
+    this.stop.labels.delete(this);
+  }
+
   clone(): Label {
     return new Label(this.text, this.x, this.y);
   }
@@ -152,6 +160,7 @@ export class TransitStop
   public location: GeoLocation;
   public routes: Set<TransitRoute>;
   public connections: Set<TransitConnection>;
+  public hidden: boolean = false;
 
   constructor(
     labels: Label[],
@@ -175,6 +184,9 @@ export class TransitStop
   }
 
   draw(ctx: CanvasRenderingContext2D) {
+    if (this.hidden) {
+      return;
+    }
     ctx.fillStyle = "black";
     ctx.strokeStyle = "white";
     ctx.lineWidth = 2;
@@ -378,7 +390,11 @@ export class TransitStop
     this.location.y = y;
   }
 
-  rightClick(map: TransitMap): void {
+  rightClick(): void {
+    this.hidden = !this.hidden;
+  }
+
+  remove(map: TransitMap): void {
     map.removeStop(this);
   }
 
@@ -401,7 +417,7 @@ export class TransitStop
 }
 
 export class TransitConnection
-  implements Drawable, Selectable, DoubleClickable
+  implements Drawable, Selectable, DoubleClickable, RightClickable
 {
   // TODO: Add support for:
   // - split routes (e.g. REM connection between Bois-Franc, Marie-Curie,
@@ -421,6 +437,7 @@ export class TransitConnection
   public from: TransitStop;
   public to: TransitStop;
   public route: TransitRoute;
+  public dotted: boolean = false;
 
   constructor(from: TransitStop, to: TransitStop, route: TransitRoute) {
     this.from = from;
@@ -435,10 +452,16 @@ export class TransitConnection
   draw(ctx: CanvasRenderingContext2D) {
     ctx.strokeStyle = this.route.color;
     ctx.lineWidth = 2;
+    ctx.save();
+    ctx.lineCap = "round";
+    if (this.dotted) {
+      ctx.setLineDash([0, 4]);
+    }
     ctx.beginPath();
     ctx.moveTo(this.from.location.x, this.from.location.y);
     ctx.lineTo(this.to.location.x, this.to.location.y);
     ctx.stroke();
+    ctx.restore();
   }
 
   drawSelected(ctx: CanvasRenderingContext2D): void {
@@ -474,8 +497,16 @@ export class TransitConnection
     return distance / length < width;
   }
 
+  remove(map: TransitMap): void {
+    map.removeConnection(this);
+  }
+
   doubleClick(map: TransitMap) {
     map.splitConnection(this);
+  }
+
+  rightClick(): void {
+    this.dotted = !this.dotted;
   }
 }
 
@@ -544,6 +575,15 @@ export class TransitMap {
       otherStop.connections.delete(connection);
       this.connections.delete(connection);
     }
+  }
+
+  removeConnection(connection: TransitConnection) {
+    if (!this.connections.has(connection)) {
+      return;
+    }
+    this.connections.delete(connection);
+    connection.from.connections.delete(connection);
+    connection.to.connections.delete(connection);
   }
 
   createStop(
@@ -621,6 +661,10 @@ export class TransitMap {
       }
     }
     return null;
+  }
+
+  remove(selectable: SelectableItem) {
+    selectable.remove(this);
   }
 
   draw(ctx: CanvasRenderingContext2D, selected: SelectableItem | null) {
