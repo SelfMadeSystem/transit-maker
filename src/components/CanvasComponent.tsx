@@ -8,6 +8,7 @@ type ReturnType<T> = {
   propsUpdate?: (data: T) => void;
   mouseMove?: (e: MouseEvent, coords: { mouseX: number; mouseY: number }) => void;
   mouseDown?: (e: MouseEvent, coords: { mouseX: number; mouseY: number }) => void;
+  mouseDbClick?: (e: MouseEvent, coords: { mouseX: number; mouseY: number }) => void;
   mouseUp?: (e: MouseEvent, coords: { mouseX: number; mouseY: number }) => void;
   touchStart?: (e: TouchEvent, coords: { mouseX: number; mouseY: number }) => void;
   touchMove?: (e: TouchEvent, coords: { mouseX: number; mouseY: number }) => void;
@@ -106,6 +107,20 @@ export default function createCanvasComponent<T>({
             (e: MouseEvent) => {
               const rect = canvas.getBoundingClientRect();
               result.mouseDown!(e, {
+                mouseX: e.clientX - rect.left,
+                mouseY: e.clientY - rect.top,
+              });
+            },
+            { signal }
+          );
+        }
+
+        if (result?.mouseDbClick) {
+          window.addEventListener(
+            "dblclick",
+            (e: MouseEvent) => {
+              const rect = canvas.getBoundingClientRect();
+              result.mouseDbClick!(e, {
                 mouseX: e.clientX - rect.left,
                 mouseY: e.clientY - rect.top,
               });

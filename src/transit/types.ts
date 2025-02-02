@@ -16,6 +16,10 @@ export interface Selectable {
   drawSelected(ctx: CanvasRenderingContext2D): void;
 }
 
+export interface DoubleClickable {
+  doubleClick(map: TransitMap): void;
+}
+
 const LabelFont = "10px sans-serif";
 
 export class Label implements Drawable, Selectable, Movable {
@@ -31,7 +35,7 @@ export class Label implements Drawable, Selectable, Movable {
   private cachedDimensions: TextMetrics | null = null;
   private cacheKey: string | null = null;
 
-  constructor(text: string, x: number, y: number) {
+  constructor(text: string, x: number = 0, y: number = -15) {
     this.text = text;
     this.x = x;
     this.y = y;
@@ -152,7 +156,9 @@ export class TransitStop implements Drawable, Selectable, Movable {
   }
 }
 
-export class TransitConnection implements Drawable, Selectable {
+export class TransitConnection
+  implements Drawable, Selectable, DoubleClickable
+{
   // TODO: Add support for:
   // - split routes (e.g. REM connection between Bois-Franc, Marie-Curie,
   //   Des Sources, and Sunnybrooke; yes, that's a single connection)
@@ -219,6 +225,10 @@ export class TransitConnection implements Drawable, Selectable {
     const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
     return distance / length < width;
   }
+
+  doubleClick(map: TransitMap) {
+    map.splitConnection(this);
+  }
 }
 
 export class TransitRoute {
@@ -279,7 +289,7 @@ export class TransitMap {
     route: TransitRoute,
     from?: TransitStop
   ) {
-    const stop = new TransitStop([new Label(name, 0, -15)], location, [route]);
+    const stop = new TransitStop([new Label(name)], location, [route]);
     this.addStop(stop);
     route.addStop(stop);
     if (from) {
@@ -296,6 +306,37 @@ export class TransitMap {
     this.addConnection(connection);
     from.connections.push(connection);
     to.connections.push(connection);
+  }
+
+  splitConnection(connection: TransitConnection) {
+    const index = this.connections.indexOf(connection);
+    if (index === -1) {
+      return;
+    }
+    this.connections.splice(index, 1);
+    const from = connection.from;
+    const to = connection.to;
+    const route = connection.route;
+    const stop = new TransitStop(
+      [new Label("Unnamed Stop")],
+      {
+        x: (from.location.x + to.location.x) / 2,
+        y: (from.location.y + to.location.y) / 2,
+      },
+      [route]
+    );
+    this.addStop(stop);
+    route.addStop(stop);
+    const connection1 = new TransitConnection(from, stop, route);
+    const connection2 = new TransitConnection(stop, to, route);
+    this.addConnection(connection1);
+    this.addConnection(connection2);
+    from.connections.push(connection1);
+    from.connections.push(connection2);
+    stop.connections.push(connection1);
+    stop.connections.push(connection2);
+    to.connections.push(connection1);
+    to.connections.push(connection2);
   }
 
   getSelectable(x: number, y: number): SelectableItem | null {

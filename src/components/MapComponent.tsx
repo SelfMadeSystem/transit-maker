@@ -58,6 +58,14 @@ export const MapComponent = createCanvasComponent<TransitMap>({
         prevMouseX = mouseX;
         prevMouseY = mouseY;
       },
+      mouseDbClick(_, { mouseX, mouseY }) {
+        const { x, y } = mouseToLocation({ mouseX, mouseY });
+        const selectable = transitMap.getSelectable(x, y);
+
+        if (selectable && "doubleClick" in selectable) {
+          selectable.doubleClick(transitMap);
+        }
+      },
       mouseMove(_, { mouseX, mouseY }) {
         if (panning) {
           const deltaX = mouseX - prevMouseX;
