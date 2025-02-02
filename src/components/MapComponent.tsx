@@ -68,12 +68,19 @@ export const MapComponent = createCanvasComponent<TransitMap>({
         ctx.restore();
       },
       mouseDown(e, { mouseX, mouseY }) {
+        e.preventDefault();
+        e.stopPropagation();
         const { x, y } = mouseToLocation({ mouseX, mouseY });
 
         if (e.button === 0) {
           setSelection(transitMap.getSelectable(x, y));
+          panning = true;
+        } else if (e.button === 2) {
+          const selectable = transitMap.getSelectable(x, y);
+          if (selectable && "rightClick" in selectable) {
+            selectable.rightClick(transitMap);
+          }
         }
-        panning = true;
         prevMouseX = mouseX;
         prevMouseY = mouseY;
         ogMouseX = mouseX;

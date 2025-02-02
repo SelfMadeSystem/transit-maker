@@ -6,13 +6,31 @@ type ReturnType<T> = {
   resize?: (width: number, height: number) => void;
   update?: (dt: number, time: number) => void;
   propsUpdate?: (data: T) => void;
-  mouseMove?: (e: MouseEvent, coords: { mouseX: number; mouseY: number }) => void;
-  mouseDown?: (e: MouseEvent, coords: { mouseX: number; mouseY: number }) => void;
-  mouseDbClick?: (e: MouseEvent, coords: { mouseX: number; mouseY: number }) => void;
+  mouseMove?: (
+    e: MouseEvent,
+    coords: { mouseX: number; mouseY: number }
+  ) => void;
+  mouseDown?: (
+    e: MouseEvent,
+    coords: { mouseX: number; mouseY: number }
+  ) => void;
+  mouseDbClick?: (
+    e: MouseEvent,
+    coords: { mouseX: number; mouseY: number }
+  ) => void;
   mouseUp?: (e: MouseEvent, coords: { mouseX: number; mouseY: number }) => void;
-  touchStart?: (e: TouchEvent, coords: { mouseX: number; mouseY: number }) => void;
-  touchMove?: (e: TouchEvent, coords: { mouseX: number; mouseY: number }) => void;
-  touchEnd?: (e: TouchEvent, coords: { mouseX: number; mouseY: number }) => void;
+  touchStart?: (
+    e: TouchEvent,
+    coords: { mouseX: number; mouseY: number }
+  ) => void;
+  touchMove?: (
+    e: TouchEvent,
+    coords: { mouseX: number; mouseY: number }
+  ) => void;
+  touchEnd?: (
+    e: TouchEvent,
+    coords: { mouseX: number; mouseY: number }
+  ) => void;
   keyDown?: (e: KeyboardEvent) => void;
   keyUp?: (e: KeyboardEvent) => void;
   wheel?: (
@@ -110,6 +128,13 @@ export default function createCanvasComponent<T>({
                 mouseX: e.clientX - rect.left,
                 mouseY: e.clientY - rect.top,
               });
+            },
+            { signal, passive: false }
+          );
+          window.addEventListener(
+            "contextmenu",
+            (e: MouseEvent) => {
+              e.preventDefault();
             },
             { signal }
           );

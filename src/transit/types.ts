@@ -29,6 +29,10 @@ export interface DoubleClickable {
   doubleClick(map: TransitMap): void;
 }
 
+export interface RightClickable {
+  rightClick(map: TransitMap): void;
+}
+
 const LabelFont = "10px sans-serif";
 
 export class Label implements Drawable, Selectable, Movable {
@@ -124,9 +128,15 @@ export class Label implements Drawable, Selectable, Movable {
     this.x = x;
     this.y = y;
   }
+
+  clone(): Label {
+    return new Label(this.text, this.x, this.y);
+  }
 }
 
-export class TransitStop implements Drawable, Selectable, Movable {
+export class TransitStop
+  implements Drawable, Selectable, Movable, RightClickable
+{
   // TODO: Add support for:
   // - multiple labels
   // - "long" transfer stations (e.g. Lucien-L'Allier in Montreal is like 3×
@@ -138,19 +148,26 @@ export class TransitStop implements Drawable, Selectable, Movable {
   // - different sizes (e.g. transfer stations and final stations are bigger)
   // - different fill colors (e.g. white, black, line color)
   // - different border colors (e.g. white, black, none)
-  public labels: Label[];
+  public labels: Set<Label>;
   public location: GeoLocation;
-  public routes: TransitRoute[];
-  public connections: TransitConnection[];
+  public routes: Set<TransitRoute>;
+  public connections: Set<TransitConnection>;
 
   constructor(labels: Label[], location: GeoLocation, routes: TransitRoute[]) {
-    this.labels = labels;
+    this.labels = new Set(labels);
     for (const label of this.labels) {
       label.stop = this;
     }
     this.location = location;
-    this.routes = routes;
-    this.connections = [];
+    this.routes = new Set(routes);
+    this.connections = new Set();
+  }
+
+  setLabels(labels: Label[]) {
+    this.labels = new Set(labels);
+    for (const label of this.labels) {
+      label.stop = this;
+    }
   }
 
   draw(ctx: CanvasRenderingContext2D) {
@@ -238,15 +255,19 @@ export class TransitStop implements Drawable, Selectable, Movable {
             );
             // Must find which side to snap to
             let orthAngle = angle2 + Math.PI / 2;
-            const testX1 = otherStop.location.x - distance * Math.cos(orthAngle);
-            const testY1 = otherStop.location.y - distance * Math.sin(orthAngle);
-            const testX2 = otherStop.location.x + distance * Math.cos(orthAngle);
-            const testY2 = otherStop.location.y + distance * Math.sin(orthAngle);
-          
+            const testX1 =
+              otherStop.location.x - distance * Math.cos(orthAngle);
+            const testY1 =
+              otherStop.location.y - distance * Math.sin(orthAngle);
+            const testX2 =
+              otherStop.location.x + distance * Math.cos(orthAngle);
+            const testY2 =
+              otherStop.location.y + distance * Math.sin(orthAngle);
+
             // Determine which side is closer
             const dist1 = Math.hypot(testX1 - x, testY1 - y);
             const dist2 = Math.hypot(testX2 - x, testY2 - y);
-          
+
             if (dist2 < dist1) {
               orthAngle = angle2 - Math.PI / 2;
             }
@@ -292,6 +313,15 @@ export class TransitStop implements Drawable, Selectable, Movable {
 
     this.location.x = x;
     this.location.y = y;
+  }
+
+  rightClick(map: TransitMap): void {
+    map.removeStop(this);
+  }
+
+  clone(): TransitStop {
+    const labels = Array.from(this.labels).map((label) => label.clone());
+    return new TransitStop(labels, this.location, Array.from(this.routes));
   }
 }
 
@@ -376,16 +406,16 @@ export class TransitRoute {
   // - idk what else
   public name: string;
   public color: string;
-  public stops: TransitStop[];
+  public stops: Set<TransitStop>;
 
   constructor(name: string, color: string) {
     this.name = name;
     this.color = color;
-    this.stops = [];
+    this.stops = new Set();
   }
 
   addStop(stop: TransitStop) {
-    this.stops.push(stop);
+    this.stops.add(stop);
   }
 }
 
@@ -400,26 +430,42 @@ export class TransitMap {
   // - legend of all routes, icons, etc.
   // - compass rose
   // - extra text (e.g. copyright, title, etc.)
-  public routes: TransitRoute[];
-  public stops: TransitStop[];
-  public connections: TransitConnection[];
+  public routes: Set<TransitRoute>;
+  public stops: Set<TransitStop>;
+  public connections: Set<TransitConnection>;
 
   constructor() {
-    this.routes = [];
-    this.stops = [];
-    this.connections = [];
+    this.routes = new Set();
+    this.stops = new Set();
+    this.connections = new Set();
   }
 
   addRoute(route: TransitRoute) {
-    this.routes.push(route);
+    this.routes.add(route);
   }
 
   addStop(stop: TransitStop) {
-    this.stops.push(stop);
+    this.stops.add(stop);
   }
 
   addConnection(connection: TransitConnection) {
-    this.connections.push(connection);
+    this.connections.add(connection);
+  }
+
+  removeStop(stop: TransitStop) {
+    if (!this.stops.has(stop)) {
+      return;
+    }
+    this.stops.delete(stop);
+    for (const route of stop.routes) {
+      route.stops.delete(stop);
+    }
+    for (const connection of stop.connections) {
+      const otherStop =
+        connection.from === stop ? connection.to : connection.from;
+      otherStop.connections.delete(connection);
+      this.connections.delete(connection);
+    }
   }
 
   createStop(
@@ -434,8 +480,8 @@ export class TransitMap {
     if (from) {
       const connection = new TransitConnection(from, stop, route);
       this.addConnection(connection);
-      from.connections.push(connection);
-      stop.connections.push(connection);
+      from.connections.add(connection);
+      stop.connections.add(connection);
     }
     return stop;
   }
@@ -443,18 +489,21 @@ export class TransitMap {
   createConnection(from: TransitStop, to: TransitStop, route: TransitRoute) {
     const connection = new TransitConnection(from, to, route);
     this.addConnection(connection);
-    from.connections.push(connection);
-    to.connections.push(connection);
+    from.connections.add(connection);
+    to.connections.add(connection);
   }
 
   splitConnection(connection: TransitConnection) {
-    const index = this.connections.indexOf(connection);
-    if (index === -1) {
+    if (!this.connections.has(connection)) {
       return;
     }
-    this.connections.splice(index, 1);
+    this.connections.delete(connection);
     const from = connection.from;
     const to = connection.to;
+
+    from.connections.delete(connection);
+    to.connections.delete(connection);
+
     const route = connection.route;
     const stop = new TransitStop(
       [new Label("Unnamed Stop")],
@@ -464,18 +513,17 @@ export class TransitMap {
       },
       [route]
     );
+
     this.addStop(stop);
     route.addStop(stop);
     const connection1 = new TransitConnection(from, stop, route);
     const connection2 = new TransitConnection(stop, to, route);
     this.addConnection(connection1);
     this.addConnection(connection2);
-    from.connections.push(connection1);
-    from.connections.push(connection2);
-    stop.connections.push(connection1);
-    stop.connections.push(connection2);
-    to.connections.push(connection1);
-    to.connections.push(connection2);
+    from.connections.add(connection1);
+    stop.connections.add(connection1);
+    stop.connections.add(connection2);
+    to.connections.add(connection2);
   }
 
   getSelectable(x: number, y: number): SelectableItem | null {
