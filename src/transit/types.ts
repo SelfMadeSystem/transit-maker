@@ -187,8 +187,12 @@ export class TransitStop
     if (this.hidden) {
       return;
     }
+    if (this.routes.size === 1) {
+      ctx.strokeStyle = this.routes.values().next().value!.color;
+    } else {
+      ctx.strokeStyle = "white";
+    }
     ctx.fillStyle = "black";
-    ctx.strokeStyle = "white";
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(this.location.x, this.location.y, 5, 0, 2 * Math.PI);
@@ -600,6 +604,7 @@ export class TransitMap {
       this.addConnection(connection);
       from.connections.add(connection);
       stop.connections.add(connection);
+      from.routes.add(route);
     }
     return stop;
   }
@@ -609,6 +614,8 @@ export class TransitMap {
     this.addConnection(connection);
     from.connections.add(connection);
     to.connections.add(connection);
+    from.routes.add(route);
+    to.routes.add(route);
   }
 
   splitConnection(connection: TransitConnection) {
