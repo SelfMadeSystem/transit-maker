@@ -210,18 +210,16 @@ export class TransitStop
       let closestDistance = 0;
       let closestAngle = 0;
       let actualDistance = 0;
-      // Snap angle
+      // Snap angle to closest stop
       outer: for (const connection of this.connections) {
-        const otherStop =
-          connection.from === this ? connection.to : connection.from;
+        const otherStop = connection.getOtherStop(this);
         const angle = Math.atan2(
           otherStop.location.y - y,
           otherStop.location.x - x
         );
 
         for (const connection2 of otherStop.connections) {
-          const otherStop2 =
-            connection2.from === otherStop ? connection2.to : connection2.from;
+          const otherStop2 = connection2.getOtherStop(otherStop);
           if (otherStop2 === this) {
             continue;
           }
@@ -285,7 +283,63 @@ export class TransitStop
           }
         }
       }
-      // ...existing code...
+
+      if (!closestAngle) {
+        // Can't be parallel or perpendicular to any other stops
+        // Try to find one that can make a horizontal or vertical line
+        for (const connection of this.connections) {
+          const otherStop = connection.getOtherStop(this);
+          const angle = Math.abs(
+            Math.atan2(otherStop.location.y - y, otherStop.location.x - x)
+          );
+
+          if (angle < Math.PI / 18 || angle > (Math.PI * 17) / 18) {
+            // Horizontal
+            const distance = Math.hypot(
+              otherStop.location.x - x,
+              otherStop.location.y - y
+            );
+            const sign = Math.sign(otherStop.location.x - x);
+            x = otherStop.location.x - sign * distance;
+            y = otherStop.location.y;
+            const nextStop = otherStop.connections
+              .values()
+              .next()
+              .value!.getOtherStop(otherStop);
+            closestStop = otherStop;
+            closestDistance = Math.hypot(
+              nextStop.location.x - otherStop.location.x,
+              nextStop.location.y - otherStop.location.y
+            );
+            closestAngle = sign > 0 ? 0 : Math.PI;
+            actualDistance = distance;
+            break;
+          }
+
+          if (angle > (Math.PI * 7) / 18 && angle < (Math.PI * 11) / 18) {
+            // Vertical
+            const distance = Math.hypot(
+              otherStop.location.x - x,
+              otherStop.location.y - y
+            );
+            const sign = Math.sign(otherStop.location.y - y);
+            x = otherStop.location.x;
+            y = otherStop.location.y - sign * distance;
+            const nextStop = otherStop.connections
+              .values()
+              .next()
+              .value!.getOtherStop(otherStop);
+            closestStop = otherStop;
+            closestDistance = Math.hypot(
+              nextStop.location.x - otherStop.location.x,
+              nextStop.location.y - otherStop.location.y
+            );
+            closestAngle = sign > 0 ? Math.PI / 2 : (Math.PI * 3) / 2;
+            actualDistance = distance;
+            break;
+          }
+        }
+      }
 
       if (ctrlKey && closestStop) {
         // Snap to multiples of distance
@@ -351,6 +405,10 @@ export class TransitConnection
     this.from = from;
     this.to = to;
     this.route = route;
+  }
+
+  getOtherStop(stop: TransitStop) {
+    return stop === this.from ? this.to : this.from;
   }
 
   draw(ctx: CanvasRenderingContext2D) {
@@ -461,8 +519,7 @@ export class TransitMap {
       route.stops.delete(stop);
     }
     for (const connection of stop.connections) {
-      const otherStop =
-        connection.from === stop ? connection.to : connection.from;
+      const otherStop = connection.getOtherStop(stop);
       otherStop.connections.delete(connection);
       this.connections.delete(connection);
     }

@@ -22,6 +22,12 @@ function createTransitMap(): TransitMap {
     line2,
     stationB
   );
+  transitMap.createStop(
+    "Station D",
+    { x: 125, y: 0 },
+    line2,
+    stationB
+  );
   transitMap.createConnection(stationA, stationC, line1);
 
   return transitMap;
