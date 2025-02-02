@@ -1,53 +1,288 @@
-export type GeoPosition = {
+export type GeoLocation = {
   x: number;
   y: number;
 };
-export type StopId = string;
-export type RouteId = string;
-export type TransitType = "bus" | "tram" | "train" | "subway" | "ferry";
-export type TransitConnection = {
-  to: StopId;
-  points?: GeoPosition[];
-};
-export type TransitStop = {
-  id: StopId;
-  name: string;
-  // If we say a->b, b is in connections of a, but not vice versa
-  connections: TransitConnection[];
-  location: GeoPosition;
-};
-export type BakedTransitStop = {
-  id: StopId;
-  name: string;
-  // If we say a->b, b is in connections of a, but not vice versa
-  connections: {
-    connection: TransitConnection;
-    route: TransitRoute; // only one route for calculation
-  }[];
-  location: GeoPosition;
-  routes: [TransitRoute, ...TransitRoute[]];
-  // All connection includes all connections to this stop, so if a->b, then
-  // a.allConnections includes { connection: b, distance: 10 } and
-  // b.allConnections includes { connection: a, distance: 10 }
-  allConnections: Map<StopId, {
-    connection: TransitConnection;
-    routes: [TransitRoute, ...TransitRoute[]];
-  }>;
-};
-export type TransitRoute = {
-  id: RouteId;
-  name: string;
-  color: string;
-  stops: TransitStop[];
-};
-export type TransitLayer = {
-  type: TransitType;
-  name: string;
-  routes: TransitRoute[];
-};
-export type TransitMap = {
-  layers: TransitLayer[];
-};
-export type BakedTransitMap = TransitMap & {
-  stopLookup: Map<string, BakedTransitStop>;
-};
+
+export interface Drawable {
+  draw(ctx: CanvasRenderingContext2D): void;
+}
+
+export interface Movable {
+  move({ x, y }: GeoLocation): void;
+}
+
+export interface Selectable {
+  isOver(x: number, y: number): boolean;
+  drawSelected(ctx: CanvasRenderingContext2D): void;
+}
+
+export class Label implements Drawable, Selectable, Movable {
+  // TODO: Add support for:
+  // - text formatting (e.g. bold for important/transfer stations)
+  // - line icon identifier (e.g. blue circle with white "5" for line 5 in Montreal)
+  // - connection icon (e.g. airport, intercity rail, etc.)
+  // - other icons (e.g. wheelchair accessible, parking, etc.)
+  public text: string;
+  public x: number;
+  public y: number;
+  public stop: TransitStop;
+  private cachedDimensions: TextMetrics | null = null;
+  private cacheKey: string | null = null;
+
+  constructor(text: string, x: number, y: number) {
+    this.text = text;
+    this.x = x;
+    this.y = y;
+    this.stop = null as unknown as TransitStop; // should always be set immediately after construction
+  }
+
+  draw(ctx: CanvasRenderingContext2D) {
+    ctx.fillStyle = "white";
+    const x = this.x + this.stop.location.x;
+    const y = this.y + this.stop.location.y;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(this.text, x, y);
+
+    if (this.cacheKey !== this.text) {
+      this.cachedDimensions = this.getDimensions(ctx);
+    }
+  }
+
+  getDimensions(ctx: CanvasRenderingContext2D) {
+    ctx.font = "12px sans-serif";
+    if (this.cacheKey !== this.text) {
+      this.cacheKey = this.text;
+    }
+    return (this.cachedDimensions = ctx.measureText(this.cacheKey));
+  }
+
+  drawSelected(ctx: CanvasRenderingContext2D) {
+    const dimensions = this.getDimensions(ctx);
+    const x = this.x + this.stop.location.x - dimensions.width / 2;
+    const y =
+      this.y + this.stop.location.y - dimensions.actualBoundingBoxAscent;
+    ctx.strokeStyle = "white";
+    ctx.strokeRect(
+      x,
+      y,
+      dimensions.width,
+      dimensions.actualBoundingBoxAscent * 2
+    );
+  }
+
+  isOver(x: number, y: number) {
+    const dimensions = this.cachedDimensions;
+    if (!dimensions) {
+      return false;
+    }
+    const x1 = this.x + this.stop.location.x - dimensions.width / 2;
+    const y1 =
+      this.y + this.stop.location.y - dimensions.actualBoundingBoxAscent;
+    const x2 = x1 + dimensions.width;
+    const y2 = y1 + dimensions.actualBoundingBoxAscent * 2;
+    return x >= x1 && x <= x2 && y >= y1 && y <= y2;
+  }
+
+  move({ x, y }: GeoLocation) {
+    this.x += x;
+    this.y += y;
+  }
+}
+
+export class TransitStop implements Drawable, Selectable, Movable {
+  // TODO: Add support for:
+  // - multiple labels
+  // - "long" transfer stations (e.g. Lucien-L'Allier in Montreal is like 3×
+  //   the width of a normal station)
+  // - connected stations (e.g. Bonaventure is connected to Gare Centrale, but
+  //   they're separate stations, same for Henri-Bourassa and Sauvé)
+  // - different shapes (e.g. square, circle, etc.)
+  //   - shapes that rotate with the line (e.g. the squares on the EXO lines)
+  // - different sizes (e.g. transfer stations and final stations are bigger)
+  // - different fill colors (e.g. white, black, line color)
+  // - different border colors (e.g. white, black, none)
+  public labels: Label[];
+  public location: GeoLocation;
+  public routes: TransitRoute[];
+  public connections: TransitConnection[];
+
+  constructor(labels: Label[], location: GeoLocation, routes: TransitRoute[]) {
+    this.labels = labels;
+    for (const label of this.labels) {
+      label.stop = this;
+    }
+    this.location = location;
+    this.routes = routes;
+    this.connections = [];
+  }
+
+  draw(ctx: CanvasRenderingContext2D) {
+    ctx.fillStyle = "black";
+    ctx.strokeStyle = "white";
+    ctx.beginPath();
+    ctx.arc(this.location.x, this.location.y, 5, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+    for (const label of this.labels) {
+      label.draw(ctx);
+    }
+  }
+
+  drawSelected(ctx: CanvasRenderingContext2D) {
+    ctx.strokeStyle = "white";
+    ctx.beginPath();
+    ctx.arc(this.location.x, this.location.y, 8, 0, 2 * Math.PI);
+    ctx.stroke();
+  }
+
+  isOver(x: number, y: number) {
+    return (
+      Math.sqrt((this.location.x - x) ** 2 + (this.location.y - y) ** 2) < 5
+    );
+  }
+
+  move(l: GeoLocation) {
+    const { x, y } = l;
+    this.location.x += x;
+    this.location.y += y;
+  }
+}
+
+export class TransitConnection {
+  // TODO: Add support for:
+  // - split routes (e.g. REM connection between Bois-Franc, Marie-Curie,
+  //   Des Sources, and Sunnybrooke; yes, that's a single connection)
+  // - multiple connections between the same two stops (e.g. line 11, 12, and 14
+  //   between Montréal-Ouest and Lucien-L'Allier)
+  // - rounded corners
+  // - go behind other lines when there's no stop in between (e.g. line 15 with
+  //   lines 11, 12, 14, the text of "De la Savane", and line 2)
+  // TODO: Different styles (todo in conjunction with `TransitRoute` since it'll
+  // likely house the style information):
+  // - Thick line
+  // - Thin line
+  // - Split (?) line (e.g. REM)
+  // - Dotted line (continuation of a line beyond the map)
+  // - Dashed line (future line)
+  public from: TransitStop;
+  public to: TransitStop;
+  public route: TransitRoute;
+
+  constructor(from: TransitStop, to: TransitStop, route: TransitRoute) {
+    this.from = from;
+    this.to = to;
+    this.route = route;
+  }
+
+  draw(ctx: CanvasRenderingContext2D) {
+    ctx.strokeStyle = this.route.color;
+    ctx.beginPath();
+    ctx.moveTo(this.from.location.x, this.from.location.y);
+    ctx.lineTo(this.to.location.x, this.to.location.y);
+    ctx.stroke();
+  }
+}
+
+export class TransitRoute {
+  // TODO: Add support for:
+  // - different styles (as mentioned in `TransitConnection`)
+  // - idk what else
+  public name: string;
+  public color: string;
+  public stops: TransitStop[];
+
+  constructor(name: string, color: string) {
+    this.name = name;
+    this.color = color;
+    this.stops = [];
+  }
+
+  addStop(stop: TransitStop) {
+    this.stops.push(stop);
+  }
+}
+
+export class TransitMap {
+  // TODO: Add support for:
+  // - multiple layers (e.g. metro, bus, train)
+  //   - I'd want e.g. bus to only show when zoomed in enough
+  // - distance between stops (e.g. 100m, 200m, 500m)
+  // - time between stops (e.g. 1m, 2m, 5m)
+  // - scenery (especially rivers and boundaries)
+  // - global labels (e.g. "Zone A"/B/C/D, "Montreal", "Laval", etc.)
+  // - legend of all routes, icons, etc.
+  // - compass rose
+  // - extra text (e.g. copyright, title, etc.)
+  public routes: TransitRoute[];
+  public stops: TransitStop[];
+  public connections: TransitConnection[];
+
+  constructor() {
+    this.routes = [];
+    this.stops = [];
+    this.connections = [];
+  }
+
+  addRoute(route: TransitRoute) {
+    this.routes.push(route);
+  }
+
+  addStop(stop: TransitStop) {
+    this.stops.push(stop);
+  }
+
+  addConnection(connection: TransitConnection) {
+    this.connections.push(connection);
+  }
+
+  createStop(
+    name: string,
+    location: GeoLocation,
+    route: TransitRoute,
+    from?: TransitStop
+  ) {
+    const stop = new TransitStop([new Label(name, 0, -15)], location, [route]);
+    this.addStop(stop);
+    route.addStop(stop);
+    if (from) {
+      const connection = new TransitConnection(from, stop, route);
+      this.addConnection(connection);
+      from.connections.push(connection);
+      stop.connections.push(connection);
+    }
+    return stop;
+  }
+
+  createConnection(from: TransitStop, to: TransitStop, route: TransitRoute) {
+    const connection = new TransitConnection(from, to, route);
+    this.addConnection(connection);
+    from.connections.push(connection);
+    to.connections.push(connection);
+  }
+
+  getSelectable(x: number, y: number): SelectableItem | null {
+    for (const stop of this.stops) {
+      if (stop.isOver(x, y)) {
+        return stop;
+      }
+      for (const label of stop.labels) {
+        if (label.isOver(x, y)) {
+          return label;
+        }
+      }
+    }
+    return null;
+  }
+
+  draw(ctx: CanvasRenderingContext2D) {
+    for (const connection of this.connections) {
+      connection.draw(ctx);
+    }
+    for (const stop of this.stops) {
+      stop.draw(ctx);
+    }
+  }
+}
+
+export type SelectableItem = TransitStop | Label;
