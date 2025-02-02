@@ -1,3 +1,5 @@
+import { angleDelta } from "../utils/mathUtils";
+
 export type GeoLocation = {
   x: number;
   y: number;
@@ -7,8 +9,15 @@ export interface Drawable {
   draw(ctx: CanvasRenderingContext2D): void;
 }
 
+export type LocationWithKeys = GeoLocation & {
+  shiftKey: boolean;
+  ctrlKey: boolean;
+  altKey: boolean;
+};
+
 export interface Movable {
-  move({ x, y }: GeoLocation): void;
+  getLocation(): GeoLocation;
+  moveTo(l: LocationWithKeys): void;
 }
 
 export interface Selectable {
@@ -104,9 +113,16 @@ export class Label implements Drawable, Selectable, Movable {
     return x >= x1 && x <= x2 && y >= y1 && y <= y2;
   }
 
-  move({ x, y }: GeoLocation) {
-    this.x += x;
-    this.y += y;
+  getLocation(): GeoLocation {
+    return {
+      x: this.x,
+      y: this.y,
+    };
+  }
+
+  moveTo({ x, y }: GeoLocation) {
+    this.x = x;
+    this.y = y;
   }
 }
 
@@ -161,10 +177,121 @@ export class TransitStop implements Drawable, Selectable, Movable {
     );
   }
 
-  move(l: GeoLocation) {
-    const { x, y } = l;
-    this.location.x += x;
-    this.location.y += y;
+  getLocation(): GeoLocation {
+    return {
+      x: this.location.x,
+      y: this.location.y,
+    };
+  }
+
+  moveTo(l: LocationWithKeys) {
+    const { shiftKey, ctrlKey } = l;
+    let { x, y } = l;
+
+    if (shiftKey) {
+      let closestStop: TransitStop | null = null;
+      let closestDistance = 0;
+      let closestAngle = 0;
+      let actualDistance = 0;
+      // Snap angle
+      outer: for (const connection of this.connections) {
+        const otherStop =
+          connection.from === this ? connection.to : connection.from;
+        const angle = Math.atan2(
+          otherStop.location.y - y,
+          otherStop.location.x - x
+        );
+
+        for (const connection2 of otherStop.connections) {
+          const otherStop2 =
+            connection2.from === otherStop ? connection2.to : connection2.from;
+          if (otherStop2 === this) {
+            continue;
+          }
+          const angle2 = Math.atan2(
+            otherStop2.location.y - otherStop.location.y,
+            otherStop2.location.x - otherStop.location.x
+          );
+          const diff = angleDelta(angle, angle2);
+          if (Math.abs(diff) < Math.PI / 18) {
+            // They're close to parallel
+            const distance = Math.hypot(
+              otherStop.location.x - x,
+              otherStop.location.y - y
+            );
+            x = otherStop.location.x - distance * Math.cos(angle2);
+            y = otherStop.location.y - distance * Math.sin(angle2);
+            closestStop = otherStop;
+            closestDistance = Math.hypot(
+              otherStop2.location.x - otherStop.location.x,
+              otherStop2.location.y - otherStop.location.y
+            );
+            closestAngle = angle2;
+            actualDistance = distance;
+            break outer;
+          }
+          if (Math.abs(Math.abs(diff) - Math.PI / 2) < Math.PI / 18) {
+            // They're close to perpendicular
+            const distance = Math.hypot(
+              otherStop.location.x - x,
+              otherStop.location.y - y
+            );
+            // Must find which side to snap to
+            let orthAngle = angle2 + Math.PI / 2;
+            const testX1 = otherStop.location.x - distance * Math.cos(orthAngle);
+            const testY1 = otherStop.location.y - distance * Math.sin(orthAngle);
+            const testX2 = otherStop.location.x + distance * Math.cos(orthAngle);
+            const testY2 = otherStop.location.y + distance * Math.sin(orthAngle);
+          
+            // Determine which side is closer
+            const dist1 = Math.hypot(testX1 - x, testY1 - y);
+            const dist2 = Math.hypot(testX2 - x, testY2 - y);
+          
+            if (dist2 < dist1) {
+              orthAngle = angle2 - Math.PI / 2;
+            }
+
+            x = otherStop.location.x - distance * Math.cos(orthAngle);
+            y = otherStop.location.y - distance * Math.sin(orthAngle);
+            closestStop = otherStop;
+            closestDistance = Math.hypot(
+              otherStop2.location.x - otherStop.location.x,
+              otherStop2.location.y - otherStop.location.y
+            );
+            closestAngle = orthAngle;
+            actualDistance = distance;
+            break outer;
+          }
+        }
+      }
+      // ...existing code...
+
+      if (ctrlKey && closestStop) {
+        // Snap to multiples of distance
+        const multipliers = [1 / 4, 1 / 3, 1 / 2, 3 / 4, 1, 3 / 2, 2, 3, 4];
+        let closestMultiplier = multipliers[0];
+        let minDifference = Math.abs(
+          actualDistance / closestDistance - closestMultiplier
+        );
+
+        for (const multiplier of multipliers) {
+          const difference = Math.abs(
+            actualDistance / closestDistance - multiplier
+          );
+          if (difference < minDifference) {
+            minDifference = difference;
+            closestMultiplier = multiplier;
+          }
+        }
+
+        const newDistance = closestMultiplier * closestDistance;
+        x = closestStop.location.x - newDistance * Math.cos(closestAngle);
+        y = closestStop.location.y - newDistance * Math.sin(closestAngle);
+      }
+    }
+
+    this.location.x = x;
+    this.location.y = y;
   }
 }
 

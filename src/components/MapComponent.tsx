@@ -1,4 +1,9 @@
-import { SelectableItem, TransitMap } from "../transit/types";
+import {
+  GeoLocation,
+  LocationWithKeys,
+  SelectableItem,
+  TransitMap,
+} from "../transit/types";
 import createCanvasComponent from "./CanvasComponent";
 
 export const MapComponent = createCanvasComponent<TransitMap>({
@@ -20,10 +25,16 @@ export const MapComponent = createCanvasComponent<TransitMap>({
     let panning = false;
     let prevMouseX = 0;
     let prevMouseY = 0;
+    let ogMouseX = 0;
+    let ogMouseY = 0;
     let selected: SelectableItem | null = null;
+    let ogPos: GeoLocation | null = null;
 
     function setSelection(stop: SelectableItem | null) {
       selected = stop;
+      if (stop && "getLocation" in stop) {
+        ogPos = stop.getLocation();
+      }
     }
 
     function mouseToLocation({
@@ -57,6 +68,8 @@ export const MapComponent = createCanvasComponent<TransitMap>({
         panning = true;
         prevMouseX = mouseX;
         prevMouseY = mouseY;
+        ogMouseX = mouseX;
+        ogMouseY = mouseY;
       },
       mouseDbClick(_, { mouseX, mouseY }) {
         const { x, y } = mouseToLocation({ mouseX, mouseY });
@@ -66,20 +79,29 @@ export const MapComponent = createCanvasComponent<TransitMap>({
           selectable.doubleClick(transitMap);
         }
       },
-      mouseMove(_, { mouseX, mouseY }) {
+      mouseMove(e, { mouseX, mouseY }) {
         if (panning) {
           const deltaX = mouseX - prevMouseX;
           const deltaY = mouseY - prevMouseY;
           if (selected) {
             const deltaLocation = {
-              x: deltaX / zoom,
-              y: deltaY / zoom,
+              x: (mouseX - ogMouseX) / zoom,
+              y: (mouseY - ogMouseY) / zoom,
             };
 
-            if ("move" in selected) selected.move(deltaLocation);
+            if ("moveTo" in selected) {
+              const l: LocationWithKeys = {
+                x: ogPos!.x + deltaLocation.x,
+                y: ogPos!.y + deltaLocation.y,
+                shiftKey: e.shiftKey,
+                ctrlKey: e.ctrlKey,
+                altKey: e.altKey,
+              };
+              selected.moveTo(l);
+            }
           } else {
-            offsetX += mouseX - prevMouseX;
-            offsetY += mouseY - prevMouseY;
+            offsetX += deltaX;
+            offsetY += deltaY;
           }
           prevMouseX = mouseX;
           prevMouseY = mouseY;
@@ -90,7 +112,6 @@ export const MapComponent = createCanvasComponent<TransitMap>({
       },
       wheel(_, { deltaY, mouseX, mouseY }) {
         const delta = deltaY / 1000;
-        console.log("delta", delta);
         zoom = Math.max(0.1, zoom * (1 + delta));
         offsetX = mouseX - (mouseX - offsetX) * (1 + delta);
         offsetY = mouseY - (mouseY - offsetY) * (1 + delta);
