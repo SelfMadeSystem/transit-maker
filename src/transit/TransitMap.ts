@@ -62,12 +62,14 @@ export class TransitMap {
   }
 
   createStop(
-    name: string,
+    name: string | null,
     location: GeoLocation,
     route: TransitRoute,
     from?: TransitStop,
   ) {
-    const stop = new TransitStop([new Label(name)], location, [route]);
+    const stop = new TransitStop(name ? [new Label(name)] : [], location, [
+      route,
+    ]);
     this.addStop(stop);
     route.addStop(stop);
     if (from) {

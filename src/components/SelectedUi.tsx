@@ -1,17 +1,18 @@
 import { EditorContext } from '../EditorContext';
 import { StrokeType, TransitConnection } from '../transit/TransitConnection';
+import { TransitMap } from '../transit/TransitMap';
 import { TransitStop } from '../transit/TransitStop';
 import { ColorEditor } from './ColorEditor';
 import { useContext, useState } from 'react';
 
 export function SelectedUi() {
-  const { selected } = useContext(EditorContext);
+  const { selected, map } = useContext(EditorContext);
 
   if (selected instanceof TransitStop) {
     return <TransitStopUi stop={selected} />;
   }
   if (selected instanceof TransitConnection) {
-    return <TransitConnectionUi connection={selected} />;
+    return <TransitConnectionUi connection={selected} map={map} />;
   }
 }
 
@@ -112,10 +113,14 @@ function TransitStopUi({ stop }: { stop: TransitStop }) {
 
 function TransitConnectionUi({
   connection,
+  map,
 }: {
   connection: TransitConnection;
+  map: TransitMap;
 }) {
   const [strokeType, setStrokeType] = useState(connection.style.strokeType);
+  const [route, setRoute] = useState(connection.route);
+  const { routes } = map;
 
   return (
     <div className="absolute top-0 right-0 w-fit bg-white/10 p-2">
@@ -135,6 +140,26 @@ function TransitConnectionUi({
             <option value="solid">Solid</option>
             <option value="dotted">Dotted</option>
             <option value="dashed">Dashed</option>
+          </select>
+        </label>
+        <label className="flex items-center gap-2">
+          <div className="text-white">Route:</div>
+          <select
+            value={route.name}
+            onChange={e =>
+              setRoute(
+                (connection.route = Array.from(routes).find(
+                  r => r.name === e.target.value,
+                )!),
+              )
+            }
+            className="bg-gray-900 text-white"
+          >
+            {Array.from(routes).map(r => (
+              <option key={r.name} value={r.name}>
+                {r.name}
+              </option>
+            ))}
           </select>
         </label>
       </div>

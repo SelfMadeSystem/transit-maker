@@ -368,7 +368,7 @@ export class TransitStop
         ? this.routes.values().next().value!
         : TRANSFER_ROUTE;
     map.createStop(
-      'Unnamed Stop',
+      this.routes.size === 1 ? 'Unnamed Stop' : null,
       {
         x: this.location.x + 10,
         y: this.location.y + 10,

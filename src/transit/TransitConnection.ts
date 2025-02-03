@@ -71,12 +71,15 @@ export class TransitConnection
   }
 
   drawSelected(ctx: CanvasRenderingContext2D): void {
+    ctx.save();
+    ctx.setLineDash([2, 2]);
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.moveTo(this.from.location.x, this.from.location.y);
     ctx.lineTo(this.to.location.x, this.to.location.y);
     ctx.stroke();
+    ctx.restore();
   }
 
   isOver(x: number, y: number) {
