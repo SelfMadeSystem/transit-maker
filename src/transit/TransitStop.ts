@@ -47,16 +47,8 @@ export class TransitStop
   implements Selectable, Movable, RightClickable, DoubleClickable
 {
   // TODO: Add support for:
-  // - multiple labels
   // - "long" transfer stations (e.g. Lucien-L'Allier in Montreal is like 3×
   //   the width of a normal station)
-  // - connected stations (e.g. Bonaventure is connected to Gare Centrale, but
-  //   they're separate stations, same for Henri-Bourassa and Sauvé)
-  // - different shapes (e.g. square, circle, etc.)
-  //   - shapes that rotate with the line (e.g. the squares on the EXO lines)
-  // - different sizes (e.g. transfer stations and final stations are bigger)
-  // - different fill colors (e.g. white, black, line color)
-  // - different border colors (e.g. white, black, none)
   public labels: Set<Label>;
   public location: GeoLocation;
   public connections: Set<TransitConnection>;

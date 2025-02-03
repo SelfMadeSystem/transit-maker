@@ -14,7 +14,6 @@ export type RouteStyle = {
 
 export class TransitRoute {
   // TODO: Add support for:
-  // - different styles (as mentioned in `TransitConnection`)
   // - idk what else
   public name: string;
   public stops: Set<TransitStop>;

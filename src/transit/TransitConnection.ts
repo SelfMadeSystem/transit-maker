@@ -27,13 +27,6 @@ export class TransitConnection
   // - rounded corners
   // - go behind other lines when there's no stop in between (e.g. line 15 with
   //   lines 11, 12, 14, the text of "De la Savane", and line 2)
-  // TODO: Different styles (todo in conjunction with `TransitRoute` since it'll
-  // likely house the style information):
-  // - Thick line
-  // - Thin line
-  // - Split (?) line (e.g. REM)
-  // - Dotted line (continuation of a line beyond the map)
-  // - Dashed line (future line)
   public from: TransitStop;
   public to: TransitStop;
   public route: TransitRoute;
