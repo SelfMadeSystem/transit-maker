@@ -1,6 +1,6 @@
-import { loopAnimationFrame } from "../utils/abortable";
-import { useEffect, useRef, useState } from "react";
-import { usePrevious } from "../utils/hooks";
+import { loopAnimationFrame } from '../utils/abortable';
+import { usePrevious } from '../utils/hooks';
+import { useEffect, useRef, useState } from 'react';
 
 type Functionify<T extends Record<string, unknown>> = {
   [K in keyof T]: (data: T[K]) => void;
@@ -13,34 +13,34 @@ type ReturnType<T extends Record<string, unknown>> = {
   propsUpdate?: Partial<Functionify<T>>;
   mouseMove?: (
     e: MouseEvent,
-    coords: { mouseX: number; mouseY: number }
+    coords: { mouseX: number; mouseY: number },
   ) => void;
   mouseDown?: (
     e: MouseEvent,
-    coords: { mouseX: number; mouseY: number }
+    coords: { mouseX: number; mouseY: number },
   ) => void;
   mouseDbClick?: (
     e: MouseEvent,
-    coords: { mouseX: number; mouseY: number }
+    coords: { mouseX: number; mouseY: number },
   ) => void;
   mouseUp?: (e: MouseEvent, coords: { mouseX: number; mouseY: number }) => void;
   touchStart?: (
     e: TouchEvent,
-    coords: { mouseX: number; mouseY: number }
+    coords: { mouseX: number; mouseY: number },
   ) => void;
   touchMove?: (
     e: TouchEvent,
-    coords: { mouseX: number; mouseY: number }
+    coords: { mouseX: number; mouseY: number },
   ) => void;
   touchEnd?: (
     e: TouchEvent,
-    coords: { mouseX: number; mouseY: number }
+    coords: { mouseX: number; mouseY: number },
   ) => void;
   keyDown?: (e: KeyboardEvent) => void;
   keyUp?: (e: KeyboardEvent) => void;
   wheel?: (
     e: WheelEvent,
-    opts: { deltaX: number; deltaY: number; mouseX: number; mouseY: number }
+    opts: { deltaX: number; deltaY: number; mouseX: number; mouseY: number },
   ) => void;
   scroll?: (
     e: Event,
@@ -51,7 +51,7 @@ type ReturnType<T extends Record<string, unknown>> = {
       scrollY: number;
       percentX: number;
       percentY: number;
-    }
+    },
   ) => void;
 };
 
@@ -61,12 +61,12 @@ type CreateProps<T extends Record<string, unknown>> = {
   setup: (
     canvas: HTMLCanvasElement,
     props: T,
-    draw: () => void
+    draw: () => void,
   ) => ReturnType<T>;
 };
 
 export default function createCanvasComponent<
-  T extends Record<string, unknown>
+  T extends Record<string, unknown>,
 >({
   props,
   autoResize,
@@ -115,7 +115,7 @@ export default function createCanvasComponent<
 
         if (result?.mouseMove) {
           window.addEventListener(
-            "mousemove",
+            'mousemove',
             (e: MouseEvent) => {
               const rect = canvas.getBoundingClientRect();
               result.mouseMove!(e, {
@@ -123,13 +123,13 @@ export default function createCanvasComponent<
                 mouseY: e.clientY - rect.top,
               });
             },
-            { signal }
+            { signal },
           );
         }
 
         if (result?.mouseDown) {
           window.addEventListener(
-            "mousedown",
+            'mousedown',
             (e: MouseEvent) => {
               const rect = canvas.getBoundingClientRect();
               result.mouseDown!(e, {
@@ -137,20 +137,20 @@ export default function createCanvasComponent<
                 mouseY: e.clientY - rect.top,
               });
             },
-            { signal, passive: false }
+            { signal, passive: false },
           );
           window.addEventListener(
-            "contextmenu",
+            'contextmenu',
             (e: MouseEvent) => {
               e.preventDefault();
             },
-            { signal }
+            { signal },
           );
         }
 
         if (result?.mouseDbClick) {
           window.addEventListener(
-            "dblclick",
+            'dblclick',
             (e: MouseEvent) => {
               const rect = canvas.getBoundingClientRect();
               result.mouseDbClick!(e, {
@@ -158,13 +158,13 @@ export default function createCanvasComponent<
                 mouseY: e.clientY - rect.top,
               });
             },
-            { signal }
+            { signal },
           );
         }
 
         if (result?.mouseUp) {
           window.addEventListener(
-            "mouseup",
+            'mouseup',
             (e: MouseEvent) => {
               const rect = canvas.getBoundingClientRect();
               result.mouseUp!(e, {
@@ -172,13 +172,13 @@ export default function createCanvasComponent<
                 mouseY: e.clientY - rect.top,
               });
             },
-            { signal }
+            { signal },
           );
         }
 
         if (result?.touchStart) {
           window.addEventListener(
-            "touchstart",
+            'touchstart',
             (e: TouchEvent) => {
               const rect = canvas.getBoundingClientRect();
               const touch = e.touches[0];
@@ -187,13 +187,13 @@ export default function createCanvasComponent<
                 mouseY: touch.clientY - rect.top,
               });
             },
-            { signal }
+            { signal },
           );
         }
 
         if (result?.touchMove) {
           window.addEventListener(
-            "touchmove",
+            'touchmove',
             (e: TouchEvent) => {
               const rect = canvas.getBoundingClientRect();
               const touch = e.touches[0];
@@ -202,13 +202,13 @@ export default function createCanvasComponent<
                 mouseY: touch.clientY - rect.top,
               });
             },
-            { signal }
+            { signal },
           );
         }
 
         if (result?.touchEnd) {
           window.addEventListener(
-            "touchend",
+            'touchend',
             (e: TouchEvent) => {
               const rect = canvas.getBoundingClientRect();
               const touch = e.changedTouches[0];
@@ -217,33 +217,33 @@ export default function createCanvasComponent<
                 mouseY: touch.clientY - rect.top,
               });
             },
-            { signal }
+            { signal },
           );
         }
 
         if (result?.keyDown) {
           window.addEventListener(
-            "keydown",
+            'keydown',
             (e: KeyboardEvent) => {
               result.keyDown!(e);
             },
-            { signal }
+            { signal },
           );
         }
 
         if (result?.keyUp) {
           window.addEventListener(
-            "keyup",
+            'keyup',
             (e: KeyboardEvent) => {
               result.keyUp!(e);
             },
-            { signal }
+            { signal },
           );
         }
 
         if (result?.wheel) {
           window.addEventListener(
-            "wheel",
+            'wheel',
             (e: WheelEvent) => {
               const rect = canvas.getBoundingClientRect();
               result.wheel!(e, {
@@ -253,14 +253,14 @@ export default function createCanvasComponent<
                 mouseY: e.clientY - rect.top,
               });
             },
-            { signal }
+            { signal },
           );
         }
 
         if (result?.scroll) {
           window.addEventListener(
-            "scroll",
-            (e) => {
+            'scroll',
+            e => {
               const rect = canvas.getBoundingClientRect();
               let deltaX = 0;
               let deltaY = 0;
@@ -287,12 +287,12 @@ export default function createCanvasComponent<
                 percentY,
               });
             },
-            { signal }
+            { signal },
           );
         }
 
         if (autoResize) {
-          const observer = new ResizeObserver((entries) => {
+          const observer = new ResizeObserver(entries => {
             const entry = entries[0];
             canvas.width = entry.contentRect.width;
             canvas.height = entry.contentRect.height;
@@ -303,7 +303,7 @@ export default function createCanvasComponent<
 
           observer.observe(canvas);
 
-          signal.addEventListener("abort", () => {
+          signal.addEventListener('abort', () => {
             observer.disconnect();
           });
         }

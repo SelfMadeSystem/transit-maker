@@ -1,9 +1,9 @@
-import { EditorProvider } from "./EditorProvider";
-import { Editor } from "./components/Editor";
+import { EditorProvider } from './EditorProvider';
+import { Editor } from './components/Editor';
 
 function App() {
   return (
-    <div className="w-full h-full min-h-screen flex justify-center items-center">
+    <div className="flex h-full min-h-screen w-full items-center justify-center">
       <EditorProvider>
         <Editor />
       </EditorProvider>

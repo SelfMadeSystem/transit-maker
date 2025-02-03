@@ -1,6 +1,6 @@
 type AbortParams = Partial<{
   signal: AbortSignal;
-}>
+}>;
 
 export function loopAnimationFrame(
   callback: FrameRequestCallback,

@@ -1,4 +1,4 @@
-import { angleDelta, mod } from "../utils/mathUtils";
+import { angleDelta, mod } from '../utils/mathUtils';
 
 export type GeoLocation = {
   x: number;
@@ -37,7 +37,7 @@ export interface RightClickable {
   rightClick(map: TransitMap): void;
 }
 
-const LabelFont = "10px sans-serif";
+const LabelFont = '10px sans-serif';
 
 export class Label implements Drawable, Selectable, Movable {
   // TODO: Add support for:
@@ -76,11 +76,11 @@ export class Label implements Drawable, Selectable, Movable {
     }
     {
       ctx.font = LabelFont;
-      ctx.fillStyle = "white";
+      ctx.fillStyle = 'white';
       const x = this.x + this.stop.location.x;
       const y = this.y + this.stop.location.y;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       ctx.fillText(this.text, x, y);
     }
   }
@@ -98,13 +98,13 @@ export class Label implements Drawable, Selectable, Movable {
     const x = this.x + this.stop.location.x - dimensions.width / 2;
     const y =
       this.y + this.stop.location.y - dimensions.actualBoundingBoxAscent;
-    ctx.strokeStyle = "white";
+    ctx.strokeStyle = 'white';
     ctx.lineWidth = 1;
     ctx.strokeRect(
       x - 2,
       y - 2,
       dimensions.width + 4,
-      dimensions.actualBoundingBoxAscent * 2 + 4
+      dimensions.actualBoundingBoxAscent * 2 + 4,
     );
   }
 
@@ -165,7 +165,7 @@ export class TransitStop
   constructor(
     labels: Label[],
     location: GeoLocation,
-    routes: Iterable<TransitRoute>
+    routes: Iterable<TransitRoute>,
   ) {
     this.labels = new Set(labels);
     for (const label of this.labels) {
@@ -190,9 +190,9 @@ export class TransitStop
     if (this.routes.size === 1) {
       ctx.strokeStyle = this.routes.values().next().value!.color;
     } else {
-      ctx.strokeStyle = "white";
+      ctx.strokeStyle = 'white';
     }
-    ctx.fillStyle = "black";
+    ctx.fillStyle = 'black';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(this.location.x, this.location.y, 5, 0, 2 * Math.PI);
@@ -201,7 +201,7 @@ export class TransitStop
   }
 
   drawSelected(ctx: CanvasRenderingContext2D) {
-    ctx.strokeStyle = "white";
+    ctx.strokeStyle = 'white';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(this.location.x, this.location.y, 8, 0, 2 * Math.PI);
@@ -231,13 +231,13 @@ export class TransitStop
       let closestDistance = 0;
       let closestAngle = 0;
       let actualDistance = 0;
-      console.log("snap");
+      console.log('snap');
       // Snap angle to closest stop
       outer: for (const connection of this.connections) {
         const otherStop = connection.getOtherStop(this);
         const angle = Math.atan2(
           otherStop.location.y - y,
-          otherStop.location.x - x
+          otherStop.location.x - x,
         );
 
         for (const connection2 of otherStop.connections) {
@@ -247,21 +247,21 @@ export class TransitStop
           }
           const angle2 = Math.atan2(
             otherStop2.location.y - otherStop.location.y,
-            otherStop2.location.x - otherStop.location.x
+            otherStop2.location.x - otherStop.location.x,
           );
           const diff = angleDelta(angle, angle2);
           if (Math.abs(diff) < ANGLE_STEP) {
             // They're close to parallel
             const distance = Math.hypot(
               otherStop.location.x - x,
-              otherStop.location.y - y
+              otherStop.location.y - y,
             );
             x = otherStop.location.x - distance * Math.cos(angle2);
             y = otherStop.location.y - distance * Math.sin(angle2);
             closestStop = otherStop;
             closestDistance = Math.hypot(
               otherStop2.location.x - otherStop.location.x,
-              otherStop2.location.y - otherStop.location.y
+              otherStop2.location.y - otherStop.location.y,
             );
             closestAngle = angle2;
             actualDistance = distance;
@@ -271,7 +271,7 @@ export class TransitStop
             // They're close to perpendicular
             const distance = Math.hypot(
               otherStop.location.x - x,
-              otherStop.location.y - y
+              otherStop.location.y - y,
             );
             // Must find which side to snap to
             let orthAngle = angle2 + Math.PI / 2;
@@ -297,7 +297,7 @@ export class TransitStop
             closestStop = otherStop;
             closestDistance = Math.hypot(
               otherStop2.location.x - otherStop.location.x,
-              otherStop2.location.y - otherStop.location.y
+              otherStop2.location.y - otherStop.location.y,
             );
             closestAngle = orthAngle;
             actualDistance = distance;
@@ -312,14 +312,14 @@ export class TransitStop
         for (const connection of this.connections) {
           const otherStop = connection.getOtherStop(this);
           const angle = Math.abs(
-            Math.atan2(otherStop.location.y - y, otherStop.location.x - x)
+            Math.atan2(otherStop.location.y - y, otherStop.location.x - x),
           );
 
           if (angle < ANGLE_STEP || angle > Math.PI - ANGLE_STEP) {
             // Horizontal
             const distance = Math.hypot(
               otherStop.location.x - x,
-              otherStop.location.y - y
+              otherStop.location.y - y,
             );
             const sign = Math.sign(otherStop.location.x - x);
             x = otherStop.location.x - sign * distance;
@@ -331,7 +331,7 @@ export class TransitStop
             closestStop = otherStop;
             closestDistance = Math.hypot(
               nextStop.location.x - otherStop.location.x,
-              nextStop.location.y - otherStop.location.y
+              nextStop.location.y - otherStop.location.y,
             );
             closestAngle = sign > 0 ? 0 : Math.PI;
             actualDistance = distance;
@@ -345,7 +345,7 @@ export class TransitStop
             // Vertical
             const distance = Math.hypot(
               otherStop.location.x - x,
-              otherStop.location.y - y
+              otherStop.location.y - y,
             );
             const sign = Math.sign(otherStop.location.y - y);
             x = otherStop.location.x;
@@ -357,7 +357,7 @@ export class TransitStop
             closestStop = otherStop;
             closestDistance = Math.hypot(
               nextStop.location.x - otherStop.location.x,
-              nextStop.location.y - otherStop.location.y
+              nextStop.location.y - otherStop.location.y,
             );
             closestAngle = sign > 0 ? Math.PI / 2 : (Math.PI * 3) / 2;
             actualDistance = distance;
@@ -371,12 +371,12 @@ export class TransitStop
         const multipliers = [1 / 4, 1 / 3, 1 / 2, 3 / 4, 1, 3 / 2, 2, 3, 4];
         let closestMultiplier = multipliers[0];
         let minDifference = Math.abs(
-          actualDistance / closestDistance - closestMultiplier
+          actualDistance / closestDistance - closestMultiplier,
         );
 
         for (const multiplier of multipliers) {
           const difference = Math.abs(
-            actualDistance / closestDistance - multiplier
+            actualDistance / closestDistance - multiplier,
           );
           if (difference < minDifference) {
             minDifference = difference;
@@ -404,18 +404,18 @@ export class TransitStop
 
   doubleClick(map: TransitMap): void {
     map.createStop(
-      "Unnamed Stop",
+      'Unnamed Stop',
       {
         x: this.location.x + 10,
         y: this.location.y + 10,
       },
       this.routes.values().next().value!,
-      this
+      this,
     );
   }
 
   clone(): TransitStop {
-    const labels = Array.from(this.labels).map((label) => label.clone());
+    const labels = Array.from(this.labels).map(label => label.clone());
     return new TransitStop(labels, this.location, Array.from(this.routes));
   }
 }
@@ -457,7 +457,7 @@ export class TransitConnection
     ctx.strokeStyle = this.route.color;
     ctx.lineWidth = 2;
     ctx.save();
-    ctx.lineCap = "round";
+    ctx.lineCap = 'round';
     if (this.dotted) {
       ctx.setLineDash([0, 4]);
     }
@@ -469,7 +469,7 @@ export class TransitConnection
   }
 
   drawSelected(ctx: CanvasRenderingContext2D): void {
-    ctx.strokeStyle = "white";
+    ctx.strokeStyle = 'white';
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.moveTo(this.from.location.x, this.from.location.y);
@@ -495,7 +495,7 @@ export class TransitConnection
     }
 
     const distance = Math.abs(
-      (y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1
+      (y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1,
     );
     const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
     return distance / length < width;
@@ -594,7 +594,7 @@ export class TransitMap {
     name: string,
     location: GeoLocation,
     route: TransitRoute,
-    from?: TransitStop
+    from?: TransitStop,
   ) {
     const stop = new TransitStop([new Label(name)], location, [route]);
     this.addStop(stop);
@@ -631,12 +631,12 @@ export class TransitMap {
 
     const route = connection.route;
     const stop = new TransitStop(
-      [new Label("Unnamed Stop")],
+      [new Label('Unnamed Stop')],
       {
         x: (from.location.x + to.location.x) / 2,
         y: (from.location.y + to.location.y) / 2,
       },
-      [route]
+      [route],
     );
 
     this.addStop(stop);

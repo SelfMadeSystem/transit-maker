@@ -1,9 +1,15 @@
-import { useContext } from "react";
-import { MapComponent } from "./MapComponent";
-import { EditorContext } from "../EditorContext";
+import { EditorContext } from '../EditorContext';
+import { MapComponent } from './MapComponent';
+import { SelectedUi } from './SelectedUi';
+import { useContext } from 'react';
 
 export function Editor() {
   const ctx = useContext(EditorContext);
 
-  return <MapComponent props={ctx} />;
+  return (
+    <>
+      <MapComponent props={ctx} />
+      <SelectedUi />
+    </>
+  );
 }

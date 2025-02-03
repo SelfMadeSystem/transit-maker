@@ -70,8 +70,8 @@ export function randomBool(probability = 0.5): boolean {
  */
 export function randomId(length = 8): string {
   return Array.from({ length }, () =>
-    Math.floor(Math.random() * 16).toString(16)
-  ).join("");
+    Math.floor(Math.random() * 16).toString(16),
+  ).join('');
 }
 
 /**
@@ -181,7 +181,7 @@ export function bezier(a: Vec2, b: Vec2, c: Vec2, d: Vec2, t: number): Vec2 {
   return lerpVec2(
     lerpVec2(lerpVec2(a, b, t), lerpVec2(b, c, t), t),
     lerpVec2(lerpVec2(b, c, t), lerpVec2(c, d, t), t),
-    t
+    t,
   );
 }
 

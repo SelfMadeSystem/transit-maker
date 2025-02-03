@@ -1,25 +1,25 @@
-import { EditorContextType } from "../EditorContext";
+import { EditorContextType } from '../EditorContext';
 import {
   GeoLocation,
   Label,
   LocationWithKeys,
   SelectableItem,
-} from "../transit/types";
-import createCanvasComponent from "./CanvasComponent";
+} from '../transit/types';
+import createCanvasComponent from './CanvasComponent';
 
 export const MapComponent = createCanvasComponent<EditorContextType>({
   autoResize: true,
   props: {
     style: {
-      position: "absolute",
+      position: 'absolute',
       inset: 0,
-      width: "100%",
-      height: "100%",
+      width: '100%',
+      height: '100%',
     },
   },
   setup(canvas, { map, selected, setSelected }) {
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("Failed to get 2d context");
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Failed to get 2d context');
     let zoom = 1;
     let offsetX = 0;
     let offsetY = 0;
@@ -32,13 +32,13 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
 
     function setSelection(item: SelectableItem | null) {
       setSelected(item);
-      if (item && "getLocation" in item) {
+      if (item && 'getLocation' in item) {
         ogPos = item.getLocation();
       }
     }
 
     function renameLabel(label: Label) {
-      const newName = prompt("Enter new name", label.text);
+      const newName = prompt('Enter new name', label.text);
       if (newName) {
         label.text = newName;
       }
@@ -68,7 +68,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
       },
       propsUpdate: {
         map() {
-          console.error("Map should never change");
+          console.error('Map should never change');
         },
         selected(newSelected) {
           selected = newSelected;
@@ -87,7 +87,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           panning = true;
         } else if (e.button === 2) {
           const selectable = map.getSelectable(x, y);
-          if (selectable && "rightClick" in selectable) {
+          if (selectable && 'rightClick' in selectable) {
             selectable.rightClick(map);
           }
         }
@@ -100,7 +100,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
         const { x, y } = mouseToLocation({ mouseX, mouseY });
         const selectable = map.getSelectable(x, y);
 
-        if (selectable && "doubleClick" in selectable) {
+        if (selectable && 'doubleClick' in selectable) {
           selectable.doubleClick(map);
         } else if (selectable instanceof Label) {
           renameLabel(selectable);
@@ -116,7 +116,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
               y: (mouseY - ogMouseY) / zoom,
             };
 
-            if ("moveTo" in selected) {
+            if ('moveTo' in selected) {
               const l: LocationWithKeys = {
                 x: ogPos!.x + deltaLocation.x,
                 y: ogPos!.y + deltaLocation.y,
@@ -140,12 +140,12 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
       keyDown(e) {
         if (selected) {
           switch (e.key) {
-            case "Delete":
-            case "Backspace":
+            case 'Delete':
+            case 'Backspace':
               map.remove(selected);
               setSelection(null);
               break;
-            case "Enter":
+            case 'Enter':
               if (selected instanceof Label) {
                 renameLabel(selected);
               }
