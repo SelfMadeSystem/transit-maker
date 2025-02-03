@@ -15,7 +15,7 @@ import {
 
 export type StopColor = string | 'route';
 
-export type TransitStopStyle = {
+export type StopStyle = {
   fillColor: StopColor;
   strokeColor: StopColor;
   /**
@@ -33,7 +33,7 @@ export type TransitStopStyle = {
   strokeWidth: number;
 };
 
-export const DEFAULT_STOP_STYLE: TransitStopStyle = {
+export const DEFAULT_STOP_STYLE: StopStyle = {
   fillColor: '#000',
   strokeColor: 'route',
   edges: 0,
@@ -61,7 +61,7 @@ export class TransitStop
   public location: GeoLocation;
   public connections: Set<TransitConnection>;
   public hidden: boolean = false;
-  public style?: TransitStopStyle;
+  public style?: StopStyle;
 
   constructor(labels: Label[], location: GeoLocation) {
     this.labels = new Set(labels);
@@ -80,7 +80,7 @@ export class TransitStop
     return routes;
   }
 
-  getStyle(): TransitStopStyle {
+  getStyle(): StopStyle {
     if (this.style) {
       return this.style;
     }

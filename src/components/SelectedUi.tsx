@@ -6,7 +6,7 @@ import {
 } from '../transit/TransitConnection';
 import { TransitMap } from '../transit/TransitMap';
 import { StrokeType, TransitRoute } from '../transit/TransitRoute';
-import { TransitStop } from '../transit/TransitStop';
+import { StopStyle, TransitStop } from '../transit/TransitStop';
 import { ColorEditor } from './ColorEditor';
 import { useContext, useState } from 'react';
 
@@ -24,17 +24,7 @@ export function SelectedUi() {
 
 function TransitStopUi({ stop }: { stop: TransitStop }) {
   const [hidden, setHidden] = useState(stop.hidden);
-  const style = stop.getStyle();
   const [hasStyle, setHasStyle] = useState(stop.style !== undefined);
-  const [fillColor, setFillColor] = useState(style.fillColor);
-  const [strokeColor, setStrokeColor] = useState(style.strokeColor);
-  const [edges, setEdges] = useState(style.edges);
-  const [edgeOrientation, setEdgeOrientation] = useState(style.edgeOrientation);
-  const [edgeFollowsRoute, setEdgeFollowsRoute] = useState(
-    style.edgeFollowsRoute,
-  );
-  const [radius, setRadius] = useState(style.radius);
-  const [strokeWidth, setStrokeWidth] = useState(style.strokeWidth);
 
   function addLabel() {
     stop.addLabel(new Label('Unnamed Label', 0, -15));
@@ -67,104 +57,107 @@ function TransitStopUi({ stop }: { stop: TransitStop }) {
         <button onClick={addLabel} className="bg-gray-900 text-white">
           Add label
         </button>
-        {stop.style ? (
-          <>
-            <label className="flex items-center gap-2">
-              <div className="text-white">Fill color:</div>
-              <ColorEditor
-                stopColor={fillColor}
-                onChange={fill => setFillColor((stop.style!.fillColor = fill))}
-              />
-            </label>
-            <label className="flex items-center gap-2">
-              <div className="text-white">Stroke color:</div>
-              <ColorEditor
-                stopColor={strokeColor}
-                onChange={stroke =>
-                  setStrokeColor((stop.style!.strokeColor = stroke))
-                }
-              />
-            </label>
-            <label className="flex items-center gap-2">
-              <div className="text-white">Edges:</div>
-              <select
-                value={edges}
-                onChange={e =>
-                  setEdges((stop.style!.edges = parseInt(e.target.value)))
-                }
-                className="bg-gray-900 text-white"
-              >
-                <option value="0">Circle</option>
-                <option value="3">Triangle</option>
-                <option value="4">Square</option>
-                <option value="5">Pentagon</option>
-                <option value="6">Hexagon</option>
-              </select>
-            </label>
-            {edges > 0 ? (
-              <>
-                <label className="flex items-center gap-2">
-                  <div className="text-white">Edge orientation:</div>
-                  <select
-                    value={edgeOrientation}
-                    onChange={e =>
-                      setEdgeOrientation(
-                        (stop.style!.edgeOrientation = parseInt(
-                          e.target.value,
-                        )),
-                      )
-                    }
-                    className="bg-gray-900 text-white"
-                  >
-                    <option value="0">A</option>
-                    <option value="1">B</option>
-                    <option value="2">C</option>
-                    <option value="3">D</option>
-                  </select>
-                </label>
-                <label className="flex items-center gap-2">
-                  <div className="text-white">Edge follows route:</div>
-                  <input
-                    type="checkbox"
-                    checked={edgeFollowsRoute}
-                    onChange={() =>
-                      setEdgeFollowsRoute(
-                        (stop.style!.edgeFollowsRoute = !edgeFollowsRoute),
-                      )
-                    }
-                  />
-                </label>
-              </>
-            ) : null}
-            <label className="flex items-center gap-2">
-              <div className="text-white">Radius:</div>
-              <input
-                type="number"
-                value={radius}
-                min="0"
-                onChange={e =>
-                  setRadius((stop.style!.radius = parseInt(e.target.value)))
-                }
-                className="bg-gray-900 text-white"
-              />
-            </label>
-            <label className="flex items-center gap-2">
-              <div className="text-white">Stroke width:</div>
-              <input
-                type="number"
-                value={strokeWidth}
-                min="0"
-                onChange={e =>
-                  setStrokeWidth(
-                    (stop.style!.strokeWidth = parseInt(e.target.value)),
-                  )
-                }
-                className="bg-gray-900 text-white"
-              />
-            </label>
-          </>
-        ) : null}
+        {stop.style ? <StopStyleUi style={stop.style} /> : null}
       </div>
+    </>
+  );
+}
+
+function StopStyleUi({ style }: { style: StopStyle }) {
+  const [fillColor, setFillColor] = useState(style.fillColor);
+  const [strokeColor, setStrokeColor] = useState(style.strokeColor);
+  const [edges, setEdges] = useState(style.edges);
+  const [edgeOrientation, setEdgeOrientation] = useState(style.edgeOrientation);
+  const [edgeFollowsRoute, setEdgeFollowsRoute] = useState(
+    style.edgeFollowsRoute,
+  );
+  const [radius, setRadius] = useState(style.radius);
+  const [strokeWidth, setStrokeWidth] = useState(style.strokeWidth);
+  return (
+    <>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Fill color:</div>
+        <ColorEditor
+          stopColor={fillColor}
+          onChange={fill => setFillColor((style.fillColor = fill))}
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Stroke color:</div>
+        <ColorEditor
+          stopColor={strokeColor}
+          onChange={stroke => setStrokeColor((style.strokeColor = stroke))}
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Edges:</div>
+        <select
+          value={edges}
+          onChange={e => setEdges((style.edges = parseInt(e.target.value)))}
+          className="bg-gray-900 text-white"
+        >
+          <option value="0">Circle</option>
+          <option value="3">Triangle</option>
+          <option value="4">Square</option>
+          <option value="5">Pentagon</option>
+          <option value="6">Hexagon</option>
+        </select>
+      </label>
+      {edges > 0 ? (
+        <>
+          <label className="flex items-center gap-2">
+            <div className="text-white">Edge orientation:</div>
+            <select
+              value={edgeOrientation}
+              onChange={e =>
+                setEdgeOrientation(
+                  (style.edgeOrientation = parseInt(e.target.value)),
+                )
+              }
+              className="bg-gray-900 text-white"
+            >
+              <option value="0">A</option>
+              <option value="1">B</option>
+              <option value="2">C</option>
+              <option value="3">D</option>
+            </select>
+          </label>
+          <label className="flex items-center gap-2">
+            <div className="text-white">Edge follows route:</div>
+            <input
+              type="checkbox"
+              checked={edgeFollowsRoute}
+              onChange={() =>
+                setEdgeFollowsRoute(
+                  (style.edgeFollowsRoute = !edgeFollowsRoute),
+                )
+              }
+            />
+          </label>
+        </>
+      ) : null}
+      <label className="flex items-center gap-2">
+        <div className="text-white">Radius:</div>
+        <input
+          type="number"
+          value={radius}
+          min="0"
+          onChange={e => setRadius((style.radius = parseInt(e.target.value)))}
+          className="bg-gray-900 text-white"
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Stroke width:</div>
+        <input
+          type="number"
+          value={strokeWidth}
+          min="0"
+          onChange={e =>
+            setStrokeWidth((style.strokeWidth = parseInt(e.target.value)))
+          }
+          className="bg-gray-900 text-white"
+        />
+      </label>
     </>
   );
 }
@@ -354,6 +347,10 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
           className="bg-gray-900 text-white"
         />
       </label>
+      <details>
+        <summary className="text-white">Stop style</summary>
+        <StopStyleUi style={style.stopStyle} />
+      </details>
     </div>
   );
 }
