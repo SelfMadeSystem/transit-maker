@@ -97,6 +97,11 @@ export class TransitStop
     }
   }
 
+  addLabel(label: Label) {
+    this.labels.add(label);
+    label.stop = this;
+  }
+
   getStopColor(c: StopColor): string {
     if (c === 'route') {
       const routes = this.getRoutes();

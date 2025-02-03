@@ -1,4 +1,5 @@
 import { EditorContext } from '../EditorContext';
+import { Label } from '../transit/Label';
 import {
   ConnectionStrokeType,
   TransitConnection,
@@ -33,6 +34,10 @@ function TransitStopUi({ stop }: { stop: TransitStop }) {
   const [radius, setRadius] = useState(style.radius);
   const [strokeWidth, setStrokeWidth] = useState(style.strokeWidth);
 
+  function addLabel() {
+    stop.addLabel(new Label('Unnamed Label', 0, -15));
+  }
+
   return (
     <div className="absolute top-0 right-0 w-fit bg-white/10 p-2">
       <div className="text-white">Modify stop style</div>
@@ -57,6 +62,9 @@ function TransitStopUi({ stop }: { stop: TransitStop }) {
             }}
           />
         </label>
+        <button onClick={addLabel} className="bg-gray-900 text-white">
+          Add label
+        </button>
         {stop.style ? (
           <>
             <label className="flex items-center gap-2">
