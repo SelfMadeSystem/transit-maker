@@ -47,8 +47,8 @@ export class TransitConnection
   }
 
   draw(ctx: CanvasRenderingContext2D) {
-    ctx.strokeStyle = this.route.color;
-    const lineWidth = 2;
+    ctx.strokeStyle = this.route.style.color;
+    const lineWidth = this.route.style.lineWidth;
     ctx.lineWidth = lineWidth;
     ctx.save();
     ctx.lineCap = 'round';
@@ -67,6 +67,11 @@ export class TransitConnection
     ctx.moveTo(this.from.location.x, this.from.location.y);
     ctx.lineTo(this.to.location.x, this.to.location.y);
     ctx.stroke();
+    if (this.route.style.strokeType === 'split') {
+      ctx.lineWidth = this.route.style.innerWidth;
+      ctx.strokeStyle = '#000';
+      ctx.stroke();
+    }
     ctx.restore();
   }
 

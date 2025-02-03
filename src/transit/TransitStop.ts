@@ -88,9 +88,9 @@ export class TransitStop
   getStopColor(c: StopColor): string {
     if (c === 'route') {
       if (this.routes.size === 1) {
-        return this.routes.values().next().value!.color;
+        return this.routes.values().next().value!.style.color;
       } else {
-        return TRANSFER_ROUTE.color;
+        return TRANSFER_ROUTE.style.color;
       }
     }
     if (c) {
