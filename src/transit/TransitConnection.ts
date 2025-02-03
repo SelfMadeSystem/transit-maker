@@ -1,7 +1,12 @@
 import { TransitMap } from './TransitMap';
 import { TransitRoute } from './TransitRoute';
 import { TransitStop } from './TransitStop';
-import { DoubleClickable, RightClickable, Selectable } from './types';
+import {
+  ClickInfo,
+  DoubleClickable,
+  RightClickable,
+  Selectable,
+} from './types';
 
 export type ConnectionStrokeType = 'solid' | 'dotted' | 'dashed';
 
@@ -134,7 +139,7 @@ export class TransitConnection
     map.removeConnection(this);
   }
 
-  doubleClick(map: TransitMap) {
+  doubleClick({ map }: ClickInfo): void {
     map.splitConnection(this);
   }
 

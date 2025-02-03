@@ -4,6 +4,7 @@ import { TransitConnection } from './TransitConnection';
 import { TransitMap } from './TransitMap';
 import { TRANSFER_ROUTE, TransitRoute } from './TransitRoute';
 import {
+  ClickInfo,
   DoubleClickable,
   GeoLocation,
   LocationWithKeys,
@@ -88,6 +89,14 @@ export class TransitStop
       return routes.values().next().value!.style.stopStyle;
     }
     return DEFAULT_STOP_STYLE;
+  }
+
+  getRoute(): TransitRoute {
+    const routes = this.getRoutes();
+    if (routes.size === 1) {
+      return routes.values().next().value!;
+    }
+    return TRANSFER_ROUTE;
   }
 
   setLabels(labels: Label[]) {
@@ -367,18 +376,19 @@ export class TransitStop
     this.location.y = y;
   }
 
-  rightClick(_: TransitMap): void {
-    this.hidden = !this.hidden;
+  rightClick({ map, selected }: ClickInfo): void {
+    if (selected instanceof TransitStop && selected !== this) {
+      map.createConnection(selected, this, selected.getRoute());
+    }
   }
 
   remove(map: TransitMap): void {
     map.removeStop(this);
   }
 
-  doubleClick(map: TransitMap): void {
+  doubleClick({ map }: ClickInfo): void {
     const routes = this.getRoutes();
-    const route =
-      routes.size === 1 ? routes.values().next().value! : TRANSFER_ROUTE;
+    const route = this.getRoute();
     map.createStop(
       routes.size === 1 ? 'Unnamed Stop' : null,
       {

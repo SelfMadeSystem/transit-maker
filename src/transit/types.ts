@@ -14,6 +14,11 @@ export type LocationWithKeys = GeoLocation & {
   altKey: boolean;
 };
 
+export type ClickInfo = {
+  map: TransitMap;
+  selected: SelectableItem | null;
+};
+
 export interface Movable {
   getLocation(): GeoLocation;
   moveTo(l: LocationWithKeys): void;
@@ -29,11 +34,11 @@ export interface Selectable extends Removable {
 }
 
 export interface DoubleClickable {
-  doubleClick(map: TransitMap): void;
+  doubleClick(a: ClickInfo): void;
 }
 
 export interface RightClickable {
-  rightClick(map: TransitMap): void;
+  rightClick(a: ClickInfo): void;
 }
 
 export type SelectableItem = Label | TransitStop | TransitConnection;
