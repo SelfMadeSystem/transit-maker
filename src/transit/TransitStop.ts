@@ -181,15 +181,15 @@ export class TransitStop
     );
     ctx.stroke();
 
-    const snapLines = this.getSnapLines();
-    for (const snapLine of snapLines) {
-      snapLine.debugDraw(ctx);
-    }
+    // const snapLines = this.getSnapLines();
+    // for (const snapLine of snapLines) {
+    //   snapLine.debugDraw(ctx);
+    // }
 
-    const snapInfo = new SnapInfo(this.pos, true).addSnapLines(snapLines);
-    snapInfo.calculateStuff();
+    // const snapInfo = new SnapInfo(this.pos, true).addSnapLines(snapLines);
+    // snapInfo.calculateStuff();
 
-    snapInfo.debugDraw(ctx);
+    // snapInfo.debugDraw(ctx);
   }
 
   isOver(x: number, y: number) {
