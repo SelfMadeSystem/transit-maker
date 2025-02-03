@@ -9,7 +9,9 @@ export function Editor() {
   return (
     <>
       <MapComponent props={ctx} />
-      <SelectedUi />
+      <div className="absolute top-0 right-0 w-fit rounded-bl-2xl bg-white/10 p-2 backdrop-blur-md">
+        <SelectedUi />
+      </div>
     </>
   );
 }

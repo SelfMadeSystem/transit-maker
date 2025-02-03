@@ -41,7 +41,7 @@ function TransitStopUi({ stop }: { stop: TransitStop }) {
   }
 
   return (
-    <div className="absolute top-0 right-0 w-fit bg-white/10 p-2">
+    <>
       <div className="text-white">Modify stop style</div>
       <div className="flex flex-col justify-center gap-2">
         <label className="flex items-center gap-2">
@@ -165,7 +165,7 @@ function TransitStopUi({ stop }: { stop: TransitStop }) {
           </>
         ) : null}
       </div>
-    </div>
+    </>
   );
 }
 
@@ -181,7 +181,7 @@ function TransitConnectionUi({
   const { routes } = map;
 
   return (
-    <div className="absolute top-0 right-0 w-fit bg-white/10 p-2">
+    <>
       <div className="text-white">Modify connection style</div>
       <div className="flex flex-col justify-center gap-2">
         <label className="flex items-center gap-2">
@@ -222,7 +222,7 @@ function TransitConnectionUi({
           </select>
         </label>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -241,7 +241,7 @@ function TransitRoutesUi({ routes: _routes }: { routes: Set<TransitRoute> }) {
   }
 
   return (
-    <div className="absolute top-0 right-0 w-fit bg-white/10 p-2">
+    <>
       <div className="text-white">Modify routes</div>
       <div className="flex items-center gap-2">
         <div className="text-white">Select route:</div>
@@ -266,7 +266,7 @@ function TransitRoutesUi({ routes: _routes }: { routes: Set<TransitRoute> }) {
       ) : (
         <button onClick={addRoute}>Add route</button>
       )}
-    </div>
+    </>
   );
 }
 
