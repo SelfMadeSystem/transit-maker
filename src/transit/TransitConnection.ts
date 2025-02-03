@@ -95,4 +95,14 @@ export class TransitConnection
   rightClick(): void {
     this.dotted = !this.dotted;
   }
+
+  getAngle(which: TransitStop): number {
+    if (which !== this.from && which !== this.to) {
+      throw new Error('The stop must be either the from or the to stop');
+    }
+    return Math.atan2(
+      this.to.location.y - this.from.location.y,
+      this.to.location.x - this.from.location.x,
+    );
+  }
 }

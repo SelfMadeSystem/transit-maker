@@ -13,6 +13,36 @@ import {
   Selectable,
 } from './types';
 
+export type StopColor = string | 'route';
+
+export type TransitStopStyle = {
+  fillColor: StopColor;
+  strokeColor: StopColor;
+  /**
+   * 0: circle :)
+   * 1-2: not supported
+   * 3+: polygon with `edges` edges and `radius` radius
+   */
+  edges: number;
+  /**
+   * Two orientations for even-numbered edges and three for odd-numbered edges.
+   */
+  edgeOrientation: number;
+  edgeFollowsRoute: boolean;
+  radius: number;
+  strokeWidth: number;
+};
+
+export const defaultTransitStopStyle = (): TransitStopStyle => ({
+  fillColor: '#000',
+  strokeColor: 'route',
+  edges: 0,
+  edgeOrientation: 0,
+  edgeFollowsRoute: false,
+  radius: 5,
+  strokeWidth: 2,
+});
+
 export class TransitStop
   implements Drawable, Selectable, Movable, RightClickable, DoubleClickable
 {
@@ -32,6 +62,7 @@ export class TransitStop
   public routes: Set<TransitRoute>;
   public connections: Set<TransitConnection>;
   public hidden: boolean = false;
+  public style: TransitStopStyle = defaultTransitStopStyle();
 
   constructor(
     labels: Label[],
@@ -54,19 +85,71 @@ export class TransitStop
     }
   }
 
+  getStopColor(c: StopColor): string {
+    if (c === 'route') {
+      if (this.routes.size === 1) {
+        return this.routes.values().next().value!.color;
+      } else {
+        return '#fff';
+      }
+    }
+    if (c) {
+      return c;
+    }
+    return '#000';
+  }
+
   draw(ctx: CanvasRenderingContext2D) {
     if (this.hidden) {
       return;
     }
-    if (this.routes.size === 1) {
-      ctx.strokeStyle = this.routes.values().next().value!.color;
-    } else {
-      ctx.strokeStyle = 'white';
-    }
-    ctx.fillStyle = 'black';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = this.getStopColor(this.style.strokeColor);
+    ctx.fillStyle = this.getStopColor(this.style.fillColor);
+    ctx.lineWidth = this.style.strokeWidth;
     ctx.beginPath();
-    ctx.arc(this.location.x, this.location.y, 5, 0, 2 * Math.PI);
+    if (this.style.edges === 0) {
+      ctx.arc(
+        this.location.x,
+        this.location.y,
+        this.style.radius,
+        0,
+        2 * Math.PI,
+      );
+    } else {
+      const { edgeOrientation, edges, edgeFollowsRoute } = this.style;
+      const angleStep = (2 * Math.PI) / edges;
+      let polyAngle = 0;
+      if (this.connections.size > 0 && edgeFollowsRoute) {
+        polyAngle =
+          Array.from(this.connections)
+            .map(connection => connection.getAngle(this))
+            .reduce((sum, angle) => sum + angle, 0) / this.connections.size;
+      }
+
+      if (edgeOrientation === 1 || edgeOrientation === 3) {
+        polyAngle += (Math.PI / edges) * (edges % 2 === 0 ? 1 : 0.5);
+        if (edgeOrientation === 3) {
+          polyAngle += Math.PI;
+        }
+      } else if (edgeOrientation === 2) {
+        polyAngle += Math.PI;
+      }
+      ctx.save();
+      ctx.translate(this.location.x, this.location.y);
+      ctx.rotate(polyAngle);
+      ctx.moveTo(
+        this.style.radius * Math.cos(0),
+        this.style.radius * Math.sin(0),
+      );
+      for (let i = 1; i <= this.style.edges; i++) {
+        ctx.lineTo(
+          this.style.radius * Math.cos(angleStep * i),
+          this.style.radius * Math.sin(angleStep * i),
+        );
+      }
+      ctx.closePath();
+      ctx.restore();
+    }
     ctx.fill();
     ctx.stroke();
   }
@@ -75,7 +158,13 @@ export class TransitStop
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(this.location.x, this.location.y, 8, 0, 2 * Math.PI);
+    ctx.arc(
+      this.location.x,
+      this.location.y,
+      this.style.radius + this.style.strokeWidth / 2 + 2,
+      0,
+      2 * Math.PI,
+    );
     ctx.stroke();
   }
 
