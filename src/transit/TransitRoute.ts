@@ -18,3 +18,6 @@ export class TransitRoute {
     this.stops.add(stop);
   }
 }
+
+// TODO: Some way to make this map-specific
+export const TRANSFER_ROUTE = new TransitRoute('Transfer', 'white');

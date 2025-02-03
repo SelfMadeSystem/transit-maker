@@ -2,7 +2,7 @@ import { angleDelta, mod } from '../utils/mathUtils';
 import { Label } from './Label';
 import { TransitConnection } from './TransitConnection';
 import { TransitMap } from './TransitMap';
-import { TransitRoute } from './TransitRoute';
+import { TRANSFER_ROUTE, TransitRoute } from './TransitRoute';
 import {
   DoubleClickable,
   Drawable,
@@ -90,7 +90,7 @@ export class TransitStop
       if (this.routes.size === 1) {
         return this.routes.values().next().value!.color;
       } else {
-        return '#fff';
+        return TRANSFER_ROUTE.color;
       }
     }
     if (c) {
@@ -363,13 +363,17 @@ export class TransitStop
   }
 
   doubleClick(map: TransitMap): void {
+    const route =
+      this.routes.size === 1
+        ? this.routes.values().next().value!
+        : TRANSFER_ROUTE;
     map.createStop(
       'Unnamed Stop',
       {
         x: this.location.x + 10,
         y: this.location.y + 10,
       },
-      this.routes.values().next().value!,
+      route,
       this,
     );
   }

@@ -1,6 +1,6 @@
 import { Label } from './Label';
 import { TransitConnection } from './TransitConnection';
-import { TransitRoute } from './TransitRoute';
+import { TRANSFER_ROUTE, TransitRoute } from './TransitRoute';
 import { TransitStop } from './TransitStop';
 import { GeoLocation, SelectableItem } from './types';
 
@@ -20,7 +20,7 @@ export class TransitMap {
   public connections: Set<TransitConnection>;
 
   constructor() {
-    this.routes = new Set();
+    this.routes = new Set([TRANSFER_ROUTE]);
     this.stops = new Set();
     this.connections = new Set();
   }
