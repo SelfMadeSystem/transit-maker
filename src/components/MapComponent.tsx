@@ -114,6 +114,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
       },
       mouseMove(e, { mouseX, mouseY }) {
         if (panning) {
+          e.preventDefault();
           const deltaX = mouseX - prevMouseX;
           const deltaY = mouseY - prevMouseY;
           if (selected) {

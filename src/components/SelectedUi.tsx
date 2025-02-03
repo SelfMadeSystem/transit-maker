@@ -5,6 +5,7 @@ import {
   TransitConnection,
 } from '../transit/TransitConnection';
 import { TransitMap } from '../transit/TransitMap';
+import { StrokeType, TransitRoute } from '../transit/TransitRoute';
 import { TransitStop } from '../transit/TransitStop';
 import { ColorEditor } from './ColorEditor';
 import { useContext, useState } from 'react';
@@ -18,6 +19,7 @@ export function SelectedUi() {
   if (selected instanceof TransitConnection) {
     return <TransitConnectionUi connection={selected} map={map} />;
   }
+  return <TransitRoutesUi routes={map.routes} />;
 }
 
 function TransitStopUi({ stop }: { stop: TransitStop }) {
@@ -220,6 +222,122 @@ function TransitConnectionUi({
           </select>
         </label>
       </div>
+    </div>
+  );
+}
+
+function TransitRoutesUi({ routes }: { routes: Set<TransitRoute> }) {
+  const [route, setRoute] = useState<TransitRoute | null>(null);
+  return (
+    <div className="absolute top-0 right-0 w-fit bg-white/10 p-2">
+      <div className="text-white">Modify routes</div>
+      <div className="flex items-center gap-2">
+        <div className="text-white">Select route:</div>
+        <select
+          value={route?.name}
+          onChange={e => {
+            const name = e.target.value;
+            setRoute(Array.from(routes).find(r => r.name === name) ?? null);
+          }}
+          className="bg-gray-900 text-white"
+        >
+          <option value="">None</option>
+          {Array.from(routes).map(r => (
+            <option key={r.name} value={r.name}>
+              {r.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      {route ? <RouteUi route={route} /> : null}
+    </div>
+  );
+}
+
+function RouteUi({ route }: { route: TransitRoute }) {
+  const [name, setName] = useState(route.name);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="flex items-center gap-2">
+        <div className="text-white">Name:</div>
+        <input
+          type="text"
+          value={name}
+          onChange={e => setName((route.name = e.target.value))}
+          className="bg-gray-900 text-white"
+        />
+      </label>
+      <RouteStyleUi style={route.style} />
+    </div>
+  );
+}
+
+function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
+  const [color, setColor] = useState(style.color);
+  const [lineWidth, setLineWidth] = useState(style.lineWidth);
+  const [strokeType, setStrokeType] = useState(style.strokeType);
+  const [innerWidth, setInnerWidth] = useState(style.innerWidth);
+  const [margin, setMargin] = useState(style.margin);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="flex items-center gap-2">
+        <div className="text-white">Color:</div>
+        <ColorEditor
+          stopColor={color}
+          onChange={c => setColor((style.color = c))}
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Line width:</div>
+        <input
+          type="number"
+          value={lineWidth}
+          min="0"
+          onChange={e =>
+            setLineWidth((style.lineWidth = parseInt(e.target.value)))
+          }
+          className="bg-gray-900 text-white"
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Stroke type:</div>
+        <select
+          value={strokeType}
+          onChange={e =>
+            setStrokeType((style.strokeType = e.target.value as StrokeType))
+          }
+          className="bg-gray-900 text-white"
+        >
+          <option value="solid">Solid</option>
+          <option value="split">Split</option>
+        </select>
+      </label>
+      {strokeType === 'split' ? (
+        <label className="flex items-center gap-2">
+          <div className="text-white">Inner width:</div>
+          <input
+            type="number"
+            value={innerWidth}
+            min="0"
+            onChange={e =>
+              setInnerWidth((style.innerWidth = parseInt(e.target.value)))
+            }
+            className="bg-gray-900 text-white"
+          />
+        </label>
+      ) : null}
+      <label className="flex items-center gap-2">
+        <div className="text-white">Margin:</div>
+        <input
+          type="number"
+          value={margin}
+          min="0"
+          onChange={e => setMargin((style.margin = parseInt(e.target.value)))}
+          className="bg-gray-900 text-white"
+        />
+      </label>
     </div>
   );
 }
