@@ -394,7 +394,7 @@ export class TransitStop
     this.location.y = y;
   }
 
-  rightClick(): void {
+  rightClick(_: TransitMap): void {
     this.hidden = !this.hidden;
   }
 

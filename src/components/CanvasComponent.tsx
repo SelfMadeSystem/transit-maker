@@ -1,11 +1,16 @@
 import { loopAnimationFrame } from "../utils/abortable";
 import { useEffect, useRef, useState } from "react";
+import { usePrevious } from "../utils/hooks";
 
-type ReturnType<T> = {
+type Functionify<T extends Record<string, unknown>> = {
+  [K in keyof T]: (data: T[K]) => void;
+};
+
+type ReturnType<T extends Record<string, unknown>> = {
   manualUpdate?: boolean;
   resize?: (width: number, height: number) => void;
   update?: (dt: number, time: number) => void;
-  propsUpdate?: (data: T) => void;
+  propsUpdate?: Partial<Functionify<T>>;
   mouseMove?: (
     e: MouseEvent,
     coords: { mouseX: number; mouseY: number }
@@ -50,7 +55,7 @@ type ReturnType<T> = {
   ) => void;
 };
 
-type CreateProps<T> = {
+type CreateProps<T extends Record<string, unknown>> = {
   props: React.HTMLProps<HTMLCanvasElement>;
   autoResize?: boolean;
   setup: (
@@ -60,7 +65,9 @@ type CreateProps<T> = {
   ) => ReturnType<T>;
 };
 
-export default function createCanvasComponent<T>({
+export default function createCanvasComponent<
+  T extends Record<string, unknown>
+>({
   props,
   autoResize,
   setup,
@@ -78,6 +85,7 @@ export default function createCanvasComponent<T>({
     const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
     const didMount = useRef(false);
     const resultRef = useRef<ReturnType<T>>();
+    const prevProps = usePrevious(props1);
 
     useEffect(() => {
       if (!didMount.current && canvas) {
@@ -307,9 +315,17 @@ export default function createCanvasComponent<T>({
 
     useEffect(() => {
       if (resultRef.current?.propsUpdate) {
-        resultRef.current.propsUpdate(props1);
+        const propsResult = resultRef.current.propsUpdate;
+        const props1Keys = Object.keys(props1) as (keyof T)[];
+        for (const key of props1Keys) {
+          const current = props1[key];
+          const prev = prevProps?.[key];
+          if (current !== prev) {
+            propsResult[key]?.(props1[key]);
+          }
+        }
       }
-    }, [props1]);
+    }, [prevProps, props1]);
 
     return <canvas {...props} {...props2} ref={setCanvas} />;
   };

@@ -1,13 +1,13 @@
+import { EditorContextType } from "../EditorContext";
 import {
   GeoLocation,
   Label,
   LocationWithKeys,
   SelectableItem,
-  TransitMap,
 } from "../transit/types";
 import createCanvasComponent from "./CanvasComponent";
 
-export const MapComponent = createCanvasComponent<TransitMap>({
+export const MapComponent = createCanvasComponent<EditorContextType>({
   autoResize: true,
   props: {
     style: {
@@ -17,7 +17,7 @@ export const MapComponent = createCanvasComponent<TransitMap>({
       height: "100%",
     },
   },
-  setup(canvas, transitMap) {
+  setup(canvas, { map, selected, setSelected }) {
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Failed to get 2d context");
     let zoom = 1;
@@ -28,13 +28,12 @@ export const MapComponent = createCanvasComponent<TransitMap>({
     let prevMouseY = 0;
     let ogMouseX = 0;
     let ogMouseY = 0;
-    let selected: SelectableItem | null = null;
     let ogPos: GeoLocation | null = null;
 
-    function setSelection(stop: SelectableItem | null) {
-      selected = stop;
-      if (stop && "getLocation" in stop) {
-        ogPos = stop.getLocation();
+    function setSelection(item: SelectableItem | null) {
+      setSelected(item);
+      if (item && "getLocation" in item) {
+        ogPos = item.getLocation();
       }
     }
 
@@ -64,8 +63,19 @@ export const MapComponent = createCanvasComponent<TransitMap>({
         ctx.save();
         ctx.translate(offsetX, offsetY);
         ctx.scale(zoom, zoom);
-        transitMap.draw(ctx, selected);
+        map.draw(ctx, selected);
         ctx.restore();
+      },
+      propsUpdate: {
+        map() {
+          console.error("Map should never change");
+        },
+        selected(newSelected) {
+          selected = newSelected;
+        },
+        setSelected(newSetSelected) {
+          setSelected = newSetSelected;
+        },
       },
       mouseDown(e, { mouseX, mouseY }) {
         e.preventDefault();
@@ -73,12 +83,12 @@ export const MapComponent = createCanvasComponent<TransitMap>({
         const { x, y } = mouseToLocation({ mouseX, mouseY });
 
         if (e.button === 0) {
-          setSelection(transitMap.getSelectable(x, y));
+          setSelection(map.getSelectable(x, y));
           panning = true;
         } else if (e.button === 2) {
-          const selectable = transitMap.getSelectable(x, y);
+          const selectable = map.getSelectable(x, y);
           if (selectable && "rightClick" in selectable) {
-            selectable.rightClick(transitMap);
+            selectable.rightClick(map);
           }
         }
         prevMouseX = mouseX;
@@ -88,10 +98,10 @@ export const MapComponent = createCanvasComponent<TransitMap>({
       },
       mouseDbClick(_, { mouseX, mouseY }) {
         const { x, y } = mouseToLocation({ mouseX, mouseY });
-        const selectable = transitMap.getSelectable(x, y);
+        const selectable = map.getSelectable(x, y);
 
         if (selectable && "doubleClick" in selectable) {
-          selectable.doubleClick(transitMap);
+          selectable.doubleClick(map);
         } else if (selectable instanceof Label) {
           renameLabel(selectable);
         }
@@ -132,7 +142,7 @@ export const MapComponent = createCanvasComponent<TransitMap>({
           switch (e.key) {
             case "Delete":
             case "Backspace":
-              transitMap.remove(selected);
+              map.remove(selected);
               setSelection(null);
               break;
             case "Enter":
