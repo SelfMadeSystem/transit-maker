@@ -1,8 +1,9 @@
+import { Vector2 } from '../utils/vec';
 import { Label } from './Label';
 import { TransitConnection } from './TransitConnection';
 import { TRANSFER_ROUTE, TransitRoute } from './TransitRoute';
 import { TransitStop } from './TransitStop';
-import { GeoLocation, SelectableItem } from './types';
+import { SelectableItem } from './types';
 
 export class TransitMap {
   // TODO: Add support for:
@@ -63,11 +64,11 @@ export class TransitMap {
 
   createStop(
     name: string | null,
-    location: GeoLocation,
+    pos: Vector2,
     route: TransitRoute,
     from?: TransitStop,
   ) {
-    const stop = new TransitStop(name ? [new Label(name)] : [], location);
+    const stop = new TransitStop(name ? [new Label(name)] : [], pos);
     this.addStop(stop);
     route.addStop(stop);
     if (from) {
@@ -98,10 +99,10 @@ export class TransitMap {
     to.connections.delete(connection);
 
     const route = connection.route;
-    const stop = new TransitStop([new Label('Unnamed Stop')], {
-      x: (from.location.x + to.location.x) / 2,
-      y: (from.location.y + to.location.y) / 2,
-    });
+    const stop = new TransitStop(
+      [new Label('Unnamed Stop')],
+      new Vector2((from.pos.x + to.pos.x) / 2, (from.pos.y + to.pos.y) / 2),
+    );
 
     this.addStop(stop);
     route.addStop(stop);

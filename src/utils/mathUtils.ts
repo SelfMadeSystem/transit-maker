@@ -6,7 +6,7 @@
  * @author SelfMadeSystem (Shoghi Simon) 2024-11-07
  */
 
-export type Vec2 = [number, number];
+export type Vec2 = { x: number; y: number };
 
 /**
  * Modulo function that always returns a positive number
@@ -127,17 +127,6 @@ export function lerp(a: number, b: number, t: number): number {
 }
 
 /**
- * Linearly interpolates between two points
- * @param a The first point
- * @param b The second point
- * @param t The interpolation value
- * @returns The interpolated point between a and b at t
- */
-export function lerpVec2(a: Vec2, b: Vec2, t: number): Vec2 {
-  return [lerp(a[0], b[0], t), lerp(a[1], b[1], t)];
-}
-
-/**
  * Greater common divisor of two numbers using iteration
  * @param a The first number
  * @param b The second number
@@ -164,25 +153,6 @@ export function approxEquals(a: number, b: number, epsilon = 1e-6): boolean {
  */
 export function ceilMultiple(a: number, multiple: number): number {
   return Math.ceil(a / multiple) * multiple;
-}
-
-/**
- * Calculates a point on a bezier curve
- * @param a The first point
- * @param b The second point
- * @param c The third point
- * @param d The fourth point
- * @param t The interpolation value
- * @returns The point on the bezier curve at t
- * @see https://en.wikipedia.org/wiki/B%C3%A9zier_curve
- * @author SelfMadeSystem (Shoghi Simon) 2024-11-08
- */
-export function bezier(a: Vec2, b: Vec2, c: Vec2, d: Vec2, t: number): Vec2 {
-  return lerpVec2(
-    lerpVec2(lerpVec2(a, b, t), lerpVec2(b, c, t), t),
-    lerpVec2(lerpVec2(b, c, t), lerpVec2(c, d, t), t),
-    t,
-  );
 }
 
 /**

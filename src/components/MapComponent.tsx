@@ -1,11 +1,8 @@
 import { EditorContextType } from '../EditorContext';
 import { Label } from '../transit/Label';
 import { TRANSFER_ROUTE } from '../transit/TransitRoute';
-import {
-  GeoLocation,
-  LocationWithKeys,
-  SelectableItem,
-} from '../transit/types';
+import { PosWithKeys, SelectableItem } from '../transit/types';
+import { Vector2 } from '../utils/vec';
 import createCanvasComponent from './CanvasComponent';
 
 export const MapComponent = createCanvasComponent<EditorContextType>({
@@ -29,12 +26,12 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
     let prevMouseY = 0;
     let ogMouseX = 0;
     let ogMouseY = 0;
-    let ogPos: GeoLocation | null = null;
+    let ogPos: Vector2 | null = null;
 
     function setSelection(item: SelectableItem | null) {
       setSelected(item);
-      if (item && 'getLocation' in item) {
-        ogPos = item.getLocation();
+      if (item && 'getPos' in item) {
+        ogPos = item.getPos();
       }
     }
 
@@ -45,7 +42,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
       }
     }
 
-    function mouseToLocation({
+    function mouseToPos({
       mouseX,
       mouseY,
     }: {
@@ -81,7 +78,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
       mouseDown(e, { mouseX, mouseY }) {
         e.preventDefault();
         e.stopPropagation();
-        const { x, y } = mouseToLocation({ mouseX, mouseY });
+        const { x, y } = mouseToPos({ mouseX, mouseY });
 
         if (e.button === 0) {
           setSelection(map.getSelectable(x, y));
@@ -101,7 +98,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
         ogMouseY = mouseY;
       },
       mouseDbClick(_, { mouseX, mouseY }) {
-        const { x, y } = mouseToLocation({ mouseX, mouseY });
+        const { x, y } = mouseToPos({ mouseX, mouseY });
         const selectable = map.getSelectable(x, y);
 
         if (selectable && 'doubleClick' in selectable) {
@@ -112,7 +109,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
         } else if (selectable instanceof Label) {
           renameLabel(selectable);
         } else if (!selectable) {
-          map.createStop('Unnamed Stop', { x, y }, TRANSFER_ROUTE);
+          map.createStop('Unnamed Stop', new Vector2(x, y), TRANSFER_ROUTE);
         }
       },
       mouseMove(e, { mouseX, mouseY }) {
@@ -121,15 +118,14 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           const deltaX = mouseX - prevMouseX;
           const deltaY = mouseY - prevMouseY;
           if (selected) {
-            const deltaLocation = {
-              x: (mouseX - ogMouseX) / zoom,
-              y: (mouseY - ogMouseY) / zoom,
-            };
+            const deltaPos = new Vector2(
+              (mouseX - ogMouseX) / zoom,
+              (mouseY - ogMouseY) / zoom,
+            );
 
             if ('moveTo' in selected) {
-              const l: LocationWithKeys = {
-                x: ogPos!.x + deltaLocation.x,
-                y: ogPos!.y + deltaLocation.y,
+              const l: PosWithKeys = {
+                pos: new Vector2(ogPos!.x + deltaPos.x, ogPos!.y + deltaPos.y),
                 shiftKey: e.shiftKey,
                 ctrlKey: e.ctrlKey,
                 altKey: e.altKey,

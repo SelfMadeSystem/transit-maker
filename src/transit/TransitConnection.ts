@@ -1,3 +1,5 @@
+import { Vector2 } from '../utils/vec';
+import { SnapLine } from './Snapping';
 import { TransitMap } from './TransitMap';
 import { TransitRoute } from './TransitRoute';
 import { TransitStop } from './TransitStop';
@@ -62,8 +64,8 @@ export class TransitConnection
         break;
     }
     ctx.beginPath();
-    ctx.moveTo(this.from.location.x, this.from.location.y);
-    ctx.lineTo(this.to.location.x, this.to.location.y);
+    ctx.moveTo(this.from.pos.x, this.from.pos.y);
+    ctx.lineTo(this.to.pos.x, this.to.pos.y);
     if (this.route.style.margin > 0) {
       ctx.lineWidth = lineWidth + this.route.style.margin * 2;
       ctx.strokeStyle = '#000';
@@ -80,8 +82,8 @@ export class TransitConnection
           ctx.save();
           ctx.lineCap = 'round';
           ctx.beginPath();
-          ctx.moveTo(this.from.location.x, this.from.location.y);
-          ctx.lineTo(this.to.location.x, this.to.location.y);
+          ctx.moveTo(this.from.pos.x, this.from.pos.y);
+          ctx.lineTo(this.to.pos.x, this.to.pos.y);
           ctx.lineWidth = this.route.style.innerWidth;
           ctx.strokeStyle = '#000';
           ctx.stroke();
@@ -98,18 +100,18 @@ export class TransitConnection
     ctx.lineWidth =
       this.route.style.lineWidth + this.route.style.margin * 2 + 2;
     ctx.beginPath();
-    ctx.moveTo(this.from.location.x, this.from.location.y);
-    ctx.lineTo(this.to.location.x, this.to.location.y);
+    ctx.moveTo(this.from.pos.x, this.from.pos.y);
+    ctx.lineTo(this.to.pos.x, this.to.pos.y);
     ctx.stroke();
     ctx.restore();
   }
 
   isOver(x: number, y: number) {
     const width = 5;
-    const x1 = this.from.location.x;
-    const y1 = this.from.location.y;
-    const x2 = this.to.location.x;
-    const y2 = this.to.location.y;
+    const x1 = this.from.pos.x;
+    const y1 = this.from.pos.y;
+    const x2 = this.to.pos.x;
+    const y2 = this.to.pos.y;
 
     const withinBoundingBox =
       Math.min(x1, x2) <= x + width &&
@@ -128,6 +130,53 @@ export class TransitConnection
     return distance / length < width;
   }
 
+  getAngle(which: TransitStop): number {
+    if (which !== this.from && which !== this.to) {
+      throw new Error('The stop must be either the from or the to stop');
+    }
+    const from = which;
+    const to = this.getOtherStop(from);
+    return Math.atan2(to.pos.y - from.pos.y, to.pos.x - from.pos.x);
+  }
+
+  getDirectSnapLines(which: TransitStop): SnapLine[] {
+    const other = this.getOtherStop(which);
+    const diff = which.pos.sub(other.pos).normalize();
+    const dist = other.pos.dist(which.pos);
+
+    return [
+      new SnapLine(which.pos, diff, 0, dist),
+      new SnapLine(which.pos, diff.rotateBy(Math.PI / 2), 1, dist),
+      new SnapLine(which.pos, diff.rotateBy(-Math.PI / 2), 1, dist),
+    ];
+  }
+
+  getSnapLines(which: TransitStop): SnapLine[] {
+    const snapLines: SnapLine[] = [];
+
+    const others = which.getConnectingStops();
+    const other = this.getOtherStop(which);
+
+    for (const connection of other.connections) {
+      if (connection === this) {
+        continue;
+      }
+      const other2 = connection.getOtherStop(other);
+      if (others.includes(other2)) {
+        continue;
+      }
+      snapLines.push(...connection.getDirectSnapLines(other));
+    }
+
+    return [
+      ...snapLines,
+      new SnapLine(other.pos, new Vector2(1, 0), 2),
+      new SnapLine(other.pos, new Vector2(0, 1), 2),
+      new SnapLine(other.pos, new Vector2(1, 1).normalize(), 3),
+      new SnapLine(other.pos, new Vector2(1, -1).normalize(), 3),
+    ];
+  }
+
   remove(map: TransitMap): void {
     map.removeConnection(this);
   }
@@ -137,14 +186,4 @@ export class TransitConnection
   }
 
   rightClick(): void {}
-
-  getAngle(which: TransitStop): number {
-    if (which !== this.from && which !== this.to) {
-      throw new Error('The stop must be either the from or the to stop');
-    }
-    return Math.atan2(
-      this.to.location.y - this.from.location.y,
-      this.to.location.x - this.from.location.x,
-    );
-  }
 }

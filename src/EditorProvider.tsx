@@ -2,6 +2,7 @@ import { EditorContext } from './EditorContext';
 import { TransitMap } from './transit/TransitMap';
 import { TransitRoute } from './transit/TransitRoute';
 import { SelectableItem } from './transit/types';
+import { Vector2 } from './utils/vec';
 import { useState } from 'react';
 
 function createTransitMap(): TransitMap {
@@ -11,20 +12,24 @@ function createTransitMap(): TransitMap {
   transitMap.addRoute(line1);
   const line2 = new TransitRoute('Metro 2', 'green');
   transitMap.addRoute(line2);
-  const stationA = transitMap.createStop('Station A', { x: 50, y: 50 }, line1);
+  const stationA = transitMap.createStop(
+    'Station A',
+    new Vector2(50, 50),
+    line1,
+  );
   const stationB = transitMap.createStop(
     'Station B',
-    { x: 100, y: 50 },
+    new Vector2(100, 50),
     line1,
     stationA,
   );
   const stationC = transitMap.createStop(
     'Station C',
-    { x: 75, y: 100 },
+    new Vector2(75, 100),
     line2,
     stationB,
   );
-  transitMap.createStop('Station D', { x: 125, y: 0 }, line2, stationB);
+  transitMap.createStop('Station D', new Vector2(125, 0), line2, stationB);
   transitMap.createConnection(stationA, stationC, line1);
 
   return transitMap;

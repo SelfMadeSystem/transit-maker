@@ -1,14 +1,11 @@
+import { Vector2 } from '../utils/vec';
 import { Label } from './Label';
 import { TransitConnection } from './TransitConnection';
 import { TransitMap } from './TransitMap';
 import { TransitStop } from './TransitStop';
 
-export type GeoLocation = {
-  x: number;
-  y: number;
-};
-
-export type LocationWithKeys = GeoLocation & {
+export type PosWithKeys = {
+  pos: Vector2;
   shiftKey: boolean;
   ctrlKey: boolean;
   altKey: boolean;
@@ -20,8 +17,8 @@ export type ClickInfo = {
 };
 
 export interface Movable {
-  getLocation(): GeoLocation;
-  moveTo(l: LocationWithKeys): void;
+  getPos(): Vector2;
+  moveTo(l: PosWithKeys): void;
 }
 
 export interface Removable {

@@ -1,5 +1,6 @@
+import { Vector2 } from '../utils/vec';
 import { TransitStop } from './TransitStop';
-import { GeoLocation, Movable, Selectable } from './types';
+import { Movable, PosWithKeys, Selectable } from './types';
 
 const LabelFont = '10px sans-serif';
 
@@ -27,9 +28,9 @@ export class Label implements Selectable, Movable {
     {
       this.getDimensions(ctx);
       // const dimensions = this.getDimensions(ctx);
-      // const x = this.x + this.stop.location.x - dimensions.width / 2;
+      // const x = this.x + this.stop.pos.x - dimensions.width / 2;
       // const y =
-      //   this.y + this.stop.location.y - dimensions.actualBoundingBoxAscent;
+      //   this.y + this.stop.pos.y - dimensions.actualBoundingBoxAscent;
       // ctx.fillStyle = "black";
       // ctx.fillRect(
       //   x - 2,
@@ -41,8 +42,8 @@ export class Label implements Selectable, Movable {
     {
       ctx.font = LabelFont;
       ctx.fillStyle = 'white';
-      const x = this.x + this.stop.location.x;
-      const y = this.y + this.stop.location.y;
+      const x = this.x + this.stop.pos.x;
+      const y = this.y + this.stop.pos.y;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(this.text, x, y);
@@ -59,9 +60,8 @@ export class Label implements Selectable, Movable {
 
   drawSelected(ctx: CanvasRenderingContext2D) {
     const dimensions = this.getDimensions(ctx);
-    const x = this.x + this.stop.location.x - dimensions.width / 2;
-    const y =
-      this.y + this.stop.location.y - dimensions.actualBoundingBoxAscent;
+    const x = this.x + this.stop.pos.x - dimensions.width / 2;
+    const y = this.y + this.stop.pos.y - dimensions.actualBoundingBoxAscent;
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 1;
     ctx.strokeRect(
@@ -77,22 +77,18 @@ export class Label implements Selectable, Movable {
     if (!dimensions) {
       return false;
     }
-    const x1 = this.x + this.stop.location.x - dimensions.width / 2;
-    const y1 =
-      this.y + this.stop.location.y - dimensions.actualBoundingBoxAscent;
+    const x1 = this.x + this.stop.pos.x - dimensions.width / 2;
+    const y1 = this.y + this.stop.pos.y - dimensions.actualBoundingBoxAscent;
     const x2 = x1 + dimensions.width;
     const y2 = y1 + dimensions.actualBoundingBoxAscent * 2;
     return x >= x1 && x <= x2 && y >= y1 && y <= y2;
   }
 
-  getLocation(): GeoLocation {
-    return {
-      x: this.x,
-      y: this.y,
-    };
+  getPos(): Vector2 {
+    return new Vector2(this.x, this.y);
   }
 
-  moveTo({ x, y }: GeoLocation) {
+  moveTo({ pos: { x, y } }: PosWithKeys) {
     this.x = x;
     this.y = y;
   }

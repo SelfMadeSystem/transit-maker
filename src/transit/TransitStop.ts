@@ -1,14 +1,14 @@
-import { angleDelta, mod } from '../utils/mathUtils';
+import { Vector2 } from '../utils/vec';
 import { Label } from './Label';
+import { SnapInfo, SnapLine } from './Snapping';
 import { TransitConnection } from './TransitConnection';
 import { TransitMap } from './TransitMap';
 import { TRANSFER_ROUTE, TransitRoute } from './TransitRoute';
 import {
   ClickInfo,
   DoubleClickable,
-  GeoLocation,
-  LocationWithKeys,
   Movable,
+  PosWithKeys,
   RightClickable,
   Selectable,
 } from './types';
@@ -50,17 +50,17 @@ export class TransitStop
   // - "long" transfer stations (e.g. Lucien-L'Allier in Montreal is like 3×
   //   the width of a normal station)
   public labels: Set<Label>;
-  public location: GeoLocation;
+  public pos: Vector2;
   public connections: Set<TransitConnection>;
   public hidden: boolean = false;
   public style?: StopStyle;
 
-  constructor(labels: Label[], location: GeoLocation) {
+  constructor(labels: Label[], pos: Vector2) {
     this.labels = new Set(labels);
     for (const label of this.labels) {
       label.stop = this;
     }
-    this.location = location;
+    this.pos = pos;
     this.connections = new Set();
   }
 
@@ -128,7 +128,7 @@ export class TransitStop
     ctx.lineWidth = style.strokeWidth;
     ctx.beginPath();
     if (style.edges === 0) {
-      ctx.arc(this.location.x, this.location.y, style.radius, 0, 2 * Math.PI);
+      ctx.arc(this.pos.x, this.pos.y, style.radius, 0, 2 * Math.PI);
     } else {
       const { edgeOrientation, edges, edgeFollowsRoute } = style;
       const angleStep = (2 * Math.PI) / edges;
@@ -149,7 +149,7 @@ export class TransitStop
         polyAngle += Math.PI;
       }
       ctx.save();
-      ctx.translate(this.location.x, this.location.y);
+      ctx.translate(this.pos.x, this.pos.y);
       ctx.rotate(polyAngle);
       ctx.moveTo(style.radius * Math.cos(0), style.radius * Math.sin(0));
       for (let i = 1; i <= style.edges; i++) {
@@ -173,199 +173,65 @@ export class TransitStop
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(
-      this.location.x,
-      this.location.y,
+      this.pos.x,
+      this.pos.y,
       style.radius + style.strokeWidth / 2 + 2,
       0,
       2 * Math.PI,
     );
     ctx.stroke();
+
+    const snapLines = this.getSnapLines();
+    for (const snapLine of snapLines) {
+      snapLine.debugDraw(ctx);
+    }
+
+    const snapInfo = new SnapInfo(this.pos, true).addSnapLines(snapLines);
+    snapInfo.calculateStuff();
+
+    snapInfo.debugDraw(ctx);
   }
 
   isOver(x: number, y: number) {
-    return (
-      Math.sqrt((this.location.x - x) ** 2 + (this.location.y - y) ** 2) < 5
+    return Math.sqrt((this.pos.x - x) ** 2 + (this.pos.y - y) ** 2) < 5;
+  }
+
+  getPos(): Vector2 {
+    return this.pos;
+  }
+
+  getSnapLines(): SnapLine[] {
+    const snapLines = [];
+
+    for (const connection of this.connections) {
+      snapLines.push(...connection.getSnapLines(this));
+    }
+
+    return snapLines;
+  }
+
+  getConnectingStops(): TransitStop[] {
+    return Array.from(this.connections).map(connection =>
+      connection.getOtherStop(this),
     );
   }
 
-  getLocation(): GeoLocation {
-    return {
-      x: this.location.x,
-      y: this.location.y,
-    };
-  }
-
-  moveTo(l: LocationWithKeys) {
+  moveTo(l: PosWithKeys) {
     const { shiftKey, ctrlKey } = l;
-    let { x, y } = l;
 
     if (shiftKey) {
-      const ANGLE_STEP = Math.PI / 18;
-      let closestStop: TransitStop | null = null;
-      let closestDistance = 0;
-      let closestAngle = 0;
-      let actualDistance = 0;
-      console.log('snap');
-      // Snap angle to closest stop
-      outer: for (const connection of this.connections) {
-        const otherStop = connection.getOtherStop(this);
-        const angle = Math.atan2(
-          otherStop.location.y - y,
-          otherStop.location.x - x,
-        );
+      const snapLines = this.getSnapLines();
 
-        for (const connection2 of otherStop.connections) {
-          const otherStop2 = connection2.getOtherStop(otherStop);
-          if (otherStop2 === this) {
-            continue;
-          }
-          const angle2 = Math.atan2(
-            otherStop2.location.y - otherStop.location.y,
-            otherStop2.location.x - otherStop.location.x,
-          );
-          const diff = angleDelta(angle, angle2);
-          if (Math.abs(diff) < ANGLE_STEP) {
-            // They're close to parallel
-            const distance = Math.hypot(
-              otherStop.location.x - x,
-              otherStop.location.y - y,
-            );
-            x = otherStop.location.x - distance * Math.cos(angle2);
-            y = otherStop.location.y - distance * Math.sin(angle2);
-            closestStop = otherStop;
-            closestDistance = Math.hypot(
-              otherStop2.location.x - otherStop.location.x,
-              otherStop2.location.y - otherStop.location.y,
-            );
-            closestAngle = angle2;
-            actualDistance = distance;
-            break outer;
-          }
-          if (Math.abs(mod(diff - Math.PI / 2, Math.PI)) < ANGLE_STEP) {
-            // They're close to perpendicular
-            const distance = Math.hypot(
-              otherStop.location.x - x,
-              otherStop.location.y - y,
-            );
-            // Must find which side to snap to
-            let orthAngle = angle2 + Math.PI / 2;
-            const testX1 =
-              otherStop.location.x - distance * Math.cos(orthAngle);
-            const testY1 =
-              otherStop.location.y - distance * Math.sin(orthAngle);
-            const testX2 =
-              otherStop.location.x + distance * Math.cos(orthAngle);
-            const testY2 =
-              otherStop.location.y + distance * Math.sin(orthAngle);
+      const snapInfo = new SnapInfo(l.pos, ctrlKey).addSnapLines(snapLines);
+      snapInfo.calculateStuff();
 
-            // Determine which side is closer
-            const dist1 = Math.hypot(testX1 - x, testY1 - y);
-            const dist2 = Math.hypot(testX2 - x, testY2 - y);
-
-            if (dist2 < dist1) {
-              orthAngle = angle2 - Math.PI / 2;
-            }
-
-            x = otherStop.location.x - distance * Math.cos(orthAngle);
-            y = otherStop.location.y - distance * Math.sin(orthAngle);
-            closestStop = otherStop;
-            closestDistance = Math.hypot(
-              otherStop2.location.x - otherStop.location.x,
-              otherStop2.location.y - otherStop.location.y,
-            );
-            closestAngle = orthAngle;
-            actualDistance = distance;
-            break outer;
-          }
-        }
-      }
-
-      if (!closestAngle) {
-        // Can't be parallel or perpendicular to any other stops
-        // Try to find one that can make a horizontal or vertical line
-        for (const connection of this.connections) {
-          const otherStop = connection.getOtherStop(this);
-          const angle = Math.abs(
-            Math.atan2(otherStop.location.y - y, otherStop.location.x - x),
-          );
-
-          if (angle < ANGLE_STEP || angle > Math.PI - ANGLE_STEP) {
-            // Horizontal
-            const distance = Math.hypot(
-              otherStop.location.x - x,
-              otherStop.location.y - y,
-            );
-            const sign = Math.sign(otherStop.location.x - x);
-            x = otherStop.location.x - sign * distance;
-            y = otherStop.location.y;
-            const nextStop = otherStop.connections
-              .values()
-              .next()
-              .value!.getOtherStop(otherStop);
-            closestStop = otherStop;
-            closestDistance = Math.hypot(
-              nextStop.location.x - otherStop.location.x,
-              nextStop.location.y - otherStop.location.y,
-            );
-            closestAngle = sign > 0 ? 0 : Math.PI;
-            actualDistance = distance;
-            break;
-          }
-
-          if (
-            angle > Math.PI / 2 - ANGLE_STEP &&
-            angle < Math.PI / 2 + ANGLE_STEP
-          ) {
-            // Vertical
-            const distance = Math.hypot(
-              otherStop.location.x - x,
-              otherStop.location.y - y,
-            );
-            const sign = Math.sign(otherStop.location.y - y);
-            x = otherStop.location.x;
-            y = otherStop.location.y - sign * distance;
-            const nextStop = otherStop.connections
-              .values()
-              .next()
-              .value!.getOtherStop(otherStop);
-            closestStop = otherStop;
-            closestDistance = Math.hypot(
-              nextStop.location.x - otherStop.location.x,
-              nextStop.location.y - otherStop.location.y,
-            );
-            closestAngle = sign > 0 ? Math.PI / 2 : (Math.PI * 3) / 2;
-            actualDistance = distance;
-            break;
-          }
-        }
-      }
-
-      if (ctrlKey && closestStop) {
-        // Snap to multiples of distance
-        const multipliers = [1 / 4, 1 / 3, 1 / 2, 3 / 4, 1, 3 / 2, 2, 3, 4];
-        let closestMultiplier = multipliers[0];
-        let minDifference = Math.abs(
-          actualDistance / closestDistance - closestMultiplier,
-        );
-
-        for (const multiplier of multipliers) {
-          const difference = Math.abs(
-            actualDistance / closestDistance - multiplier,
-          );
-          if (difference < minDifference) {
-            minDifference = difference;
-            closestMultiplier = multiplier;
-          }
-        }
-
-        const newDistance = closestMultiplier * closestDistance;
-        x = closestStop.location.x - newDistance * Math.cos(closestAngle);
-        y = closestStop.location.y - newDistance * Math.sin(closestAngle);
+      if (snapInfo.snapped) {
+        this.pos = snapInfo.snapped;
+        return;
       }
     }
 
-    this.location.x = x;
-    this.location.y = y;
+    this.pos = l.pos;
   }
 
   rightClick({ map, selected }: ClickInfo): void {
@@ -383,10 +249,7 @@ export class TransitStop
     const route = this.getRoute();
     map.createStop(
       routes.size === 1 ? 'Unnamed Stop' : null,
-      {
-        x: this.location.x + 10,
-        y: this.location.y + 10,
-      },
+      new Vector2(this.pos.x + 10, this.pos.y + 10),
       route,
       this,
     );
