@@ -226,8 +226,20 @@ function TransitConnectionUi({
   );
 }
 
-function TransitRoutesUi({ routes }: { routes: Set<TransitRoute> }) {
+function TransitRoutesUi({ routes: _routes }: { routes: Set<TransitRoute> }) {
+  const [routes, setRoutes] = useState(_routes);
   const [route, setRoute] = useState<TransitRoute | null>(null);
+
+  function addRoute() {
+    const name = prompt('Enter route name');
+    if (name) {
+      const route = new TransitRoute(name, 'white');
+      routes.add(route);
+      setRoute(route);
+      setRoutes(new Set(routes));
+    }
+  }
+
   return (
     <div className="absolute top-0 right-0 w-fit bg-white/10 p-2">
       <div className="text-white">Modify routes</div>
@@ -249,7 +261,11 @@ function TransitRoutesUi({ routes }: { routes: Set<TransitRoute> }) {
           ))}
         </select>
       </div>
-      {route ? <RouteUi route={route} /> : null}
+      {route ? (
+        <RouteUi route={route} />
+      ) : (
+        <button onClick={addRoute}>Add route</button>
+      )}
     </div>
   );
 }

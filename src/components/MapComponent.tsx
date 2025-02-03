@@ -1,5 +1,6 @@
 import { EditorContextType } from '../EditorContext';
 import { Label } from '../transit/Label';
+import { TRANSFER_ROUTE } from '../transit/TransitRoute';
 import {
   GeoLocation,
   LocationWithKeys,
@@ -110,6 +111,8 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           });
         } else if (selectable instanceof Label) {
           renameLabel(selectable);
+        } else if (!selectable) {
+          map.createStop('Unnamed Stop', { x, y }, TRANSFER_ROUTE);
         }
       },
       mouseMove(e, { mouseX, mouseY }) {
