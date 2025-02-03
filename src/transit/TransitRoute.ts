@@ -12,6 +12,7 @@ export type RouteStyle = {
   lineWidth: number;
   strokeType: StrokeType;
   innerWidth: number; // only for split lines
+  margin: number;
   stopStyle: StopStyle;
 };
 
@@ -27,13 +28,12 @@ export class TransitRoute {
     this.name = name;
     this.style = {
       color,
-      lineWidth: 5,
-      strokeType: 'split',
+      lineWidth: 2,
+      strokeType: 'solid',
       innerWidth: 1,
+      margin: 1,
       stopStyle: {
         ...DEFAULT_STOP_STYLE,
-        radius: 2,
-        strokeColor: '#0000',
       },
     };
     this.stops = new Set();

@@ -46,10 +46,10 @@ export class TransitConnection
     return stop === this.from ? this.to : this.from;
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
-    ctx.strokeStyle = this.route.style.color;
+  draw(ctx: CanvasRenderingContext2D): void | {
+    postDraw: () => void;
+  } {
     const lineWidth = this.route.style.lineWidth;
-    ctx.lineWidth = lineWidth;
     ctx.save();
     ctx.lineCap = 'round';
     switch (this.style.strokeType) {
@@ -66,20 +66,39 @@ export class TransitConnection
     ctx.beginPath();
     ctx.moveTo(this.from.location.x, this.from.location.y);
     ctx.lineTo(this.to.location.x, this.to.location.y);
-    ctx.stroke();
-    if (this.route.style.strokeType === 'split') {
-      ctx.lineWidth = this.route.style.innerWidth;
+    if (this.route.style.margin > 0) {
+      ctx.lineWidth = lineWidth + this.route.style.margin * 2;
       ctx.strokeStyle = '#000';
       ctx.stroke();
     }
+    ctx.lineWidth = lineWidth;
+    ctx.strokeStyle = this.route.style.color;
+    ctx.stroke();
     ctx.restore();
+
+    if (this.route.style.strokeType === 'split') {
+      return {
+        postDraw: () => {
+          ctx.save();
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(this.from.location.x, this.from.location.y);
+          ctx.lineTo(this.to.location.x, this.to.location.y);
+          ctx.lineWidth = this.route.style.innerWidth;
+          ctx.strokeStyle = '#000';
+          ctx.stroke();
+          ctx.restore();
+        },
+      };
+    }
   }
 
   drawSelected(ctx: CanvasRenderingContext2D): void {
     ctx.save();
     ctx.setLineDash([2, 2]);
     ctx.strokeStyle = 'white';
-    ctx.lineWidth = 4;
+    ctx.lineWidth =
+      this.route.style.lineWidth + this.route.style.margin * 2 + 2;
     ctx.beginPath();
     ctx.moveTo(this.from.location.x, this.from.location.y);
     ctx.lineTo(this.to.location.x, this.to.location.y);

@@ -131,6 +131,7 @@ function TransitStopUi({ stop }: { stop: TransitStop }) {
               <input
                 type="number"
                 value={radius}
+                min="0"
                 onChange={e =>
                   setRadius((stop.style!.radius = parseInt(e.target.value)))
                 }
@@ -142,6 +143,7 @@ function TransitStopUi({ stop }: { stop: TransitStop }) {
               <input
                 type="number"
                 value={strokeWidth}
+                min="0"
                 onChange={e =>
                   setStrokeWidth(
                     (stop.style!.strokeWidth = parseInt(e.target.value)),

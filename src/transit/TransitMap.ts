@@ -42,7 +42,7 @@ export class TransitMap {
       return;
     }
     this.stops.delete(stop);
-    for (const route of stop.routes) {
+    for (const route of stop.getRoutes()) {
       route.stops.delete(stop);
     }
     for (const connection of stop.connections) {
@@ -67,9 +67,7 @@ export class TransitMap {
     route: TransitRoute,
     from?: TransitStop,
   ) {
-    const stop = new TransitStop(name ? [new Label(name)] : [], location, [
-      route,
-    ]);
+    const stop = new TransitStop(name ? [new Label(name)] : [], location);
     this.addStop(stop);
     route.addStop(stop);
     if (from) {
@@ -77,7 +75,6 @@ export class TransitMap {
       this.addConnection(connection);
       from.connections.add(connection);
       stop.connections.add(connection);
-      from.routes.add(route);
     }
     return stop;
   }
@@ -87,8 +84,6 @@ export class TransitMap {
     this.addConnection(connection);
     from.connections.add(connection);
     to.connections.add(connection);
-    from.routes.add(route);
-    to.routes.add(route);
   }
 
   splitConnection(connection: TransitConnection) {
@@ -103,14 +98,10 @@ export class TransitMap {
     to.connections.delete(connection);
 
     const route = connection.route;
-    const stop = new TransitStop(
-      [new Label('Unnamed Stop')],
-      {
-        x: (from.location.x + to.location.x) / 2,
-        y: (from.location.y + to.location.y) / 2,
-      },
-      [route],
-    );
+    const stop = new TransitStop([new Label('Unnamed Stop')], {
+      x: (from.location.x + to.location.x) / 2,
+      y: (from.location.y + to.location.y) / 2,
+    });
 
     this.addStop(stop);
     route.addStop(stop);
@@ -150,11 +141,18 @@ export class TransitMap {
   }
 
   draw(ctx: CanvasRenderingContext2D, selected: SelectableItem | null) {
+    const postConnections: Array<() => void> = [];
     for (const connection of this.connections) {
       if (selected === connection) {
         connection.drawSelected(ctx);
       }
-      connection.draw(ctx);
+      const post = connection.draw(ctx);
+      if (post) {
+        postConnections.push(post.postDraw);
+      }
+    }
+    for (const post of postConnections) {
+      post();
     }
     for (const stop of this.stops) {
       if (selected === stop) {

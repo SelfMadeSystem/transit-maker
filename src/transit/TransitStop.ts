@@ -58,31 +58,34 @@ export class TransitStop
   // - different border colors (e.g. white, black, none)
   public labels: Set<Label>;
   public location: GeoLocation;
-  public routes: Set<TransitRoute>;
   public connections: Set<TransitConnection>;
   public hidden: boolean = false;
   public style?: TransitStopStyle;
 
-  constructor(
-    labels: Label[],
-    location: GeoLocation,
-    routes: Iterable<TransitRoute>,
-  ) {
+  constructor(labels: Label[], location: GeoLocation) {
     this.labels = new Set(labels);
     for (const label of this.labels) {
       label.stop = this;
     }
     this.location = location;
-    this.routes = new Set(routes);
     this.connections = new Set();
+  }
+
+  getRoutes(): Set<TransitRoute> {
+    const routes = new Set<TransitRoute>();
+    for (const connection of this.connections) {
+      routes.add(connection.route);
+    }
+    return routes;
   }
 
   getStyle(): TransitStopStyle {
     if (this.style) {
       return this.style;
     }
-    if (this.routes.size === 1) {
-      return this.routes.values().next().value!.style.stopStyle;
+    const routes = this.getRoutes();
+    if (routes.size === 1) {
+      return routes.values().next().value!.style.stopStyle;
     }
     return DEFAULT_STOP_STYLE;
   }
@@ -96,8 +99,9 @@ export class TransitStop
 
   getStopColor(c: StopColor): string {
     if (c === 'route') {
-      if (this.routes.size === 1) {
-        return this.routes.values().next().value!.style.color;
+      const routes = this.getRoutes();
+      if (routes.size === 1) {
+        return routes.values().next().value!.style.color;
       } else {
         return TRANSFER_ROUTE.style.color;
       }
@@ -152,7 +156,9 @@ export class TransitStop
       ctx.restore();
     }
     ctx.fill();
-    ctx.stroke();
+    if (style.strokeWidth > 0) {
+      ctx.stroke();
+    }
   }
 
   drawSelected(ctx: CanvasRenderingContext2D) {
@@ -365,12 +371,11 @@ export class TransitStop
   }
 
   doubleClick(map: TransitMap): void {
+    const routes = this.getRoutes();
     const route =
-      this.routes.size === 1
-        ? this.routes.values().next().value!
-        : TRANSFER_ROUTE;
+      routes.size === 1 ? routes.values().next().value! : TRANSFER_ROUTE;
     map.createStop(
-      this.routes.size === 1 ? 'Unnamed Stop' : null,
+      routes.size === 1 ? 'Unnamed Stop' : null,
       {
         x: this.location.x + 10,
         y: this.location.y + 10,
@@ -378,10 +383,5 @@ export class TransitStop
       route,
       this,
     );
-  }
-
-  clone(): TransitStop {
-    const labels = Array.from(this.labels).map(label => label.clone());
-    return new TransitStop(labels, this.location, Array.from(this.routes));
   }
 }
