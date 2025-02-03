@@ -1,4 +1,5 @@
 import { EditorContext } from '../EditorContext';
+import { StrokeType, TransitConnection } from '../transit/TransitConnection';
 import { TransitStop } from '../transit/TransitStop';
 import { ColorEditor } from './ColorEditor';
 import { useContext, useState } from 'react';
@@ -8,6 +9,9 @@ export function SelectedUi() {
 
   if (selected instanceof TransitStop) {
     return <TransitStopUi stop={selected} />;
+  }
+  if (selected instanceof TransitConnection) {
+    return <TransitConnectionUi connection={selected} />;
   }
 }
 
@@ -101,6 +105,38 @@ function TransitStopUi({ stop }: { stop: TransitStop }) {
             </label>
           </>
         ) : null}
+      </div>
+    </div>
+  );
+}
+
+function TransitConnectionUi({
+  connection,
+}: {
+  connection: TransitConnection;
+}) {
+  const [strokeType, setStrokeType] = useState(connection.style.strokeType);
+
+  return (
+    <div className="absolute top-0 right-0 w-fit bg-white/10 p-2">
+      <div className="text-white">Modify connection style</div>
+      <div className="flex flex-col justify-center gap-2">
+        <label className="flex items-center gap-2">
+          <div className="text-white">Stroke type:</div>
+          <select
+            value={strokeType}
+            onChange={e =>
+              setStrokeType(
+                (connection.style.strokeType = e.target.value as StrokeType),
+              )
+            }
+            className="bg-gray-900 text-white"
+          >
+            <option value="solid">Solid</option>
+            <option value="dotted">Dotted</option>
+            <option value="dashed">Dashed</option>
+          </select>
+        </label>
       </div>
     </div>
   );

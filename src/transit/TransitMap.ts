@@ -114,6 +114,8 @@ export class TransitMap {
     route.addStop(stop);
     const connection1 = new TransitConnection(from, stop, route);
     const connection2 = new TransitConnection(stop, to, route);
+    connection1.style = { ...connection.style };
+    connection2.style = { ...connection.style };
     this.addConnection(connection1);
     this.addConnection(connection2);
     from.connections.add(connection1);

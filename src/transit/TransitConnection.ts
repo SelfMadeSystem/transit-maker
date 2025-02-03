@@ -3,6 +3,14 @@ import { TransitRoute } from './TransitRoute';
 import { TransitStop } from './TransitStop';
 import { DoubleClickable, Drawable, RightClickable, Selectable } from './types';
 
+export type StrokeType = 'solid' | 'dotted' | 'dashed';
+
+// Styles only for this individual connection. Other styles should be specific
+// to the route.
+export type ConnectionStyle = {
+  strokeType: StrokeType;
+};
+
 export class TransitConnection
   implements Drawable, Selectable, DoubleClickable, RightClickable
 {
@@ -24,7 +32,9 @@ export class TransitConnection
   public from: TransitStop;
   public to: TransitStop;
   public route: TransitRoute;
-  public dotted: boolean = false;
+  public style: ConnectionStyle = {
+    strokeType: 'solid',
+  };
 
   constructor(from: TransitStop, to: TransitStop, route: TransitRoute) {
     this.from = from;
@@ -38,11 +48,20 @@ export class TransitConnection
 
   draw(ctx: CanvasRenderingContext2D) {
     ctx.strokeStyle = this.route.color;
-    ctx.lineWidth = 2;
+    const lineWidth = 2;
+    ctx.lineWidth = lineWidth;
     ctx.save();
     ctx.lineCap = 'round';
-    if (this.dotted) {
-      ctx.setLineDash([0, 4]);
+    switch (this.style.strokeType) {
+      case 'solid':
+        ctx.setLineDash([]);
+        break;
+      case 'dotted':
+        ctx.setLineDash([0, lineWidth * 2]);
+        break;
+      case 'dashed':
+        ctx.setLineDash([lineWidth * 4, lineWidth * 3]);
+        break;
     }
     ctx.beginPath();
     ctx.moveTo(this.from.location.x, this.from.location.y);
@@ -92,9 +111,7 @@ export class TransitConnection
     map.splitConnection(this);
   }
 
-  rightClick(): void {
-    this.dotted = !this.dotted;
-  }
+  rightClick(): void {}
 
   getAngle(which: TransitStop): number {
     if (which !== this.from && which !== this.to) {
