@@ -21,17 +21,17 @@ export function SelectedUi() {
 
 function TransitStopUi({ stop }: { stop: TransitStop }) {
   const [hidden, setHidden] = useState(stop.hidden);
-  const [fillColor, setFillColor] = useState(stop.style.fillColor);
-  const [strokeColor, setStrokeColor] = useState(stop.style.strokeColor);
-  const [edges, setEdges] = useState(stop.style.edges);
-  const [edgeOrientation, setEdgeOrientation] = useState(
-    stop.style.edgeOrientation,
-  );
+  const style = stop.getStyle();
+  const [hasStyle, setHasStyle] = useState(stop.style !== undefined);
+  const [fillColor, setFillColor] = useState(style.fillColor);
+  const [strokeColor, setStrokeColor] = useState(style.strokeColor);
+  const [edges, setEdges] = useState(style.edges);
+  const [edgeOrientation, setEdgeOrientation] = useState(style.edgeOrientation);
   const [edgeFollowsRoute, setEdgeFollowsRoute] = useState(
-    stop.style.edgeFollowsRoute,
+    style.edgeFollowsRoute,
   );
-  const [radius, setRadius] = useState(stop.style.radius);
-  const [strokeWidth, setStrokeWidth] = useState(stop.style.strokeWidth);
+  const [radius, setRadius] = useState(style.radius);
+  const [strokeWidth, setStrokeWidth] = useState(style.strokeWidth);
 
   return (
     <div className="absolute top-0 right-0 w-fit bg-white/10 p-2">
@@ -45,96 +45,113 @@ function TransitStopUi({ stop }: { stop: TransitStop }) {
             onChange={() => setHidden((stop.hidden = !hidden))}
           />
         </label>
-
         <label className="flex items-center gap-2">
-          <div className="text-white">Fill color:</div>
-          <ColorEditor
-            stopColor={fillColor}
-            onChange={fill => setFillColor((stop.style.fillColor = fill))}
+          <div className="text-white">Override stop style:</div>
+          <input
+            type="checkbox"
+            checked={hasStyle}
+            onChange={() => {
+              stop.style =
+                stop.style === undefined ? { ...stop.getStyle() } : undefined;
+              setHasStyle(!hasStyle);
+            }}
           />
         </label>
-        <label className="flex items-center gap-2">
-          <div className="text-white">Stroke color:</div>
-          <ColorEditor
-            stopColor={strokeColor}
-            onChange={stroke =>
-              setStrokeColor((stop.style.strokeColor = stroke))
-            }
-          />
-        </label>
-        <label className="flex items-center gap-2">
-          <div className="text-white">Edges:</div>
-          <select
-            value={edges}
-            onChange={e =>
-              setEdges((stop.style.edges = parseInt(e.target.value)))
-            }
-            className="bg-gray-900 text-white"
-          >
-            <option value="0">Circle</option>
-            <option value="3">Triangle</option>
-            <option value="4">Square</option>
-            <option value="5">Pentagon</option>
-            <option value="6">Hexagon</option>
-          </select>
-        </label>
-        {edges > 0 ? (
+        {stop.style ? (
           <>
             <label className="flex items-center gap-2">
-              <div className="text-white">Edge orientation:</div>
+              <div className="text-white">Fill color:</div>
+              <ColorEditor
+                stopColor={fillColor}
+                onChange={fill => setFillColor((stop.style!.fillColor = fill))}
+              />
+            </label>
+            <label className="flex items-center gap-2">
+              <div className="text-white">Stroke color:</div>
+              <ColorEditor
+                stopColor={strokeColor}
+                onChange={stroke =>
+                  setStrokeColor((stop.style!.strokeColor = stroke))
+                }
+              />
+            </label>
+            <label className="flex items-center gap-2">
+              <div className="text-white">Edges:</div>
               <select
-                value={edgeOrientation}
+                value={edges}
                 onChange={e =>
-                  setEdgeOrientation(
-                    (stop.style.edgeOrientation = parseInt(e.target.value)),
-                  )
+                  setEdges((stop.style!.edges = parseInt(e.target.value)))
                 }
                 className="bg-gray-900 text-white"
               >
-                <option value="0">A</option>
-                <option value="1">B</option>
-                <option value="2">C</option>
-                <option value="3">D</option>
+                <option value="0">Circle</option>
+                <option value="3">Triangle</option>
+                <option value="4">Square</option>
+                <option value="5">Pentagon</option>
+                <option value="6">Hexagon</option>
               </select>
             </label>
+            {edges > 0 ? (
+              <>
+                <label className="flex items-center gap-2">
+                  <div className="text-white">Edge orientation:</div>
+                  <select
+                    value={edgeOrientation}
+                    onChange={e =>
+                      setEdgeOrientation(
+                        (stop.style!.edgeOrientation = parseInt(
+                          e.target.value,
+                        )),
+                      )
+                    }
+                    className="bg-gray-900 text-white"
+                  >
+                    <option value="0">A</option>
+                    <option value="1">B</option>
+                    <option value="2">C</option>
+                    <option value="3">D</option>
+                  </select>
+                </label>
+                <label className="flex items-center gap-2">
+                  <div className="text-white">Edge follows route:</div>
+                  <input
+                    type="checkbox"
+                    checked={edgeFollowsRoute}
+                    onChange={() =>
+                      setEdgeFollowsRoute(
+                        (stop.style!.edgeFollowsRoute = !edgeFollowsRoute),
+                      )
+                    }
+                  />
+                </label>
+              </>
+            ) : null}
             <label className="flex items-center gap-2">
-              <div className="text-white">Edge follows route:</div>
+              <div className="text-white">Radius:</div>
               <input
-                type="checkbox"
-                checked={edgeFollowsRoute}
-                onChange={() =>
-                  setEdgeFollowsRoute(
-                    (stop.style.edgeFollowsRoute = !edgeFollowsRoute),
+                type="number"
+                value={radius}
+                onChange={e =>
+                  setRadius((stop.style!.radius = parseInt(e.target.value)))
+                }
+                className="bg-gray-900 text-white"
+              />
+            </label>
+            <label className="flex items-center gap-2">
+              <div className="text-white">Stroke width:</div>
+              <input
+                type="number"
+                value={strokeWidth}
+                onChange={e =>
+                  setStrokeWidth(
+                    (stop.style!.strokeWidth = parseInt(e.target.value)),
                   )
                 }
+                className="bg-gray-900 text-white"
               />
             </label>
           </>
         ) : null}
-        <label className="flex items-center gap-2">
-          <div className="text-white">Radius:</div>
-          <input
-            type="number"
-            value={radius}
-            onChange={e =>
-              setRadius((stop.style.radius = parseInt(e.target.value)))
-            }
-            className="bg-gray-900 text-white"
-          />
-        </label>
-        <label className="flex items-center gap-2">
-          <div className="text-white">Stroke width:</div>
-          <input
-            type="number"
-            value={strokeWidth}
-            onChange={e =>
-              setStrokeWidth(
-                (stop.style.strokeWidth = parseInt(e.target.value)),
-              )
-            }
-            className="bg-gray-900 text-white"
-          />
-        </label>
       </div>
     </div>
   );

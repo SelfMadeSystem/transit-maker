@@ -5,7 +5,6 @@ import { TransitMap } from './TransitMap';
 import { TRANSFER_ROUTE, TransitRoute } from './TransitRoute';
 import {
   DoubleClickable,
-  Drawable,
   GeoLocation,
   LocationWithKeys,
   Movable,
@@ -33,7 +32,7 @@ export type TransitStopStyle = {
   strokeWidth: number;
 };
 
-export const defaultTransitStopStyle = (): TransitStopStyle => ({
+export const DEFAULT_STOP_STYLE: TransitStopStyle = {
   fillColor: '#000',
   strokeColor: 'route',
   edges: 0,
@@ -41,10 +40,10 @@ export const defaultTransitStopStyle = (): TransitStopStyle => ({
   edgeFollowsRoute: false,
   radius: 5,
   strokeWidth: 2,
-});
+};
 
 export class TransitStop
-  implements Drawable, Selectable, Movable, RightClickable, DoubleClickable
+  implements Selectable, Movable, RightClickable, DoubleClickable
 {
   // TODO: Add support for:
   // - multiple labels
@@ -62,7 +61,7 @@ export class TransitStop
   public routes: Set<TransitRoute>;
   public connections: Set<TransitConnection>;
   public hidden: boolean = false;
-  public style: TransitStopStyle = defaultTransitStopStyle();
+  public style?: TransitStopStyle;
 
   constructor(
     labels: Label[],
@@ -76,6 +75,16 @@ export class TransitStop
     this.location = location;
     this.routes = new Set(routes);
     this.connections = new Set();
+  }
+
+  getStyle(): TransitStopStyle {
+    if (this.style) {
+      return this.style;
+    }
+    if (this.routes.size === 1) {
+      return this.routes.values().next().value!.style.stopStyle;
+    }
+    return DEFAULT_STOP_STYLE;
   }
 
   setLabels(labels: Label[]) {
@@ -103,20 +112,15 @@ export class TransitStop
     if (this.hidden) {
       return;
     }
-    ctx.strokeStyle = this.getStopColor(this.style.strokeColor);
-    ctx.fillStyle = this.getStopColor(this.style.fillColor);
-    ctx.lineWidth = this.style.strokeWidth;
+    const style = this.getStyle();
+    ctx.strokeStyle = this.getStopColor(style.strokeColor);
+    ctx.fillStyle = this.getStopColor(style.fillColor);
+    ctx.lineWidth = style.strokeWidth;
     ctx.beginPath();
-    if (this.style.edges === 0) {
-      ctx.arc(
-        this.location.x,
-        this.location.y,
-        this.style.radius,
-        0,
-        2 * Math.PI,
-      );
+    if (style.edges === 0) {
+      ctx.arc(this.location.x, this.location.y, style.radius, 0, 2 * Math.PI);
     } else {
-      const { edgeOrientation, edges, edgeFollowsRoute } = this.style;
+      const { edgeOrientation, edges, edgeFollowsRoute } = style;
       const angleStep = (2 * Math.PI) / edges;
       let polyAngle = 0;
       if (this.connections.size > 0 && edgeFollowsRoute) {
@@ -137,14 +141,11 @@ export class TransitStop
       ctx.save();
       ctx.translate(this.location.x, this.location.y);
       ctx.rotate(polyAngle);
-      ctx.moveTo(
-        this.style.radius * Math.cos(0),
-        this.style.radius * Math.sin(0),
-      );
-      for (let i = 1; i <= this.style.edges; i++) {
+      ctx.moveTo(style.radius * Math.cos(0), style.radius * Math.sin(0));
+      for (let i = 1; i <= style.edges; i++) {
         ctx.lineTo(
-          this.style.radius * Math.cos(angleStep * i),
-          this.style.radius * Math.sin(angleStep * i),
+          style.radius * Math.cos(angleStep * i),
+          style.radius * Math.sin(angleStep * i),
         );
       }
       ctx.closePath();
@@ -155,13 +156,14 @@ export class TransitStop
   }
 
   drawSelected(ctx: CanvasRenderingContext2D) {
+    const style = this.getStyle();
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(
       this.location.x,
       this.location.y,
-      this.style.radius + this.style.strokeWidth / 2 + 2,
+      style.radius + style.strokeWidth / 2 + 2,
       0,
       2 * Math.PI,
     );

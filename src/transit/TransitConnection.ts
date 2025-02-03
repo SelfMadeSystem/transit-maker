@@ -1,7 +1,7 @@
 import { TransitMap } from './TransitMap';
 import { TransitRoute } from './TransitRoute';
 import { TransitStop } from './TransitStop';
-import { DoubleClickable, Drawable, RightClickable, Selectable } from './types';
+import { DoubleClickable, RightClickable, Selectable } from './types';
 
 export type ConnectionStrokeType = 'solid' | 'dotted' | 'dashed';
 
@@ -12,7 +12,7 @@ export type ConnectionStyle = {
 };
 
 export class TransitConnection
-  implements Drawable, Selectable, DoubleClickable, RightClickable
+  implements Selectable, DoubleClickable, RightClickable
 {
   // TODO: Add support for:
   // - split routes (e.g. REM connection between Bois-Franc, Marie-Curie,

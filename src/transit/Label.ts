@@ -1,9 +1,9 @@
 import { TransitStop } from './TransitStop';
-import { Drawable, GeoLocation, Movable, Selectable } from './types';
+import { GeoLocation, Movable, Selectable } from './types';
 
 const LabelFont = '10px sans-serif';
 
-export class Label implements Drawable, Selectable, Movable {
+export class Label implements Selectable, Movable {
   // TODO: Add support for:
   // - text formatting (e.g. bold for important/transfer stations)
   // - line icon identifier (e.g. blue circle with white "5" for line 5 in Montreal)

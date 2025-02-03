@@ -1,4 +1,8 @@
-import { TransitStop } from './TransitStop';
+import {
+  DEFAULT_STOP_STYLE,
+  TransitStopStyle as StopStyle,
+  TransitStop,
+} from './TransitStop';
 
 // The REM has the `split` style. It's very weird, I've never seen it on any other transit map.
 export type StrokeType = 'solid' | 'split';
@@ -8,6 +12,7 @@ export type RouteStyle = {
   lineWidth: number;
   strokeType: StrokeType;
   innerWidth: number; // only for split lines
+  stopStyle: StopStyle;
 };
 
 export class TransitRoute {
@@ -22,9 +27,14 @@ export class TransitRoute {
     this.name = name;
     this.style = {
       color,
-      lineWidth: 2,
-      strokeType: 'solid',
+      lineWidth: 5,
+      strokeType: 'split',
       innerWidth: 1,
+      stopStyle: {
+        ...DEFAULT_STOP_STYLE,
+        radius: 2,
+        strokeColor: '#0000',
+      },
     };
     this.stops = new Set();
   }
