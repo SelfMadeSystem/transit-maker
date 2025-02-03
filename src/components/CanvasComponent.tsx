@@ -128,7 +128,7 @@ export default function createCanvasComponent<
         }
 
         if (result?.mouseDown) {
-          window.addEventListener(
+          canvas.addEventListener(
             'mousedown',
             (e: MouseEvent) => {
               const rect = canvas.getBoundingClientRect();
@@ -139,7 +139,7 @@ export default function createCanvasComponent<
             },
             { signal, passive: false },
           );
-          window.addEventListener(
+          canvas.addEventListener(
             'contextmenu',
             (e: MouseEvent) => {
               e.preventDefault();

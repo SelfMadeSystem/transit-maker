@@ -1,5 +1,7 @@
 import { EditorContext } from './EditorContext';
-import { SelectableItem, TransitMap, TransitRoute } from './transit/types';
+import { TransitMap } from './transit/TransitMap';
+import { TransitRoute } from './transit/TransitRoute';
+import { SelectableItem } from './transit/types';
 import { useState } from 'react';
 
 function createTransitMap(): TransitMap {

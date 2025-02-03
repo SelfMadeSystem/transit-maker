@@ -1,7 +1,7 @@
 import { EditorContextType } from '../EditorContext';
+import { Label } from '../transit/Label';
 import {
   GeoLocation,
-  Label,
   LocationWithKeys,
   SelectableItem,
 } from '../transit/types';

@@ -1,5 +1,5 @@
 import { EditorContext } from '../EditorContext';
-import { TransitStop } from '../transit/types';
+import { TransitStop } from '../transit/TransitStop';
 import { useContext } from 'react';
 
 export function SelectedUi() {

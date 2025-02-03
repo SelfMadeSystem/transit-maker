@@ -1,3 +1,4 @@
+import './App.css';
 import { EditorProvider } from './EditorProvider';
 import { Editor } from './components/Editor';
 

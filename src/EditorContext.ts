@@ -1,5 +1,6 @@
-import { createContext } from "react";
-import { SelectableItem, TransitMap } from "./transit/types";
+import { TransitMap } from './transit/TransitMap';
+import { SelectableItem } from './transit/types';
+import { createContext } from 'react';
 
 export type EditorContextType = {
   map: TransitMap;
@@ -12,4 +13,3 @@ export const EditorContext = createContext<EditorContextType>({
   selected: null,
   setSelected: () => {},
 });
-
