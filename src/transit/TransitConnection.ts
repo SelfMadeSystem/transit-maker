@@ -3,12 +3,12 @@ import { TransitRoute } from './TransitRoute';
 import { TransitStop } from './TransitStop';
 import { DoubleClickable, Drawable, RightClickable, Selectable } from './types';
 
-export type StrokeType = 'solid' | 'dotted' | 'dashed';
+export type ConnectionStrokeType = 'solid' | 'dotted' | 'dashed';
 
 // Styles only for this individual connection. Other styles should be specific
 // to the route.
 export type ConnectionStyle = {
-  strokeType: StrokeType;
+  strokeType: ConnectionStrokeType;
 };
 
 export class TransitConnection
