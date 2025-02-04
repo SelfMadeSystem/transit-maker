@@ -14,7 +14,8 @@ export type RouteStyle = {
 
 export class TransitRoute {
   // TODO: Add support for:
-  // - idk what else
+  // - Different route styles for solid/dotted/dashed lines. I found that for
+  //   thick lines, the dotted and dashed styles are way too large.
   public name: string;
   public stops: Set<TransitStop>;
   public style: RouteStyle;

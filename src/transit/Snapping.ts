@@ -3,6 +3,8 @@ import { Vector2 } from '../utils/vec';
 export const SNAP_DISTANCE = 10;
 export const SNAP_POINT_DISTANCE = 5;
 
+// TODO: Allow the use to enable/disable snapping for each type of snap line.
+
 export class SnapInfo {
   public original: Vector2;
   public doSnapDistance: boolean;

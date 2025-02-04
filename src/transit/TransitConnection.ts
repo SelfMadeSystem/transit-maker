@@ -76,7 +76,10 @@ export class TransitConnection
     ctx.stroke();
     ctx.restore();
 
-    if (this.route.style.strokeType === 'split') {
+    if (
+      this.route.style.strokeType === 'split' &&
+      this.style.strokeType === 'solid'
+    ) {
       return {
         postDraw: () => {
           ctx.save();
