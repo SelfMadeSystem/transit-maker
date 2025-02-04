@@ -1,3 +1,4 @@
+import { id } from '../utils/id';
 import { DEFAULT_STOP_STYLE, StopStyle, TransitStop } from './TransitStop';
 
 // The REM has the `split` style. It's very weird, I've never seen it on any other transit map.
@@ -13,6 +14,7 @@ export type RouteStyle = {
 };
 
 export class TransitRoute {
+  public id: number = id();
   // TODO: Add support for:
   // - Different route styles for solid/dotted/dashed lines. I found that for
   //   thick lines, the dotted and dashed styles are way too large.

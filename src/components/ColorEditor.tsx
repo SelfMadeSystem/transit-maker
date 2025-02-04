@@ -1,32 +1,17 @@
-import type { StopColor } from '../transit/TransitStop';
-import { useState } from 'react';
-
 export function ColorEditor({
-  stopColor,
+  color,
   onChange,
 }: {
-  stopColor: StopColor;
-  onChange: (color: StopColor) => void;
+  color: string;
+  onChange: (color: string) => void;
 }) {
-  const [isRoute, setIsRoute] = useState(stopColor === 'route');
-
   return (
     <div className="flex items-center space-x-2">
       <input
-        type="checkbox"
-        checked={isRoute}
-        onChange={() => {
-          setIsRoute(!isRoute);
-          onChange(isRoute ? 'black' : 'route');
-        }}
+        type="color"
+        value={color}
+        onChange={e => onChange(e.target.value)}
       />
-      {isRoute ? null : (
-        <input
-          type="color"
-          value={stopColor}
-          onChange={e => onChange(e.target.value as StopColor)}
-        />
-      )}
     </div>
   );
 }

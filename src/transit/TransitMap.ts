@@ -1,3 +1,4 @@
+import { id } from '../utils/id';
 import { Vector2 } from '../utils/vec';
 import { Label } from './Label';
 import { TransitConnection } from './TransitConnection';
@@ -6,6 +7,7 @@ import { TransitStop } from './TransitStop';
 import { SelectableItem } from './types';
 
 export class TransitMap {
+  public id: number = id();
   // TODO: Add support for:
   // - multiple layers (e.g. metro, bus, train)
   //   - I'd want e.g. bus to only show when zoomed in enough

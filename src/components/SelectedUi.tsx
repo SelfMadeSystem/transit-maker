@@ -8,16 +8,19 @@ import { TransitMap } from '../transit/TransitMap';
 import { StrokeType, TransitRoute } from '../transit/TransitRoute';
 import { StopStyle, TransitStop } from '../transit/TransitStop';
 import { ColorEditor } from './ColorEditor';
+import { StopColorEditor } from './StopColorEditor';
 import { useContext, useState } from 'react';
 
 export function SelectedUi() {
   const { selected, map } = useContext(EditorContext);
 
   if (selected instanceof TransitStop) {
-    return <TransitStopUi stop={selected} />;
+    return <TransitStopUi key={selected.id} stop={selected} />;
   }
   if (selected instanceof TransitConnection) {
-    return <TransitConnectionUi connection={selected} map={map} />;
+    return (
+      <TransitConnectionUi key={selected.id} connection={selected} map={map} />
+    );
   }
   return <TransitRoutesUi routes={map.routes} />;
 }
@@ -77,14 +80,14 @@ function StopStyleUi({ style }: { style: StopStyle }) {
     <>
       <label className="flex items-center gap-2">
         <div className="text-white">Fill color:</div>
-        <ColorEditor
+        <StopColorEditor
           stopColor={fillColor}
           onChange={fill => setFillColor((style.fillColor = fill))}
         />
       </label>
       <label className="flex items-center gap-2">
         <div className="text-white">Stroke color:</div>
-        <ColorEditor
+        <StopColorEditor
           stopColor={strokeColor}
           onChange={stroke => setStrokeColor((style.strokeColor = stroke))}
         />
@@ -255,7 +258,7 @@ function TransitRoutesUi({ routes: _routes }: { routes: Set<TransitRoute> }) {
         </select>
       </div>
       {route ? (
-        <RouteUi route={route} />
+        <RouteUi key={route.id} route={route} />
       ) : (
         <button onClick={addRoute}>Add route</button>
       )}
@@ -284,6 +287,7 @@ function RouteUi({ route }: { route: TransitRoute }) {
 
 function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
   const [color, setColor] = useState(style.color);
+  console.log(color);
   const [lineWidth, setLineWidth] = useState(style.lineWidth);
   const [strokeType, setStrokeType] = useState(style.strokeType);
   const [innerWidth, setInnerWidth] = useState(style.innerWidth);
@@ -294,7 +298,7 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
       <label className="flex items-center gap-2">
         <div className="text-white">Color:</div>
         <ColorEditor
-          stopColor={color}
+          color={color}
           onChange={c => setColor((style.color = c))}
         />
       </label>

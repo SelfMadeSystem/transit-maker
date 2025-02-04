@@ -1,3 +1,4 @@
+import { id } from '../utils/id';
 import { Vector2 } from '../utils/vec';
 import { Label } from './Label';
 import { SnapInfo, SnapLine } from './Snapping';
@@ -34,7 +35,7 @@ export type StopStyle = {
 };
 
 export const DEFAULT_STOP_STYLE: StopStyle = {
-  fillColor: '#000',
+  fillColor: '#000000',
   strokeColor: 'route',
   edges: 0,
   edgeOrientation: 0,
@@ -46,6 +47,7 @@ export const DEFAULT_STOP_STYLE: StopStyle = {
 export class TransitStop
   implements Selectable, Movable, RightClickable, DoubleClickable
 {
+  public id: number = id();
   // TODO: Add support for:
   // - "long" transfer stations (e.g. Lucien-L'Allier in Montreal is like 3×
   //   the width of a normal station)

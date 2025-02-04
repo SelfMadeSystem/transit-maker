@@ -1,3 +1,4 @@
+import { id } from '../utils/id';
 import { Vector2 } from '../utils/vec';
 import { SnapLine } from './Snapping';
 import { TransitMap } from './TransitMap';
@@ -21,6 +22,7 @@ export type ConnectionStyle = {
 export class TransitConnection
   implements Selectable, DoubleClickable, RightClickable
 {
+  public id: number = id();
   // TODO: Add support for:
   // - split routes (e.g. REM connection between Bois-Franc, Marie-Curie,
   //   Des Sources, and Sunnybrooke; yes, that's a single connection)
