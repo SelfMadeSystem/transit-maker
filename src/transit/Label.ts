@@ -42,8 +42,9 @@ export class Label implements Selectable, Movable {
     {
       ctx.font = LabelFont;
       ctx.fillStyle = 'white';
-      const x = this.x + this.stop.pos.x;
-      const y = this.y + this.stop.pos.y;
+      const stopPos = this.stop.getDrawPos();
+      const x = this.x + stopPos.x;
+      const y = this.y + stopPos.y;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(this.text, x, y);

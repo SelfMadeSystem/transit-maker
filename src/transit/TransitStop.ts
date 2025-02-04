@@ -56,6 +56,18 @@ export class TransitStop
   public connections: Set<TransitConnection>;
   public hidden: boolean = false;
   public style?: StopStyle;
+  private roundingStuffCache:
+    | {
+        ogPos: Vector2;
+        centerOffset: Vector2;
+        center: Vector2;
+        stopOffset: Vector2;
+        stop: Vector2;
+        radius: number;
+        edgeDist: number;
+      }
+    | null
+    | undefined = undefined;
 
   constructor(labels: Label[], pos: Vector2) {
     this.labels = new Set(labels);
@@ -120,9 +132,76 @@ export class TransitStop
     return '#000';
   }
 
+  getDrawPos() {
+    return this.calculateRoundingStuff()?.stop ?? this.pos;
+  }
+
+  calculateRoundingStuff() {
+    if (this.roundingStuffCache !== undefined) {
+      return this.roundingStuffCache;
+    }
+    if (this.connections.size !== 2) {
+      this.roundingStuffCache = null;
+      return;
+    }
+    const route = this.getRoute();
+
+    const radius = route.style.roundRadius;
+    if (radius <= 0) {
+      this.roundingStuffCache = null;
+      return;
+    }
+
+    const connectionArray = Array.from(this.connections);
+    let [connection1, connection2] = connectionArray;
+
+    if (connection1.isParallelTo(connection2)) {
+      return;
+    }
+
+    const otherPoint1 = connection1.getOtherStop(this).pos;
+    const otherPoint2 = connection2.getOtherStop(this).pos;
+
+    const vector1 = otherPoint1.sub(this.pos);
+    const vector2 = otherPoint2.sub(this.pos);
+
+    const checkAngle = vector1.angleTo(vector2);
+
+    if (checkAngle < Math.PI / 2) {
+      [connection1, connection2] = [connection2, connection1];
+    }
+
+    const dirThis = connection2.getDirectionVector(this);
+    const dirOther = connection1.getDirectionVector(this);
+    const avgDir = dirThis.add(dirOther).normalize();
+    const angle = dirThis.angleBetween(dirOther) / 2;
+    const dist = radius / Math.sin(angle);
+    const centerOffset = avgDir.mult(dist);
+    const center = this.pos.add(centerOffset);
+    const stopOffset = avgDir.mult(dist - radius);
+    const stop = this.pos.add(stopOffset);
+    const edgeDist = radius / Math.tan(angle);
+
+    return (this.roundingStuffCache = {
+      ogPos: this.pos,
+      centerOffset,
+      center,
+      stopOffset,
+      stop,
+      radius,
+      edgeDist,
+    });
+  }
+
   draw(ctx: CanvasRenderingContext2D) {
+    this.roundingStuffCache = undefined;
     if (this.hidden) {
       return;
+    }
+    ctx.save();
+    const roundingStuff = this.calculateRoundingStuff();
+    if (roundingStuff) {
+      ctx.translate(roundingStuff.stopOffset.x, roundingStuff.stopOffset.y);
     }
     const style = this.getStyle();
     ctx.strokeStyle = this.getStopColor(style.strokeColor);
@@ -167,6 +246,7 @@ export class TransitStop
     if (style.strokeWidth > 0) {
       ctx.stroke();
     }
+    ctx.restore();
   }
 
   drawSelected(ctx: CanvasRenderingContext2D) {
@@ -174,9 +254,10 @@ export class TransitStop
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 1;
     ctx.beginPath();
+    const pos = this.getDrawPos();
     ctx.arc(
-      this.pos.x,
-      this.pos.y,
+      pos.x,
+      pos.y,
       style.radius + style.strokeWidth / 2 + 2,
       0,
       2 * Math.PI,
@@ -195,7 +276,8 @@ export class TransitStop
   }
 
   isOver(x: number, y: number) {
-    return Math.sqrt((this.pos.x - x) ** 2 + (this.pos.y - y) ** 2) < 5;
+    const pos = this.getDrawPos();
+    return Math.sqrt((pos.x - x) ** 2 + (pos.y - y) ** 2) < 5;
   }
 
   getPos(): Vector2 {

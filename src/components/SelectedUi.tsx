@@ -287,13 +287,13 @@ function RouteUi({ route }: { route: TransitRoute }) {
 
 function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
   const [color, setColor] = useState(style.color);
-  console.log(color);
   const [lineWidth, setLineWidth] = useState(style.lineWidth);
   const [strokeType, setStrokeType] = useState(style.strokeType);
   const [innerWidth, setInnerWidth] = useState(style.innerWidth);
   const [dottedWidth, setDottedWidth] = useState(style.dottedWidth);
   const [dashedWidth, setDashedWidth] = useState(style.dashedWidth);
   const [margin, setMargin] = useState(style.margin);
+  const [roundRadius, setRoundRadius] = useState(style.roundRadius);
 
   return (
     <div className="flex flex-col gap-2">
@@ -374,6 +374,18 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
           value={margin}
           min="0"
           onChange={e => setMargin((style.margin = parseInt(e.target.value)))}
+          className="bg-gray-900 text-white"
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Round radius:</div>
+        <input
+          type="number"
+          value={roundRadius}
+          min="0"
+          onChange={e =>
+            setRoundRadius((style.roundRadius = parseInt(e.target.value)))
+          }
           className="bg-gray-900 text-white"
         />
       </label>

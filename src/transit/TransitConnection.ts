@@ -1,4 +1,5 @@
 import { id } from '../utils/id';
+import { angleDelta, wrapAngle2PI } from '../utils/mathUtils';
 import { Vector2 } from '../utils/vec';
 import { SnapLine } from './Snapping';
 import { TransitMap } from './TransitMap';
@@ -28,7 +29,6 @@ export class TransitConnection
   //   Des Sources, and Sunnybrooke; yes, that's a single connection)
   // - multiple connections between the same two stops (e.g. line 11, 12, and 14
   //   between Montréal-Ouest and Lucien-L'Allier)
-  // - rounded corners
   // - go behind other lines when there's no stop in between (e.g. line 15 with
   //   lines 11, 12, 14, the text of "De la Savane", and line 2)
   public from: TransitStop;
@@ -46,6 +46,10 @@ export class TransitConnection
 
   getOtherStop(stop: TransitStop) {
     return stop === this.from ? this.to : this.from;
+  }
+
+  hasStop(stop: TransitStop) {
+    return stop === this.from || stop === this.to;
   }
 
   draw(ctx: CanvasRenderingContext2D): void | {
@@ -69,17 +73,61 @@ export class TransitConnection
         ctx.lineDashOffset = lineWidth * 2 - this.getLength() / 2;
         break;
     }
-    ctx.beginPath();
-    ctx.moveTo(this.from.pos.x, this.from.pos.y);
-    ctx.lineTo(this.to.pos.x, this.to.pos.y);
+    let from = this.from.pos;
+    let to = this.to.pos;
+
+    let fromRounding;
+    let toRounding;
+
+    if (this.style.strokeType === 'solid') {
+      fromRounding = this.from.calculateRoundingStuff();
+      toRounding = this.to.calculateRoundingStuff();
+
+      if (fromRounding) {
+        const direction = from.directionTo(to);
+        from = from.add(direction.mult(fromRounding.edgeDist));
+      }
+
+      if (toRounding) {
+        const direction = to.directionTo(from);
+        to = to.add(direction.mult(toRounding.edgeDist));
+      }
+    }
+    const path = new Path2D();
+
+    if (fromRounding) {
+      const { center, ogPos, radius } = fromRounding;
+      const startAngle = wrapAngle2PI(center.angleTo(from));
+      const endAngle = wrapAngle2PI(center.angleTo(ogPos));
+      const clockwise =
+        wrapAngle2PI(angleDelta(startAngle, endAngle)) < Math.PI;
+
+      path.arc(center.x, center.y, radius, endAngle, startAngle, clockwise);
+    } else {
+      path.moveTo(from.x, from.y);
+    }
+
+    path.lineTo(to.x, to.y);
+
+    if (toRounding) {
+      const { center, ogPos, radius } = toRounding;
+      const startAngle = center.angleTo(to);
+      const endAngle = center.angleTo(ogPos);
+      const clockwise =
+        wrapAngle2PI(angleDelta(startAngle, endAngle)) < Math.PI;
+
+      path.arc(center.x, center.y, radius, startAngle, endAngle, !clockwise);
+    }
+
     if (this.route.style.margin > 0) {
       ctx.lineWidth = lineWidth + this.route.style.margin * 2;
       ctx.strokeStyle = '#000';
-      ctx.stroke();
+      ctx.stroke(path);
     }
+
     ctx.lineWidth = lineWidth;
     ctx.strokeStyle = this.route.style.color;
-    ctx.stroke();
+    ctx.stroke(path);
     ctx.restore();
 
     if (
@@ -90,12 +138,7 @@ export class TransitConnection
         postDraw: () => {
           ctx.save();
           ctx.lineCap = 'round';
-          ctx.beginPath();
-          ctx.moveTo(this.from.pos.x, this.from.pos.y);
-          ctx.lineTo(this.to.pos.x, this.to.pos.y);
-          ctx.lineWidth = this.route.style.innerWidth;
-          ctx.strokeStyle = '#000';
-          ctx.stroke();
+          ctx.stroke(path);
           ctx.restore();
         },
       };
@@ -150,6 +193,21 @@ export class TransitConnection
     const from = which;
     const to = this.getOtherStop(from);
     return Math.atan2(to.pos.y - from.pos.y, to.pos.x - from.pos.x);
+  }
+
+  isParallelTo(other: TransitConnection): boolean {
+    const angle1 = this.getAngle(this.from);
+    const angle2 = other.getAngle(other.from);
+    return Math.abs(angleDelta(angle1, angle2)) < 0.1;
+  }
+
+  getDirectionVector(which: TransitStop): Vector2 {
+    if (which !== this.from && which !== this.to) {
+      throw new Error('The stop must be either the from or the to stop');
+    }
+    const from = which;
+    const to = this.getOtherStop(from);
+    return from.pos.directionTo(to.pos);
   }
 
   getDirectSnapLines(which: TransitStop): SnapLine[] {

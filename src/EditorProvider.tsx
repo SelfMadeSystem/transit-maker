@@ -25,7 +25,13 @@ function createTransitMap(): TransitMap {
     line2,
     stationB,
   );
-  transitMap.createStop('Station D', new Vector2(125, 0), line2, stationB);
+  const stationD = transitMap.createStop(
+    'Station D',
+    new Vector2(125, 0),
+    line2,
+    stationB,
+  );
+  transitMap.createStop('Station E', new Vector2(175, 0), line2, stationD);
   transitMap.createConnection(stationA, stationC, line1);
 
   return transitMap;

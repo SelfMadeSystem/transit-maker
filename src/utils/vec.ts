@@ -148,6 +148,14 @@ export class Vector2 {
     return new Vector2(mod(this.x, other.x), mod(this.y, other.y));
   }
 
+  directionTo(other: Vector2): Vector2 {
+    return other.sub(this).normalize();
+  }
+
+  angleBetween(other: Vector2) {
+    return Math.acos(this.dot(other) / (this.length() * other.length()));
+  }
+
   length(): number {
     return Math.sqrt(this.x * this.x + this.y * this.y);
   }

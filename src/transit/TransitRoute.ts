@@ -11,6 +11,7 @@ export type RouteStyle = {
   innerWidth: number; // only for split lines
   dottedWidth: number; // only for dotted lines
   dashedWidth: number; // only for dashed lines
+  roundRadius: number;
   margin: number;
   stopStyle: StopStyle;
 };
@@ -30,6 +31,7 @@ export class TransitRoute {
       innerWidth: 1,
       dottedWidth: 2,
       dashedWidth: 2,
+      roundRadius: 10,
       margin: 1,
       stopStyle: {
         ...DEFAULT_STOP_STYLE,
@@ -44,4 +46,9 @@ export class TransitRoute {
 }
 
 // TODO: Some way to make this map-specific
-export const TRANSFER_ROUTE = new TransitRoute('Transfer', 'white');
+export const TRANSFER_ROUTE = (() => {
+  const route = new TransitRoute('Transfer', 'white');
+  route.style.roundRadius = 0;
+  route.style.margin = 0;
+  return route;
+})();
