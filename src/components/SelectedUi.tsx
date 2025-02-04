@@ -291,6 +291,8 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
   const [lineWidth, setLineWidth] = useState(style.lineWidth);
   const [strokeType, setStrokeType] = useState(style.strokeType);
   const [innerWidth, setInnerWidth] = useState(style.innerWidth);
+  const [dottedWidth, setDottedWidth] = useState(style.dottedWidth);
+  const [dashedWidth, setDashedWidth] = useState(style.dashedWidth);
   const [margin, setMargin] = useState(style.margin);
 
   return (
@@ -341,6 +343,30 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
           />
         </label>
       ) : null}
+      <label className="flex items-center gap-2">
+        <div className="text-white">Dotted width:</div>
+        <input
+          type="number"
+          value={dottedWidth}
+          min="0"
+          onChange={e =>
+            setDottedWidth((style.dottedWidth = parseInt(e.target.value)))
+          }
+          className="bg-gray-900 text-white"
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Dashed width:</div>
+        <input
+          type="number"
+          value={dashedWidth}
+          min="0"
+          onChange={e =>
+            setDashedWidth((style.dashedWidth = parseInt(e.target.value)))
+          }
+          className="bg-gray-900 text-white"
+        />
+      </label>
       <label className="flex items-center gap-2">
         <div className="text-white">Margin:</div>
         <input

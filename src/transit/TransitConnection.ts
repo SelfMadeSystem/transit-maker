@@ -51,7 +51,7 @@ export class TransitConnection
   draw(ctx: CanvasRenderingContext2D): void | {
     postDraw: () => void;
   } {
-    const lineWidth = this.route.style.lineWidth;
+    let lineWidth = this.route.style.lineWidth;
     ctx.save();
     ctx.lineCap = 'round';
     switch (this.style.strokeType) {
@@ -59,9 +59,11 @@ export class TransitConnection
         ctx.setLineDash([]);
         break;
       case 'dotted':
+        lineWidth = this.route.style.dottedWidth;
         ctx.setLineDash([0, lineWidth * 2]);
         break;
       case 'dashed':
+        lineWidth = this.route.style.dashedWidth;
         ctx.setLineDash([lineWidth * 4, lineWidth * 3]);
         break;
     }

@@ -9,15 +9,14 @@ export type RouteStyle = {
   lineWidth: number;
   strokeType: StrokeType;
   innerWidth: number; // only for split lines
+  dottedWidth: number; // only for dotted lines
+  dashedWidth: number; // only for dashed lines
   margin: number;
   stopStyle: StopStyle;
 };
 
 export class TransitRoute {
   public id: number = id();
-  // TODO: Add support for:
-  // - Different route styles for solid/dotted/dashed lines. I found that for
-  //   thick lines, the dotted and dashed styles are way too large.
   public name: string;
   public stops: Set<TransitStop>;
   public style: RouteStyle;
@@ -29,6 +28,8 @@ export class TransitRoute {
       lineWidth: 2,
       strokeType: 'solid',
       innerWidth: 1,
+      dottedWidth: 2,
+      dashedWidth: 2,
       margin: 1,
       stopStyle: {
         ...DEFAULT_STOP_STYLE,
