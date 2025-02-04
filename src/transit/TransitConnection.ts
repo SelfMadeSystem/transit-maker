@@ -61,10 +61,12 @@ export class TransitConnection
       case 'dotted':
         lineWidth = this.route.style.dottedWidth;
         ctx.setLineDash([0, lineWidth * 2]);
+        ctx.lineDashOffset = -this.getLength() / 2;
         break;
       case 'dashed':
         lineWidth = this.route.style.dashedWidth;
         ctx.setLineDash([lineWidth * 4, lineWidth * 3]);
+        ctx.lineDashOffset = lineWidth * 2 - this.getLength() / 2;
         break;
     }
     ctx.beginPath();
@@ -111,6 +113,10 @@ export class TransitConnection
     ctx.lineTo(this.to.pos.x, this.to.pos.y);
     ctx.stroke();
     ctx.restore();
+  }
+
+  getLength(): number {
+    return this.from.pos.dist(this.to.pos);
   }
 
   isOver(x: number, y: number) {
