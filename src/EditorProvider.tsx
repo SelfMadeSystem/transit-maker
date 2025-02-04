@@ -12,11 +12,7 @@ function createTransitMap(): TransitMap {
   transitMap.addRoute(line1);
   const line2 = new TransitRoute('Metro 2', '#008000');
   transitMap.addRoute(line2);
-  const stationA = transitMap.createStop(
-    'Station A',
-    new Vector2(50, 50),
-    line1,
-  );
+  const stationA = transitMap.createStop('Station A', new Vector2(50, 50));
   const stationB = transitMap.createStop(
     'Station B',
     new Vector2(100, 50),

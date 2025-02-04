@@ -64,16 +64,25 @@ export class TransitMap {
     connection.to.connections.delete(connection);
   }
 
+  createStop(name: string | null, pos: Vector2): TransitStop;
   createStop(
     name: string | null,
     pos: Vector2,
     route: TransitRoute,
+    from: TransitStop,
+  ): TransitStop;
+  createStop(
+    name: string | null,
+    pos: Vector2,
+    route?: TransitRoute,
     from?: TransitStop,
   ) {
     const stop = new TransitStop(name ? [new Label(name)] : [], pos);
     this.addStop(stop);
-    route.addStop(stop);
     if (from) {
+      if (!route) {
+        throw new Error('Must provide route when creating stop with from');
+      }
       const connection = new TransitConnection(from, stop, route);
       this.addConnection(connection);
       from.connections.add(connection);

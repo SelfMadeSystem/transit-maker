@@ -1,6 +1,5 @@
 import { EditorContextType } from '../EditorContext';
 import { Label } from '../transit/Label';
-import { TRANSFER_ROUTE } from '../transit/TransitRoute';
 import { PosWithKeys, SelectableItem } from '../transit/types';
 import { Vector2 } from '../utils/vec';
 import createCanvasComponent from './CanvasComponent';
@@ -109,7 +108,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
         } else if (selectable instanceof Label) {
           renameLabel(selectable);
         } else if (!selectable) {
-          map.createStop('Unnamed Stop', new Vector2(x, y), TRANSFER_ROUTE);
+          map.createStop('Unnamed Stop', new Vector2(x, y));
         }
       },
       mouseMove(e, { mouseX, mouseY }) {
