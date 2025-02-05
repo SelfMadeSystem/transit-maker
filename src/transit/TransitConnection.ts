@@ -198,7 +198,12 @@ export class TransitConnection
   isParallelTo(other: TransitConnection): boolean {
     const angle1 = this.getAngle(this.from);
     const angle2 = other.getAngle(other.from);
-    return Math.abs(angleDelta(angle1, angle2)) < 0.1;
+    const diff = Math.abs(angle1 - angle2);
+    return (
+      diff < 0.1 ||
+      (diff > Math.PI - 0.1 && diff < Math.PI + 0.1) ||
+      diff > Math.PI * 2 - 0.1
+    );
   }
 
   getDirectionVector(which: TransitStop): Vector2 {
@@ -222,6 +227,28 @@ export class TransitConnection
     ];
   }
 
+  getCardinalSnapLines(which: TransitStop, length: number | null): SnapLine[] {
+    if (length === null) {
+      return [
+        new SnapLine(which.pos, new Vector2(1, 0), 2),
+        new SnapLine(which.pos, new Vector2(0, 1), 2),
+        new SnapLine(which.pos, new Vector2(1, 1).normalize(), 3),
+        new SnapLine(which.pos, new Vector2(1, -1).normalize(), 3),
+      ];
+    } else {
+      return [
+        new SnapLine(which.pos, new Vector2(1, 0), 2, length),
+        new SnapLine(which.pos, new Vector2(-1, 0), 2, length),
+        new SnapLine(which.pos, new Vector2(0, 1), 2, length),
+        new SnapLine(which.pos, new Vector2(0, -1), 2, length),
+        new SnapLine(which.pos, new Vector2(1, 1).normalize(), 3, length),
+        new SnapLine(which.pos, new Vector2(1, -1).normalize(), 3, length),
+        new SnapLine(which.pos, new Vector2(-1, 1).normalize(), 3, length),
+        new SnapLine(which.pos, new Vector2(-1, -1).normalize(), 3, length),
+      ];
+    }
+  }
+
   getSnapLines(which: TransitStop): SnapLine[] {
     const snapLines: SnapLine[] = [];
 
@@ -239,13 +266,10 @@ export class TransitConnection
       snapLines.push(...connection.getDirectSnapLines(other));
     }
 
-    return [
-      ...snapLines,
-      new SnapLine(other.pos, new Vector2(1, 0), 2),
-      new SnapLine(other.pos, new Vector2(0, 1), 2),
-      new SnapLine(other.pos, new Vector2(1, 1).normalize(), 3),
-      new SnapLine(other.pos, new Vector2(1, -1).normalize(), 3),
-    ];
+    const length = snapLines.length === 3 ? snapLines[0].length : null;
+    const cardinalSnapLines = this.getCardinalSnapLines(other, length);
+
+    return [...snapLines, ...cardinalSnapLines];
   }
 
   remove(map: TransitMap): void {

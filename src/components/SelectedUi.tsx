@@ -145,7 +145,7 @@ function StopStyleUi({ style }: { style: StopStyle }) {
           type="number"
           value={radius}
           min="0"
-          onChange={e => setRadius((style.radius = parseInt(e.target.value)))}
+          onChange={e => setRadius((style.radius = parseFloat(e.target.value)))}
           className="bg-gray-900 text-white"
         />
       </label>
@@ -156,7 +156,7 @@ function StopStyleUi({ style }: { style: StopStyle }) {
           value={strokeWidth}
           min="0"
           onChange={e =>
-            setStrokeWidth((style.strokeWidth = parseInt(e.target.value)))
+            setStrokeWidth((style.strokeWidth = parseFloat(e.target.value)))
           }
           className="bg-gray-900 text-white"
         />
@@ -311,7 +311,7 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
           value={lineWidth}
           min="0"
           onChange={e =>
-            setLineWidth((style.lineWidth = parseInt(e.target.value)))
+            setLineWidth((style.lineWidth = parseFloat(e.target.value)))
           }
           className="bg-gray-900 text-white"
         />
@@ -337,7 +337,7 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
             value={innerWidth}
             min="0"
             onChange={e =>
-              setInnerWidth((style.innerWidth = parseInt(e.target.value)))
+              setInnerWidth((style.innerWidth = parseFloat(e.target.value)))
             }
             className="bg-gray-900 text-white"
           />
@@ -350,7 +350,7 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
           value={dottedWidth}
           min="0"
           onChange={e =>
-            setDottedWidth((style.dottedWidth = parseInt(e.target.value)))
+            setDottedWidth((style.dottedWidth = parseFloat(e.target.value)))
           }
           className="bg-gray-900 text-white"
         />
@@ -362,7 +362,7 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
           value={dashedWidth}
           min="0"
           onChange={e =>
-            setDashedWidth((style.dashedWidth = parseInt(e.target.value)))
+            setDashedWidth((style.dashedWidth = parseFloat(e.target.value)))
           }
           className="bg-gray-900 text-white"
         />
@@ -373,7 +373,7 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
           type="number"
           value={margin}
           min="0"
-          onChange={e => setMargin((style.margin = parseInt(e.target.value)))}
+          onChange={e => setMargin((style.margin = parseFloat(e.target.value)))}
           className="bg-gray-900 text-white"
         />
       </label>
@@ -384,7 +384,7 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
           value={roundRadius}
           min="0"
           onChange={e =>
-            setRoundRadius((style.roundRadius = parseInt(e.target.value)))
+            setRoundRadius((style.roundRadius = parseFloat(e.target.value)))
           }
           className="bg-gray-900 text-white"
         />
