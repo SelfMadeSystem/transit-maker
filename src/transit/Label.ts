@@ -27,20 +27,13 @@ export class Label implements Selectable, Movable {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
-    {
-      this.getDimensions(ctx);
-    }
-    {
-      ctx.font = LabelFont;
-      ctx.fillStyle = 'white';
-      const drawPos = this.getDrawPos();
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(this.text, drawPos.x, drawPos.y);
-      ctx.fillStyle = 'red';
-      ctx.fillRect(drawPos.x, drawPos.y, 1, 1);
-      this.drawSelected(ctx);
-    }
+    this.getDimensions(ctx);
+    ctx.font = LabelFont;
+    ctx.fillStyle = 'white';
+    const drawPos = this.getDrawPos();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(this.text, drawPos.x, drawPos.y);
   }
 
   getDimensions(ctx: CanvasRenderingContext2D): [Vector2, Vector2] {
