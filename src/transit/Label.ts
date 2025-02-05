@@ -11,65 +11,71 @@ export class Label implements Selectable, Movable {
   // - connection icon (e.g. airport, intercity rail, etc.)
   // - other icons (e.g. wheelchair accessible, parking, etc.)
   public text: string;
-  public x: number;
-  public y: number;
+  public pos: Vector2;
   public stop: TransitStop;
-  private cachedDimensions: TextMetrics | null = null;
+  private cachedDimensions: [tl: Vector2, br: Vector2] | null = null;
   private cacheKey: string | null = null;
 
-  constructor(text: string, x: number = 0, y: number = -15) {
+  constructor(text: string, pos: Vector2 = new Vector2(0, -15)) {
     this.text = text;
-    this.x = x;
-    this.y = y;
+    this.pos = pos;
     this.stop = null as unknown as TransitStop; // should always be set immediately after construction
+  }
+
+  getDrawPos(): Vector2 {
+    return this.pos.add(this.stop.getDrawPos());
   }
 
   draw(ctx: CanvasRenderingContext2D) {
     {
       this.getDimensions(ctx);
-      // const dimensions = this.getDimensions(ctx);
-      // const x = this.x + this.stop.pos.x - dimensions.width / 2;
-      // const y =
-      //   this.y + this.stop.pos.y - dimensions.actualBoundingBoxAscent;
-      // ctx.fillStyle = "black";
-      // ctx.fillRect(
-      //   x - 2,
-      //   y - 2,
-      //   dimensions.width + 4,
-      //   dimensions.actualBoundingBoxAscent * 2 + 4
-      // );
     }
     {
       ctx.font = LabelFont;
       ctx.fillStyle = 'white';
-      const stopPos = this.stop.getDrawPos();
-      const x = this.x + stopPos.x;
-      const y = this.y + stopPos.y;
+      const drawPos = this.getDrawPos();
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(this.text, x, y);
+      ctx.fillText(this.text, drawPos.x, drawPos.y);
+      ctx.fillStyle = 'red';
+      ctx.fillRect(drawPos.x, drawPos.y, 1, 1);
+      this.drawSelected(ctx);
     }
   }
 
-  getDimensions(ctx: CanvasRenderingContext2D) {
-    ctx.font = LabelFont;
-    if (this.cacheKey !== this.text) {
-      this.cacheKey = this.text;
+  getDimensions(ctx: CanvasRenderingContext2D): [Vector2, Vector2] {
+    if (this.cacheKey === this.text) {
+      return this.cachedDimensions as [Vector2, Vector2];
     }
-    return (this.cachedDimensions = ctx.measureText(this.cacheKey));
+    ctx.font = LabelFont;
+    this.cacheKey = this.text;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const textMetrics = ctx.measureText(this.cacheKey);
+    const tl = new Vector2(
+      textMetrics.actualBoundingBoxLeft,
+      textMetrics.actualBoundingBoxAscent,
+    );
+    const br = new Vector2(
+      textMetrics.actualBoundingBoxRight,
+      textMetrics.actualBoundingBoxDescent,
+    );
+    const dimensions: [Vector2, Vector2] = [tl, br];
+    this.cachedDimensions = dimensions;
+    return dimensions;
   }
 
   drawSelected(ctx: CanvasRenderingContext2D) {
-    const dimensions = this.getDimensions(ctx);
-    const x = this.x + this.stop.pos.x - dimensions.width / 2;
-    const y = this.y + this.stop.pos.y - dimensions.actualBoundingBoxAscent;
+    const [tl, br] = this.getDimensions(ctx);
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 1;
+    const topLeft = this.getDrawPos().sub(tl);
+    const dimensions = br.add(tl);
     ctx.strokeRect(
-      x - 2,
-      y - 2,
-      dimensions.width + 4,
-      dimensions.actualBoundingBoxAscent * 2 + 4,
+      topLeft.x - 2,
+      topLeft.y - 2,
+      dimensions.x + 4,
+      dimensions.y * 2 + 4,
     );
   }
 
@@ -78,20 +84,24 @@ export class Label implements Selectable, Movable {
     if (!dimensions) {
       return false;
     }
-    const x1 = this.x + this.stop.pos.x - dimensions.width / 2;
-    const y1 = this.y + this.stop.pos.y - dimensions.actualBoundingBoxAscent;
-    const x2 = x1 + dimensions.width;
-    const y2 = y1 + dimensions.actualBoundingBoxAscent * 2;
-    return x >= x1 && x <= x2 && y >= y1 && y <= y2;
+    const [tl, br] = dimensions;
+    const drawPos = this.getDrawPos();
+    const topLeft = drawPos.sub(tl);
+    const bottomRight = drawPos.add(br);
+    return (
+      x >= topLeft.x &&
+      x <= bottomRight.x &&
+      y >= topLeft.y &&
+      y <= bottomRight.y
+    );
   }
 
   getPos(): Vector2 {
-    return new Vector2(this.x, this.y);
+    return this.pos;
   }
 
-  moveTo({ pos: { x, y } }: PosWithKeys) {
-    this.x = x;
-    this.y = y;
+  moveTo({ pos }: PosWithKeys) {
+    this.pos = pos;
   }
 
   remove(): void {
@@ -99,6 +109,6 @@ export class Label implements Selectable, Movable {
   }
 
   clone(): Label {
-    return new Label(this.text, this.x, this.y);
+    return new Label(this.text, this.pos);
   }
 }

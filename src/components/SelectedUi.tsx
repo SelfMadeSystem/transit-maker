@@ -7,6 +7,7 @@ import {
 import { TransitMap } from '../transit/TransitMap';
 import { StrokeType, TransitRoute } from '../transit/TransitRoute';
 import { StopStyle, TransitStop } from '../transit/TransitStop';
+import { Vector2 } from '../utils/vec';
 import { ColorEditor } from './ColorEditor';
 import { StopColorEditor } from './StopColorEditor';
 import { useContext, useState } from 'react';
@@ -30,7 +31,7 @@ function TransitStopUi({ stop }: { stop: TransitStop }) {
   const [hasStyle, setHasStyle] = useState(stop.style !== undefined);
 
   function addLabel() {
-    stop.addLabel(new Label('Unnamed Label', 0, -15));
+    stop.addLabel(new Label('Unnamed Label', new Vector2(0, -15)));
   }
 
   return (
