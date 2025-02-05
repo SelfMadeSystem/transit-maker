@@ -149,7 +149,7 @@ export default function createCanvasComponent<
         }
 
         if (result?.mouseDbClick) {
-          window.addEventListener(
+          canvas.addEventListener(
             'dblclick',
             (e: MouseEvent) => {
               const rect = canvas.getBoundingClientRect();

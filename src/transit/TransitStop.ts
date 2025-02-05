@@ -29,6 +29,7 @@ export type StopStyle = {
    * Two orientations for even-numbered edges and three for odd-numbered edges.
    */
   edgeOrientation: number;
+  roundRadius?: number;
   edgeFollowsRoute: boolean;
   radius: number;
   strokeWidth: number;
@@ -146,7 +147,7 @@ export class TransitStop
     }
     const route = this.getRoute();
 
-    const radius = route.style.roundRadius;
+    let radius = this.getStyle().roundRadius ?? route.style.roundRadius;
     if (radius <= 0) {
       this.roundingStuffCache = null;
       return;
@@ -165,6 +166,8 @@ export class TransitStop
     const vector1 = otherPoint1.sub(this.pos);
     const vector2 = otherPoint2.sub(this.pos);
 
+    const minDist = Math.min(vector1.length(), vector2.length());
+
     const checkAngle = vector1.angleTo(vector2);
 
     if (checkAngle < Math.PI / 2) {
@@ -175,7 +178,11 @@ export class TransitStop
     const dirOther = connection1.getDirectionVector(this);
     const avgDir = dirThis.add(dirOther).normalize();
     const angle = dirThis.angleBetween(dirOther) / 2;
-    const dist = radius / Math.sin(angle);
+    let dist = radius / Math.sin(angle);
+    if (dist > minDist / 2) {
+      dist = minDist / 2;
+      radius = dist * Math.sin(angle);
+    }
     const centerOffset = avgDir.mult(dist);
     const center = this.pos.add(centerOffset);
     const stopOffset = avgDir.mult(dist - radius);
