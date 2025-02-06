@@ -5,7 +5,11 @@ import {
   TransitConnection,
 } from '../transit/TransitConnection';
 import { TransitMap } from '../transit/TransitMap';
-import { StrokeType, TransitRoute } from '../transit/TransitRoute';
+import {
+  StrokeType,
+  TransitRoute,
+  createDefaultRoute,
+} from '../transit/TransitRoute';
 import { StopStyle, TransitStop } from '../transit/TransitStop';
 import { Vector2 } from '../utils/vec';
 import { ColorEditor } from './ColorEditor';
@@ -254,7 +258,8 @@ function TransitRoutesUi({ routes: _routes }: { routes: Set<TransitRoute> }) {
   function addRoute() {
     const name = prompt('Enter route name');
     if (name) {
-      const route = new TransitRoute(name, 'white');
+      const route = createDefaultRoute();
+      route.name = name;
       routes.add(route);
       setRoute(route);
       setRoutes(new Set(routes));

@@ -46,9 +46,9 @@ export class TransitRoute {
 }
 
 // TODO: Some way to make this map-specific
-export const TRANSFER_ROUTE = (() => {
+export const createDefaultRoute = () => {
   const route = new TransitRoute('Transfer', 'white');
   route.style.roundRadius = 0;
   route.style.margin = 0;
   return route;
-})();
+};

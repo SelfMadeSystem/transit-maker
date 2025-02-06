@@ -9,7 +9,7 @@ import {
   styleEquals,
 } from './TransitConnection';
 import { TransitMap } from './TransitMap';
-import { TRANSFER_ROUTE, TransitRoute } from './TransitRoute';
+import { TransitRoute } from './TransitRoute';
 import {
   ClickInfo,
   DoubleClickable,
@@ -102,7 +102,7 @@ export class TransitStop
     if (routes.size === 1) {
       return routes.values().next().value!.style.stopStyle;
     }
-    return DEFAULT_STOP_STYLE;
+    return this.map.defaultRoute.style.stopStyle;
   }
 
   getRoute(): TransitRoute {
@@ -110,13 +110,12 @@ export class TransitStop
     if (routes.size === 1) {
       return routes.values().next().value!;
     }
-    return TRANSFER_ROUTE;
+    return this.map.defaultRoute;
   }
 
   getConnectionStyle(): ConnectionStyle {
     const connections = [...this.connections];
     const style = connections[0]?.style;
-    console.log('connectionStyle', style, connections);
     if (connections.every(connection => styleEquals(style, connection.style))) {
       return style;
     }
@@ -143,7 +142,7 @@ export class TransitStop
       if (routes.size === 1) {
         return routes.values().next().value!.style.color;
       } else {
-        return TRANSFER_ROUTE.style.color;
+        return this.map.defaultRoute.style.color;
       }
     }
     if (c) {
@@ -361,7 +360,7 @@ export class TransitStop
     const route = this.getRoute();
     const connectionStyle = this.getConnectionStyle();
     const stop = this.map.createStop(
-      routes.size === 1 ? 'Unnamed Stop' : null,
+      routes.size === 1 && this.labels.size > 0 ? 'Unnamed Stop' : null,
       new Vector2(this.pos.x + 10, this.pos.y + 10),
       route,
       this,

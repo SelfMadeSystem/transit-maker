@@ -2,7 +2,7 @@ import { id } from '../utils/id';
 import { Vector2 } from '../utils/vec';
 import { Label } from './Label';
 import { TransitConnection } from './TransitConnection';
-import { TRANSFER_ROUTE, TransitRoute } from './TransitRoute';
+import { TransitRoute, createDefaultRoute } from './TransitRoute';
 import { TransitStop } from './TransitStop';
 import { SelectableItem } from './types';
 
@@ -21,9 +21,10 @@ export class TransitMap {
   public routes: Set<TransitRoute>;
   public stops: Set<TransitStop>;
   public connections: Set<TransitConnection>;
+  public defaultRoute: TransitRoute;
 
   constructor() {
-    this.routes = new Set([TRANSFER_ROUTE]);
+    this.routes = new Set([(this.defaultRoute = createDefaultRoute())]);
     this.stops = new Set();
     this.connections = new Set();
   }
