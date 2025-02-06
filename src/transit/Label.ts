@@ -2,11 +2,11 @@ import { id } from '../utils/id';
 import { Vector2 } from '../utils/vec';
 import { TransitMap } from './TransitMap';
 import { TransitStop } from './TransitStop';
-import { Movable, PosWithKeys, Selectable } from './types';
+import { Movable, PosWithKeys, Removable, Selectable } from './types';
 
 const LabelFont = '10px sans-serif';
 
-export class Label implements Selectable, Movable {
+export class Label implements Selectable, Movable, Removable {
   // TODO: Add support for:
   // - text formatting (e.g. bold for important/transfer stations)
   // - line icon identifier (e.g. blue circle with white "5" for line 5 in Montreal)

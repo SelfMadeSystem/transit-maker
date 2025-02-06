@@ -387,6 +387,9 @@ export class TransitStop
       otherStop.removeConnection(connection);
       this.map.connections.delete(connection);
     }
+    for (const label of this.labels) {
+      label.remove();
+    }
   }
 
   doubleClick(a: ClickInfo): void; // just for types
