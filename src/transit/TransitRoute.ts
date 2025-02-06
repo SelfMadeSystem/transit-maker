@@ -1,4 +1,5 @@
 import { id } from '../utils/id';
+import { TransitMap } from './TransitMap';
 import { DEFAULT_STOP_STYLE, StopStyle, TransitStop } from './TransitStop';
 
 // The REM has the `split` style. It's very weird, I've never seen it on any other transit map.
@@ -19,11 +20,13 @@ export type RouteStyle = {
 
 export class TransitRoute {
   public id: number = id();
+  public map: TransitMap;
   public name: string;
   public stops: Set<TransitStop>;
   public style: RouteStyle;
 
-  constructor(name: string, color: string) {
+  constructor(map: TransitMap, name: string, color: string) {
+    this.map = map;
     this.name = name;
     this.style = {
       color,
@@ -42,16 +45,21 @@ export class TransitRoute {
       },
     };
     this.stops = new Set();
+    this.map.routes.add(this);
   }
 
   addStop(stop: TransitStop) {
     this.stops.add(stop);
   }
+
+  removeStop(stop: TransitStop) {
+    this.stops.delete(stop);
+  }
 }
 
 // TODO: Some way to make this map-specific
-export const createDefaultRoute = () => {
-  const route = new TransitRoute('Transfer', 'white');
+export const createDefaultRoute = (map: TransitMap) => {
+  const route = new TransitRoute(map, 'Transfer', 'white');
   route.style.roundRadius = 0;
   route.style.margin = 0;
   return route;

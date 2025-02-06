@@ -84,6 +84,29 @@ export class TransitStop
     }
     this.pos = pos;
     this.connections = new Set();
+    this.map.stops.add(this);
+  }
+
+  addConnection(connection: TransitConnection) {
+    this.connections.add(connection);
+    connection.route.stops.add(this);
+  }
+
+  removeConnection(connection: TransitConnection) {
+    if (!this.connections.has(connection)) {
+      return;
+    }
+    this.connections.delete(connection);
+    if (!this.hasRoute(connection)) connection.route.removeStop(this);
+  }
+
+  hasRoute(connection: TransitConnection): boolean {
+    for (const otherConnection of this.connections) {
+      if (otherConnection.route === connection.route) {
+        return true;
+      }
+    }
+    return false;
   }
 
   getRoutes(): Set<TransitRoute> {
@@ -352,7 +375,18 @@ export class TransitStop
   }
 
   remove(): void {
-    this.map.removeStop(this);
+    if (!this.map.stops.has(this)) {
+      return;
+    }
+    this.map.stops.delete(this);
+    for (const route of this.getRoutes()) {
+      route.stops.delete(this);
+    }
+    for (const connection of this.connections) {
+      const otherStop = connection.getOtherStop(this);
+      otherStop.removeConnection(connection);
+      this.map.connections.delete(connection);
+    }
   }
 
   doubleClick(a: ClickInfo): void; // just for types

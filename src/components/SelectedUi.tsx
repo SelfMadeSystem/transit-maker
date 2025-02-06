@@ -27,7 +27,7 @@ export function SelectedUi() {
       <TransitConnectionUi key={selected.id} connection={selected} map={map} />
     );
   }
-  return <TransitRoutesUi routes={map.routes} />;
+  return <TransitRoutesUi routes={map.routes} map={map} />;
 }
 
 function TransitStopUi({ stop }: { stop: TransitStop }) {
@@ -251,14 +251,20 @@ function TransitConnectionUi({
   );
 }
 
-function TransitRoutesUi({ routes: _routes }: { routes: Set<TransitRoute> }) {
+function TransitRoutesUi({
+  routes: _routes,
+  map,
+}: {
+  routes: Set<TransitRoute>;
+  map: TransitMap;
+}) {
   const [routes, setRoutes] = useState(_routes);
   const [route, setRoute] = useState<TransitRoute | null>(null);
 
   function addRoute() {
     const name = prompt('Enter route name');
     if (name) {
-      const route = createDefaultRoute();
+      const route = createDefaultRoute(map);
       route.name = name;
       routes.add(route);
       setRoute(route);

@@ -19,50 +19,17 @@ export class TransitMap {
   // - compass rose
   // - extra text (e.g. copyright, title, etc.)
   public routes: Set<TransitRoute>;
+  public labels: Set<Label>;
   public stops: Set<TransitStop>;
   public connections: Set<TransitConnection>;
   public defaultRoute: TransitRoute;
 
   constructor() {
-    this.routes = new Set([(this.defaultRoute = createDefaultRoute())]);
+    this.routes = new Set();
+    this.labels = new Set();
     this.stops = new Set();
     this.connections = new Set();
-  }
-
-  addRoute(route: TransitRoute) {
-    this.routes.add(route);
-  }
-
-  addStop(stop: TransitStop) {
-    this.stops.add(stop);
-  }
-
-  addConnection(connection: TransitConnection) {
-    this.connections.add(connection);
-  }
-
-  removeStop(stop: TransitStop) {
-    if (!this.stops.has(stop)) {
-      return;
-    }
-    this.stops.delete(stop);
-    for (const route of stop.getRoutes()) {
-      route.stops.delete(stop);
-    }
-    for (const connection of stop.connections) {
-      const otherStop = connection.getOtherStop(stop);
-      otherStop.connections.delete(connection);
-      this.connections.delete(connection);
-    }
-  }
-
-  removeConnection(connection: TransitConnection) {
-    if (!this.connections.has(connection)) {
-      return;
-    }
-    this.connections.delete(connection);
-    connection.from.connections.delete(connection);
-    connection.to.connections.delete(connection);
+    this.defaultRoute = createDefaultRoute(this);
   }
 
   createStop(name: string | null, pos: Vector2): TransitStop;
@@ -83,36 +50,26 @@ export class TransitMap {
       name ? [new Label(this, name)] : [],
       pos,
     );
-    this.addStop(stop);
     if (from) {
       if (!route) {
         throw new Error('Must provide route when creating stop with from');
       }
-      const connection = new TransitConnection(this, from, stop, route);
-      this.addConnection(connection);
-      from.connections.add(connection);
-      stop.connections.add(connection);
+      new TransitConnection(this, from, stop, route);
     }
     return stop;
   }
 
   createConnection(from: TransitStop, to: TransitStop, route: TransitRoute) {
-    const connection = new TransitConnection(this, from, to, route);
-    this.addConnection(connection);
-    from.connections.add(connection);
-    to.connections.add(connection);
+    new TransitConnection(this, from, to, route);
   }
 
   splitConnection(connection: TransitConnection) {
     if (!this.connections.has(connection)) {
       return;
     }
-    this.connections.delete(connection);
+    connection.remove();
     const from = connection.from;
     const to = connection.to;
-
-    from.connections.delete(connection);
-    to.connections.delete(connection);
 
     const route = connection.route;
     const stop = new TransitStop(
@@ -121,18 +78,11 @@ export class TransitMap {
       new Vector2((from.pos.x + to.pos.x) / 2, (from.pos.y + to.pos.y) / 2),
     );
 
-    this.addStop(stop);
     route.addStop(stop);
     const connection1 = new TransitConnection(this, from, stop, route);
     const connection2 = new TransitConnection(this, stop, to, route);
     connection1.style = { ...connection.style };
     connection2.style = { ...connection.style };
-    this.addConnection(connection1);
-    this.addConnection(connection2);
-    from.connections.add(connection1);
-    stop.connections.add(connection1);
-    stop.connections.add(connection2);
-    to.connections.add(connection2);
   }
 
   getSelectable(x: number, y: number): SelectableItem | null {
@@ -177,12 +127,12 @@ export class TransitMap {
         stop.drawSelected(ctx);
       }
       stop.draw(ctx);
-      for (const label of stop.labels) {
-        if (selected === label) {
-          label.drawSelected(ctx);
-        }
-        label.draw(ctx);
+    }
+    for (const label of this.labels) {
+      if (selected === label) {
+        label.drawSelected(ctx);
       }
+      label.draw(ctx);
     }
   }
 }

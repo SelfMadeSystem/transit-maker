@@ -8,10 +8,8 @@ import { useState } from 'react';
 function createTransitMap(): TransitMap {
   const transitMap = new TransitMap();
 
-  const line1 = new TransitRoute('Metro 1', '#ff0000');
-  transitMap.addRoute(line1);
-  const line2 = new TransitRoute('Metro 2', '#008000');
-  transitMap.addRoute(line2);
+  const line1 = new TransitRoute(transitMap, 'Metro 1', '#ff0000');
+  const line2 = new TransitRoute(transitMap, 'Metro 2', '#008000');
   const stationA = transitMap.createStop('Station A', new Vector2(50, 50));
   const stationB = transitMap.createStop(
     'Station B',

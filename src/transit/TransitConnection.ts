@@ -53,6 +53,9 @@ export class TransitConnection
     this.from = from;
     this.to = to;
     this.route = route;
+    this.map.connections.add(this);
+    this.from.addConnection(this);
+    this.to.addConnection(this);
   }
 
   getOtherStop(stop: TransitStop) {
@@ -105,6 +108,7 @@ export class TransitConnection
         postDraw: () => {
           ctx.save();
           ctx.lineCap = 'round';
+          ctx.lineWidth = this.route.style.innerWidth;
           ctx.stroke(path);
           ctx.restore();
         },
@@ -290,7 +294,9 @@ export class TransitConnection
   }
 
   remove(): void {
-    this.map.removeConnection(this);
+    this.map.connections.delete(this);
+    this.from.removeConnection(this);
+    this.to.removeConnection(this);
   }
 
   doubleClick(): void {

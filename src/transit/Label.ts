@@ -1,3 +1,4 @@
+import { id } from '../utils/id';
 import { Vector2 } from '../utils/vec';
 import { TransitMap } from './TransitMap';
 import { TransitStop } from './TransitStop';
@@ -11,10 +12,11 @@ export class Label implements Selectable, Movable {
   // - line icon identifier (e.g. blue circle with white "5" for line 5 in Montreal)
   // - connection icon (e.g. airport, intercity rail, etc.)
   // - other icons (e.g. wheelchair accessible, parking, etc.)
+  public id: number = id();
   public map: TransitMap;
   public text: string;
   public pos: Vector2;
-  public stop: TransitStop;
+  public stop: TransitStop | null;
   private cachedDimensions: [tl: Vector2, br: Vector2] | null = null;
   private cacheKey: string | null = null;
 
@@ -26,10 +28,26 @@ export class Label implements Selectable, Movable {
     this.map = map;
     this.text = text;
     this.pos = pos;
-    this.stop = null as unknown as TransitStop; // should always be set immediately after construction
+    this.stop = null;
+    this.map.labels.add(this);
+  }
+
+  disconnectFromStop() {
+    const drawPos = this.getDrawPos();
+    this.pos = drawPos;
+    this.stop = null;
+  }
+
+  connectToStop(stop: TransitStop) {
+    const stopPos = stop.getDrawPos();
+    this.pos = this.pos.sub(stopPos);
+    this.stop = stop;
   }
 
   getDrawPos(): Vector2 {
+    if (!this.stop) {
+      return this.pos;
+    }
     return this.pos.add(this.stop.getDrawPos());
   }
 
@@ -105,6 +123,7 @@ export class Label implements Selectable, Movable {
   }
 
   remove(): void {
-    this.stop.labels.delete(this);
+    this.map.labels.delete(this);
+    this.stop?.labels.delete(this);
   }
 }
