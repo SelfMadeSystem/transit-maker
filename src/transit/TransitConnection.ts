@@ -114,14 +114,14 @@ export class TransitConnection
 
   drawSelected(ctx: CanvasRenderingContext2D): void {
     ctx.save();
-    ctx.setLineDash([2, 2]);
+    const lineWidth = this.route.style.dottedWidth;
+    ctx.setLineDash([lineWidth, lineWidth]);
+    ctx.lineDashOffset = (Date.now() / 200) % (lineWidth * 2);
     ctx.strokeStyle = 'white';
     ctx.lineWidth =
       this.route.style.lineWidth + this.route.style.margin * 2 + 2;
-    ctx.beginPath();
-    ctx.moveTo(this.from.pos.x, this.from.pos.y);
-    ctx.lineTo(this.to.pos.x, this.to.pos.y);
-    ctx.stroke();
+    const [path] = this.getPath();
+    ctx.stroke(path);
     ctx.restore();
   }
 
