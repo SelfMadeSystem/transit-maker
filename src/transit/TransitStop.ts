@@ -2,7 +2,12 @@ import { id } from '../utils/id';
 import { Vector2 } from '../utils/vec';
 import { Label } from './Label';
 import { SnapInfo, SnapLine } from './Snapping';
-import { TransitConnection } from './TransitConnection';
+import {
+  ConnectionStyle,
+  DEFALUT_CONNECTION_STYLE,
+  TransitConnection,
+  styleEquals,
+} from './TransitConnection';
 import { TransitMap } from './TransitMap';
 import { TRANSFER_ROUTE, TransitRoute } from './TransitRoute';
 import {
@@ -44,6 +49,17 @@ export const DEFAULT_STOP_STYLE: StopStyle = {
   strokeWidth: 2,
 };
 
+export type RoundingCalculation = {
+  ogPos: Vector2;
+  centerOffset: Vector2;
+  center: Vector2;
+  stopOffset: Vector2;
+  stop: Vector2;
+  radius: number;
+  edgeDist: number;
+  angle: number;
+} | null;
+
 export class TransitStop
   implements Selectable, Movable, RightClickable, DoubleClickable
 {
@@ -58,18 +74,7 @@ export class TransitStop
   public hidden: boolean = false;
   public roundRadius: number | undefined;
   public style?: StopStyle;
-  private roundingStuffCache:
-    | {
-        ogPos: Vector2;
-        centerOffset: Vector2;
-        center: Vector2;
-        stopOffset: Vector2;
-        stop: Vector2;
-        radius: number;
-        edgeDist: number;
-      }
-    | null
-    | undefined = undefined;
+  private roundingStuffCache: RoundingCalculation | undefined = undefined;
 
   constructor(map: TransitMap, labels: Label[], pos: Vector2) {
     this.map = map;
@@ -108,6 +113,18 @@ export class TransitStop
     return TRANSFER_ROUTE;
   }
 
+  getConnectionStyle(): ConnectionStyle {
+    const connections = [...this.connections];
+    const style = connections[0]?.style;
+    console.log('connectionStyle', style, connections);
+    if (connections.every(connection => styleEquals(style, connection.style))) {
+      return style;
+    }
+    return {
+      ...DEFALUT_CONNECTION_STYLE,
+    };
+  }
+
   setLabels(labels: Label[]) {
     this.labels = new Set(labels);
     for (const label of this.labels) {
@@ -139,27 +156,27 @@ export class TransitStop
     return this.calculateRoundingStuff()?.stop ?? this.pos;
   }
 
-  calculateRoundingStuff() {
+  calculateRoundingStuff(): RoundingCalculation {
     if (this.roundingStuffCache !== undefined) {
       return this.roundingStuffCache;
     }
     if (this.connections.size !== 2) {
       this.roundingStuffCache = null;
-      return;
+      return this.roundingStuffCache;
     }
     const route = this.getRoute();
 
     let radius = this.roundRadius ?? route.style.roundRadius;
     if (radius <= 0) {
       this.roundingStuffCache = null;
-      return;
+      return null;
     }
 
     const connectionArray = Array.from(this.connections);
     let [connection1, connection2] = connectionArray;
 
     if (connection1.isParallelTo(connection2)) {
-      return;
+      return null;
     }
 
     const otherPoint1 = connection1.getOtherStop(this).pos;
@@ -199,6 +216,7 @@ export class TransitStop
       stop,
       radius,
       edgeDist,
+      angle,
     });
   }
 
@@ -341,11 +359,16 @@ export class TransitStop
   doubleClick(): void {
     const routes = this.getRoutes();
     const route = this.getRoute();
-    this.map.createStop(
+    const connectionStyle = this.getConnectionStyle();
+    const stop = this.map.createStop(
       routes.size === 1 ? 'Unnamed Stop' : null,
       new Vector2(this.pos.x + 10, this.pos.y + 10),
       route,
       this,
     );
+    stop.style = this.style;
+    stop.connections.forEach(connection => {
+      connection.style = { ...connectionStyle };
+    });
   }
 }

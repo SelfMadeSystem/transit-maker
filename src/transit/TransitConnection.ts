@@ -6,6 +6,7 @@ import { TransitMap } from './TransitMap';
 import { TransitRoute } from './TransitRoute';
 import { TransitStop } from './TransitStop';
 import { DoubleClickable, RightClickable, Selectable } from './types';
+import { path as d3path } from 'd3-path';
 
 export type ConnectionStrokeType = 'solid' | 'dotted' | 'dashed';
 
@@ -13,6 +14,14 @@ export type ConnectionStrokeType = 'solid' | 'dotted' | 'dashed';
 // to the route.
 export type ConnectionStyle = {
   strokeType: ConnectionStrokeType;
+};
+
+export function styleEquals(a: ConnectionStyle, b: ConnectionStyle): boolean {
+  return a.strokeType === b.strokeType;
+}
+
+export const DEFALUT_CONNECTION_STYLE: ConnectionStyle = {
+  strokeType: 'solid',
 };
 
 export class TransitConnection
@@ -31,7 +40,7 @@ export class TransitConnection
   public to: TransitStop;
   public route: TransitRoute;
   public style: ConnectionStyle = {
-    strokeType: 'solid',
+    ...DEFALUT_CONNECTION_STYLE,
   };
 
   constructor(
@@ -67,59 +76,15 @@ export class TransitConnection
       case 'dotted':
         lineWidth = this.route.style.dottedWidth;
         ctx.setLineDash([0, lineWidth * 2]);
-        ctx.lineDashOffset = -this.getLength() / 2;
         break;
       case 'dashed':
         lineWidth = this.route.style.dashedWidth;
         ctx.setLineDash([lineWidth * 4, lineWidth * 3]);
-        ctx.lineDashOffset = lineWidth * 2 - this.getLength() / 2;
         break;
     }
-    let from = this.from.pos;
-    let to = this.to.pos;
 
-    let fromRounding;
-    let toRounding;
-
-    if (this.style.strokeType === 'solid') {
-      fromRounding = this.from.calculateRoundingStuff();
-      toRounding = this.to.calculateRoundingStuff();
-
-      if (fromRounding) {
-        const direction = from.directionTo(to);
-        from = from.add(direction.mult(fromRounding.edgeDist));
-      }
-
-      if (toRounding) {
-        const direction = to.directionTo(from);
-        to = to.add(direction.mult(toRounding.edgeDist));
-      }
-    }
-    const path = new Path2D();
-
-    if (fromRounding) {
-      const { center, ogPos, radius } = fromRounding;
-      const startAngle = wrapAngle2PI(center.angleTo(from));
-      const endAngle = wrapAngle2PI(center.angleTo(ogPos));
-      const clockwise =
-        wrapAngle2PI(angleDelta(startAngle, endAngle)) < Math.PI;
-
-      path.arc(center.x, center.y, radius, endAngle, startAngle, clockwise);
-    } else {
-      path.moveTo(from.x, from.y);
-    }
-
-    path.lineTo(to.x, to.y);
-
-    if (toRounding) {
-      const { center, ogPos, radius } = toRounding;
-      const startAngle = center.angleTo(to);
-      const endAngle = center.angleTo(ogPos);
-      const clockwise =
-        wrapAngle2PI(angleDelta(startAngle, endAngle)) < Math.PI;
-
-      path.arc(center.x, center.y, radius, startAngle, endAngle, !clockwise);
-    }
+    const [path, length, rounded] = this.getPath();
+    if (rounded) ctx.lineDashOffset = lineWidth * 2 - length / 2;
 
     if (this.route.style.margin > 0) {
       ctx.lineWidth = lineWidth + this.route.style.margin * 2;
@@ -160,8 +125,58 @@ export class TransitConnection
     ctx.restore();
   }
 
-  getLength(): number {
-    return this.from.pos.dist(this.to.pos);
+  getPath(): [Path2D, number, boolean] {
+    let from = this.from.pos;
+    let to = this.to.pos;
+
+    const fromRounding = this.from.calculateRoundingStuff();
+    const toRounding = this.to.calculateRoundingStuff();
+
+    if (fromRounding) {
+      const direction = from.directionTo(to);
+      from = from.add(direction.mult(fromRounding.edgeDist));
+    }
+
+    if (toRounding) {
+      const direction = to.directionTo(from);
+      to = to.add(direction.mult(toRounding.edgeDist));
+    }
+    const path = d3path();
+
+    if (fromRounding) {
+      const { center, ogPos, radius } = fromRounding;
+      const startAngle = wrapAngle2PI(center.angleTo(from));
+      const endAngle = wrapAngle2PI(center.angleTo(ogPos));
+      const clockwise =
+        wrapAngle2PI(angleDelta(startAngle, endAngle)) < Math.PI;
+
+      path.arc(center.x, center.y, radius, endAngle, startAngle, clockwise);
+    } else {
+      path.moveTo(from.x, from.y);
+    }
+
+    path.lineTo(to.x, to.y);
+
+    if (toRounding) {
+      const { center, ogPos, radius } = toRounding;
+      const startAngle = center.angleTo(to);
+      const endAngle = center.angleTo(ogPos);
+      const clockwise =
+        wrapAngle2PI(angleDelta(startAngle, endAngle)) < Math.PI;
+
+      path.arc(center.x, center.y, radius, startAngle, endAngle, !clockwise);
+    }
+
+    const str = path.toString();
+    const svgPath = document.createElementNS(
+      'http://www.w3.org/2000/svg',
+      'path',
+    );
+    svgPath.setAttribute('d', str);
+    const length = svgPath.getTotalLength();
+    const path2d = new Path2D(str);
+
+    return [path2d, length, !!(fromRounding || toRounding)];
   }
 
   isOver(x: number, y: number) {

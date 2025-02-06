@@ -33,7 +33,7 @@ function TransitStopUi({ stop }: { stop: TransitStop }) {
   const hasRoundRadius = roundRadius !== undefined;
 
   function addLabel() {
-    stop.addLabel(new Label('Unnamed Label', new Vector2(0, -15)));
+    stop.addLabel(new Label(stop.map, 'Unnamed Label', new Vector2(0, -15)));
   }
 
   return (
