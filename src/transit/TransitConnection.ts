@@ -5,12 +5,7 @@ import { SnapLine } from './Snapping';
 import { TransitMap } from './TransitMap';
 import { TransitRoute } from './TransitRoute';
 import { TransitStop } from './TransitStop';
-import {
-  ClickInfo,
-  DoubleClickable,
-  RightClickable,
-  Selectable,
-} from './types';
+import { DoubleClickable, RightClickable, Selectable } from './types';
 
 export type ConnectionStrokeType = 'solid' | 'dotted' | 'dashed';
 
@@ -31,6 +26,7 @@ export class TransitConnection
   //   between Montréal-Ouest and Lucien-L'Allier)
   // - go behind other lines when there's no stop in between (e.g. line 15 with
   //   lines 11, 12, 14, the text of "De la Savane", and line 2)
+  public map: TransitMap;
   public from: TransitStop;
   public to: TransitStop;
   public route: TransitRoute;
@@ -38,7 +34,13 @@ export class TransitConnection
     strokeType: 'solid',
   };
 
-  constructor(from: TransitStop, to: TransitStop, route: TransitRoute) {
+  constructor(
+    map: TransitMap,
+    from: TransitStop,
+    to: TransitStop,
+    route: TransitRoute,
+  ) {
+    this.map = map;
     this.from = from;
     this.to = to;
     this.route = route;
@@ -272,12 +274,12 @@ export class TransitConnection
     return [...snapLines, ...cardinalSnapLines];
   }
 
-  remove(map: TransitMap): void {
-    map.removeConnection(this);
+  remove(): void {
+    this.map.removeConnection(this);
   }
 
-  doubleClick({ map }: ClickInfo): void {
-    map.splitConnection(this);
+  doubleClick(): void {
+    this.map.splitConnection(this);
   }
 
   rightClick(): void {}

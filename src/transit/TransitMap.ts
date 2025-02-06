@@ -77,13 +77,17 @@ export class TransitMap {
     route?: TransitRoute,
     from?: TransitStop,
   ) {
-    const stop = new TransitStop(name ? [new Label(name)] : [], pos);
+    const stop = new TransitStop(
+      this,
+      name ? [new Label(this, name)] : [],
+      pos,
+    );
     this.addStop(stop);
     if (from) {
       if (!route) {
         throw new Error('Must provide route when creating stop with from');
       }
-      const connection = new TransitConnection(from, stop, route);
+      const connection = new TransitConnection(this, from, stop, route);
       this.addConnection(connection);
       from.connections.add(connection);
       stop.connections.add(connection);
@@ -92,7 +96,7 @@ export class TransitMap {
   }
 
   createConnection(from: TransitStop, to: TransitStop, route: TransitRoute) {
-    const connection = new TransitConnection(from, to, route);
+    const connection = new TransitConnection(this, from, to, route);
     this.addConnection(connection);
     from.connections.add(connection);
     to.connections.add(connection);
@@ -111,14 +115,15 @@ export class TransitMap {
 
     const route = connection.route;
     const stop = new TransitStop(
-      [new Label('Unnamed Stop')],
+      this,
+      [new Label(this, 'Unnamed Stop')],
       new Vector2((from.pos.x + to.pos.x) / 2, (from.pos.y + to.pos.y) / 2),
     );
 
     this.addStop(stop);
     route.addStop(stop);
-    const connection1 = new TransitConnection(from, stop, route);
-    const connection2 = new TransitConnection(stop, to, route);
+    const connection1 = new TransitConnection(this, from, stop, route);
+    const connection2 = new TransitConnection(this, stop, to, route);
     connection1.style = { ...connection.style };
     connection2.style = { ...connection.style };
     this.addConnection(connection1);
@@ -149,7 +154,7 @@ export class TransitMap {
   }
 
   remove(selectable: SelectableItem) {
-    selectable.remove(this);
+    selectable.remove();
   }
 
   draw(ctx: CanvasRenderingContext2D, selected: SelectableItem | null) {

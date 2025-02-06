@@ -51,6 +51,7 @@ export class TransitStop
   // TODO: Add support for:
   // - "long" transfer stations (e.g. Lucien-L'Allier in Montreal is like 3×
   //   the width of a normal station)
+  public map: TransitMap;
   public labels: Set<Label>;
   public pos: Vector2;
   public connections: Set<TransitConnection>;
@@ -70,7 +71,8 @@ export class TransitStop
     | null
     | undefined = undefined;
 
-  constructor(labels: Label[], pos: Vector2) {
+  constructor(map: TransitMap, labels: Label[], pos: Vector2) {
+    this.map = map;
     this.labels = new Set(labels);
     for (const label of this.labels) {
       label.stop = this;
@@ -325,20 +327,21 @@ export class TransitStop
     this.pos = l.pos;
   }
 
-  rightClick({ map, selected }: ClickInfo): void {
+  rightClick({ selected }: ClickInfo): void {
     if (selected instanceof TransitStop && selected !== this) {
-      map.createConnection(selected, this, selected.getRoute());
+      this.map.createConnection(selected, this, selected.getRoute());
     }
   }
 
-  remove(map: TransitMap): void {
-    map.removeStop(this);
+  remove(): void {
+    this.map.removeStop(this);
   }
 
-  doubleClick({ map }: ClickInfo): void {
+  doubleClick(a: ClickInfo): void; // just for types
+  doubleClick(): void {
     const routes = this.getRoutes();
     const route = this.getRoute();
-    map.createStop(
+    this.map.createStop(
       routes.size === 1 ? 'Unnamed Stop' : null,
       new Vector2(this.pos.x + 10, this.pos.y + 10),
       route,

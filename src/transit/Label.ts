@@ -1,4 +1,5 @@
 import { Vector2 } from '../utils/vec';
+import { TransitMap } from './TransitMap';
 import { TransitStop } from './TransitStop';
 import { Movable, PosWithKeys, Selectable } from './types';
 
@@ -10,13 +11,19 @@ export class Label implements Selectable, Movable {
   // - line icon identifier (e.g. blue circle with white "5" for line 5 in Montreal)
   // - connection icon (e.g. airport, intercity rail, etc.)
   // - other icons (e.g. wheelchair accessible, parking, etc.)
+  public map: TransitMap;
   public text: string;
   public pos: Vector2;
   public stop: TransitStop;
   private cachedDimensions: [tl: Vector2, br: Vector2] | null = null;
   private cacheKey: string | null = null;
 
-  constructor(text: string, pos: Vector2 = new Vector2(0, -15)) {
+  constructor(
+    map: TransitMap,
+    text: string,
+    pos: Vector2 = new Vector2(0, -15),
+  ) {
+    this.map = map;
     this.text = text;
     this.pos = pos;
     this.stop = null as unknown as TransitStop; // should always be set immediately after construction
@@ -99,9 +106,5 @@ export class Label implements Selectable, Movable {
 
   remove(): void {
     this.stop.labels.delete(this);
-  }
-
-  clone(): Label {
-    return new Label(this.text, this.pos);
   }
 }

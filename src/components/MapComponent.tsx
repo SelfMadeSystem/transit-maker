@@ -86,7 +86,6 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           const selectable = map.getSelectable(x, y);
           if (selectable && 'rightClick' in selectable) {
             selectable.rightClick({
-              map,
               selected,
             });
           }
@@ -102,7 +101,6 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
 
         if (selectable && 'doubleClick' in selectable) {
           selectable.doubleClick({
-            map,
             selected,
           });
         } else if (selectable instanceof Label) {
