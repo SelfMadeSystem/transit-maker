@@ -14,6 +14,7 @@ export type RouteStyle = {
   roundRadius: number;
   margin: number;
   stopStyle: StopStyle;
+  terminusStyle: StopStyle;
 };
 
 export class TransitRoute {
@@ -34,6 +35,9 @@ export class TransitRoute {
       roundRadius: 10,
       margin: 1,
       stopStyle: {
+        ...DEFAULT_STOP_STYLE,
+      },
+      terminusStyle: {
         ...DEFAULT_STOP_STYLE,
       },
     };

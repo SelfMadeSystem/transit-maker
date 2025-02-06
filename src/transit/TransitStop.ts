@@ -98,11 +98,12 @@ export class TransitStop
     if (this.style) {
       return this.style;
     }
+    const key = this.connections.size === 1 ? 'terminusStyle' : 'stopStyle';
     const routes = this.getRoutes();
     if (routes.size === 1) {
-      return routes.values().next().value!.style.stopStyle;
+      return routes.values().next().value!.style[key];
     }
-    return this.map.defaultRoute.style.stopStyle;
+    return this.map.defaultRoute.style[key];
   }
 
   getRoute(): TransitRoute {

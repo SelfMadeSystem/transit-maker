@@ -423,6 +423,10 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
         <summary className="text-white">Stop style</summary>
         <StopStyleUi style={style.stopStyle} />
       </details>
+      <details>
+        <summary className="text-white">Terminus style</summary>
+        <StopStyleUi style={style.terminusStyle} />
+      </details>
     </div>
   );
 }
