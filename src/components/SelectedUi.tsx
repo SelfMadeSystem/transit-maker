@@ -29,6 +29,8 @@ export function SelectedUi() {
 function TransitStopUi({ stop }: { stop: TransitStop }) {
   const [hidden, setHidden] = useState(stop.hidden);
   const [hasStyle, setHasStyle] = useState(stop.style !== undefined);
+  const [roundRadius, setRoundRadius] = useState(stop.roundRadius);
+  const hasRoundRadius = roundRadius !== undefined;
 
   function addLabel() {
     stop.addLabel(new Label('Unnamed Label', new Vector2(0, -15)));
@@ -57,6 +59,28 @@ function TransitStopUi({ stop }: { stop: TransitStop }) {
               setHasStyle(!hasStyle);
             }}
           />
+        </label>
+        <label className="flex items-center gap-2">
+          <div className="text-white">Round radius:</div>
+          <input
+            type="checkbox"
+            checked={hasRoundRadius}
+            onChange={() => {
+              stop.roundRadius = hasRoundRadius ? undefined : 5;
+              setRoundRadius(stop.roundRadius);
+            }}
+          />
+          {hasRoundRadius && (
+            <input
+              type="number"
+              value={roundRadius}
+              min="0"
+              onChange={e =>
+                setRoundRadius((stop.roundRadius = parseFloat(e.target.value)))
+              }
+              className="bg-gray-900 text-white"
+            />
+          )}
         </label>
         <button onClick={addLabel} className="bg-gray-900 text-white">
           Add label

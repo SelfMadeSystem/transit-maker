@@ -29,7 +29,6 @@ export type StopStyle = {
    * Two orientations for even-numbered edges and three for odd-numbered edges.
    */
   edgeOrientation: number;
-  roundRadius?: number;
   edgeFollowsRoute: boolean;
   radius: number;
   strokeWidth: number;
@@ -56,6 +55,7 @@ export class TransitStop
   public pos: Vector2;
   public connections: Set<TransitConnection>;
   public hidden: boolean = false;
+  public roundRadius: number | undefined;
   public style?: StopStyle;
   private roundingStuffCache:
     | {
@@ -147,7 +147,7 @@ export class TransitStop
     }
     const route = this.getRoute();
 
-    let radius = this.getStyle().roundRadius ?? route.style.roundRadius;
+    let radius = this.roundRadius ?? route.style.roundRadius;
     if (radius <= 0) {
       this.roundingStuffCache = null;
       return;
