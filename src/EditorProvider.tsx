@@ -1,5 +1,5 @@
 import { EditorContext } from './EditorContext';
-import { TransitMap } from './transit/TransitMap';
+import { TransitMap, deserializeMap } from './transit/TransitMap';
 import { TransitRoute } from './transit/TransitRoute';
 import { SelectableItem } from './transit/types';
 import { Vector2 } from './utils/vec';
@@ -35,13 +35,22 @@ function createTransitMap(): TransitMap {
   return transitMap;
 }
 
+function loadTransitMap(): TransitMap {
+  const serialized = localStorage.getItem('map');
+  if (serialized) {
+    return deserializeMap(JSON.parse(serialized));
+  }
+  return createTransitMap();
+}
+
 export function EditorProvider({ children }: { children: React.ReactNode }) {
   const [selected, setSelected] = useState<SelectableItem | null>(null);
-  const [map] = useState(createTransitMap);
+  const [map, setMap] = useState(loadTransitMap());
   return (
     <EditorContext.Provider
       value={{
         map,
+        setMap,
         selected,
         setSelected,
       }}

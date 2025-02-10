@@ -3,8 +3,16 @@ import { Vector2 } from '../utils/vec';
 import { TransitMap } from './TransitMap';
 import { TransitStop } from './TransitStop';
 import { Movable, PosWithKeys, Removable, Selectable } from './types';
+import { z } from 'zod';
 
 const LabelFont = '10px sans-serif';
+
+export const SerializedLabel = z.object({
+  id: z.number(),
+  text: z.string(),
+  pos: Vector2.schema,
+});
+export type SerializedLabel = z.infer<typeof SerializedLabel>;
 
 export class Label implements Selectable, Movable, Removable {
   // TODO: Add support for:
@@ -125,5 +133,13 @@ export class Label implements Selectable, Movable, Removable {
   remove(): void {
     this.map.labels.delete(this);
     this.stop?.labels.delete(this);
+  }
+
+  serialize(): SerializedLabel {
+    return {
+      id: this.id,
+      text: this.text,
+      pos: this.pos,
+    };
   }
 }

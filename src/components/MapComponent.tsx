@@ -4,6 +4,14 @@ import { PosWithKeys, SelectableItem } from '../transit/types';
 import { Vector2 } from '../utils/vec';
 import createCanvasComponent from './CanvasComponent';
 
+function debounce(func: () => void, wait: number) {
+  let timeout: number;
+  return function () {
+    clearTimeout(timeout);
+    timeout = setTimeout(func, wait);
+  };
+}
+
 export const MapComponent = createCanvasComponent<EditorContextType>({
   autoResize: true,
   props: {
@@ -26,6 +34,11 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
     let ogMouseX = 0;
     let ogMouseY = 0;
     let ogPos: Vector2 | null = null;
+
+    const saveMapToLocalStorage = debounce(() => {
+      console.log('saving');
+      localStorage.setItem('map', JSON.stringify(map.serialize()));
+    }, 1000);
 
     function setSelection(item: SelectableItem | null) {
       setSelected(item);
@@ -64,8 +77,8 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
         ctx.restore();
       },
       propsUpdate: {
-        map() {
-          console.error('Map should never change');
+        map(newMap) {
+          map = newMap;
         },
         selected(newSelected) {
           selected = newSelected;
@@ -89,6 +102,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
               selected,
             });
           }
+          saveMapToLocalStorage();
         }
         prevMouseX = mouseX;
         prevMouseY = mouseY;
@@ -103,10 +117,13 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           selectable.doubleClick({
             selected,
           });
+          saveMapToLocalStorage();
         } else if (selectable instanceof Label) {
           renameLabel(selectable);
+          saveMapToLocalStorage();
         } else if (!selectable) {
           map.createStop('Unnamed Stop', new Vector2(x, y));
+          saveMapToLocalStorage();
         }
       },
       mouseMove(e, { mouseX, mouseY }) {
@@ -128,6 +145,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
                 altKey: e.altKey,
               };
               selected.moveTo(l);
+              saveMapToLocalStorage();
             }
           } else {
             offsetX += deltaX;
@@ -155,6 +173,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
               break;
           }
         }
+        saveMapToLocalStorage();
       },
       wheel(_, { deltaY, mouseX, mouseY }) {
         const delta = deltaY / 1000;

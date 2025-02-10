@@ -1,10 +1,25 @@
 import { id } from '../utils/id';
 import { Vector2 } from '../utils/vec';
-import { Label } from './Label';
-import { TransitConnection } from './TransitConnection';
-import { TransitRoute, createDefaultRoute } from './TransitRoute';
-import { TransitStop } from './TransitStop';
+import { Label, SerializedLabel } from './Label';
+import { SerializedConnection, TransitConnection } from './TransitConnection';
+import {
+  SerializedRoute,
+  TransitRoute,
+  createDefaultRoute,
+} from './TransitRoute';
+import { SerializedStop, TransitStop } from './TransitStop';
 import { SelectableItem } from './types';
+import { z } from 'zod';
+
+export const SerializedMap = z.object({
+  id: z.number(),
+  routes: z.array(SerializedRoute),
+  labels: z.array(SerializedLabel),
+  stops: z.array(SerializedStop),
+  connections: z.array(SerializedConnection),
+  defaultRoute: z.number(),
+});
+export type SerializedMap = z.infer<typeof SerializedMap>;
 
 export class TransitMap {
   public id: number = id();
@@ -144,4 +159,73 @@ export class TransitMap {
       label.draw(ctx);
     }
   }
+
+  serialize(): SerializedMap {
+    return {
+      id: this.id,
+      routes: [...this.routes].map(route => route.serialize()),
+      labels: [...this.labels].map(label => label.serialize()),
+      stops: [...this.stops].map(stop => stop.serialize()),
+      connections: [...this.connections].map(connection =>
+        connection.serialize(),
+      ),
+      defaultRoute: this.defaultRoute.id,
+    };
+  }
+}
+
+export function deserializeMap(content: unknown): TransitMap {
+  const parseResult = SerializedMap.safeParse(content);
+  if (!parseResult.success) {
+    throw new Error(`Failed to parse map: ${parseResult.error.errors}`);
+  }
+  const serialized = parseResult.data;
+  const map = new TransitMap();
+  const routeMap = new Map<number, TransitRoute>();
+  const stopMap = new Map<number, TransitStop>();
+  const labelMap = new Map<number, Label>();
+  for (const serializedRoute of serialized.routes) {
+    const route = new TransitRoute(
+      map,
+      serializedRoute.name,
+      serializedRoute.style.color,
+    );
+    route.id = serializedRoute.id;
+    route.style = serializedRoute.style;
+    routeMap.set(route.id, route);
+  }
+  for (const serializedLabel of serialized.labels) {
+    const label = new Label(map, serializedLabel.text);
+    label.id = serializedLabel.id;
+    label.pos = serializedLabel.pos;
+    labelMap.set(label.id, label);
+  }
+  for (const serializedStop of serialized.stops) {
+    const stop = new TransitStop(
+      map,
+      serializedStop.labels.map(label => {
+        const l = labelMap.get(label);
+        if (!l) {
+          throw new Error('Label not found');
+        }
+        return l;
+      }),
+      serializedStop.pos,
+    );
+    stop.id = serializedStop.id;
+    stopMap.set(stop.id, stop);
+  }
+  for (const serializedConnection of serialized.connections) {
+    const from = stopMap.get(serializedConnection.from);
+    const to = stopMap.get(serializedConnection.to);
+    const route = routeMap.get(serializedConnection.route);
+    if (!from || !to || !route) {
+      throw new Error('Connection missing from/to/route');
+    }
+    const connection = new TransitConnection(map, from, to, route);
+    connection.id = serializedConnection.id;
+    connection.style = serializedConnection.style;
+  }
+  map.defaultRoute = routeMap.get(serialized.defaultRoute)!;
+  return map;
 }
