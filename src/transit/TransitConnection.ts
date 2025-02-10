@@ -66,9 +66,23 @@ export class TransitConnection
     return stop === this.from || stop === this.to;
   }
 
-  draw(ctx: CanvasRenderingContext2D): void | {
-    postDraw: () => void;
-  } {
+  preDraw(ctx: CanvasRenderingContext2D): void {
+    if (this.route.style.margin <= 0) {
+      return;
+    }
+    const lineWidth = this.route.style.lineWidth;
+    ctx.save();
+    ctx.lineCap = 'round';
+
+    const [path] = this.getPath();
+
+    ctx.lineWidth = lineWidth + this.route.style.margin * 2;
+    ctx.strokeStyle = '#000';
+    ctx.stroke(path);
+    ctx.restore();
+  }
+
+  draw(ctx: CanvasRenderingContext2D) {
     let lineWidth = this.route.style.lineWidth;
     ctx.save();
     ctx.lineCap = 'round';
@@ -89,30 +103,23 @@ export class TransitConnection
     const [path, length, rounded] = this.getPath();
     if (rounded) ctx.lineDashOffset = lineWidth * 2 - length / 2;
 
-    if (this.route.style.margin > 0) {
-      ctx.lineWidth = lineWidth + this.route.style.margin * 2;
-      ctx.strokeStyle = '#000';
-      ctx.stroke(path);
-    }
-
     ctx.lineWidth = lineWidth;
     ctx.strokeStyle = this.route.style.color;
     ctx.stroke(path);
     ctx.restore();
+  }
 
+  postDraw(ctx: CanvasRenderingContext2D): void {
     if (
       this.route.style.strokeType === 'split' &&
       this.style.strokeType === 'solid'
     ) {
-      return {
-        postDraw: () => {
-          ctx.save();
-          ctx.lineCap = 'round';
-          ctx.lineWidth = this.route.style.innerWidth;
-          ctx.stroke(path);
-          ctx.restore();
-        },
-      };
+      const [path] = this.getPath();
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineWidth = this.route.style.innerWidth;
+      ctx.stroke(path);
+      ctx.restore();
     }
   }
 

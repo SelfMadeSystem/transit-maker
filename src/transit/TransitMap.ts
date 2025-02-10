@@ -108,19 +108,28 @@ export class TransitMap {
     selectable.remove();
   }
 
-  draw(ctx: CanvasRenderingContext2D, selected: SelectableItem | null) {
-    const postConnections: Array<() => void> = [];
+  connectionsByRoute(): Map<TransitRoute, TransitConnection[]> {
+    const connections: Map<TransitRoute, TransitConnection[]> = new Map();
     for (const connection of this.connections) {
-      if (selected === connection) {
-        connection.drawSelected(ctx);
+      if (!connections.has(connection.route)) {
+        connections.set(connection.route, []);
       }
-      const post = connection.draw(ctx);
-      if (post) {
-        postConnections.push(post.postDraw);
-      }
+      connections.get(connection.route)!.push(connection);
     }
-    for (const post of postConnections) {
-      post();
+    return connections;
+  }
+
+  draw(ctx: CanvasRenderingContext2D, selected: SelectableItem | null) {
+    const connectionsByRoute = this.connectionsByRoute().values();
+    for (const connections of connectionsByRoute) {
+      for (const connection of connections) {
+        if (selected === connection) {
+          connection.drawSelected(ctx);
+        }
+        connection.preDraw(ctx);
+      }
+      connections.forEach(c => c.draw(ctx));
+      connections.forEach(c => c.postDraw(ctx));
     }
     for (const stop of this.stops) {
       if (selected === stop) {
