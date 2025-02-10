@@ -159,6 +159,13 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
         panning = false;
       },
       keyDown(e) {
+        if (
+          e.target instanceof HTMLInputElement ||
+          e.target instanceof HTMLTextAreaElement
+        ) {
+          return;
+        }
+
         if (selected) {
           switch (e.key) {
             case 'Delete':
