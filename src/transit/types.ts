@@ -10,7 +10,7 @@ export type PosWithKeys = {
   altKey: boolean;
 };
 
-export type ClickInfo = {
+export type ClickInfo = PosWithKeys & {
   selected: SelectableItem | null;
 };
 

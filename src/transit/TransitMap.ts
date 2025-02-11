@@ -38,7 +38,7 @@ export class TransitMap {
     pos: Vector2,
     route: TransitRoute,
     from: TransitStop,
-  ): TransitStop;
+  ): [TransitStop, TransitConnection];
   createStop(
     name: string | null,
     pos: Vector2,
@@ -54,13 +54,14 @@ export class TransitMap {
       if (!route) {
         throw new Error('Must provide route when creating stop with from');
       }
-      new TransitConnection(this, from, stop, route);
+      const connection = new TransitConnection(this, from, stop, route);
+      return [stop, connection];
     }
     return stop;
   }
 
   createConnection(from: TransitStop, to: TransitStop, route: TransitRoute) {
-    new TransitConnection(this, from, to, route);
+    return new TransitConnection(this, from, to, route);
   }
 
   splitConnection(connection: TransitConnection) {

@@ -87,6 +87,10 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           if (selectable && 'rightClick' in selectable) {
             selectable.rightClick({
               selected,
+              altKey: e.altKey,
+              ctrlKey: e.ctrlKey,
+              shiftKey: e.shiftKey,
+              pos: new Vector2(x, y),
             });
           }
         }
@@ -95,13 +99,17 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
         ogMouseX = mouseX;
         ogMouseY = mouseY;
       },
-      mouseDbClick(_, { mouseX, mouseY }) {
+      mouseDbClick(e, { mouseX, mouseY }) {
         const { x, y } = mouseToPos({ mouseX, mouseY });
         const selectable = map.getSelectable(x, y, ctx);
 
         if (selectable && 'doubleClick' in selectable) {
           selectable.doubleClick({
             selected,
+            altKey: e.altKey,
+            ctrlKey: e.ctrlKey,
+            shiftKey: e.shiftKey,
+            pos: new Vector2(x, y),
           });
         } else if (selectable instanceof Label) {
           renameLabel(selectable);

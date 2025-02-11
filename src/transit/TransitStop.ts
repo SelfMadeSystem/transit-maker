@@ -174,14 +174,16 @@ export class TransitStop
     };
   }
 
-  uniqueConnectionCount(): number {
-    const otherStops = new Set<TransitStop>();
-
+  connectionsByStop(): Map<TransitStop, TransitConnection[]> {
+    const connections: Map<TransitStop, TransitConnection[]> = new Map();
     for (const connection of this.connections) {
-      otherStops.add(connection.getOtherStop(this));
+      const stop = connection.getOtherStop(this);
+      if (!connections.has(stop)) {
+        connections.set(stop, []);
+      }
+      connections.get(stop)!.push(connection);
     }
-
-    return otherStops.size;
+    return connections;
   }
 
   setLabels(labels: Label[]) {
@@ -216,10 +218,11 @@ export class TransitStop
   }
 
   calculateRoundingStuff(): RoundingCalculation {
+    const connectionsByStop = this.connectionsByStop();
     // if (this.roundingStuffCache !== undefined) {
     //   return this.roundingStuffCache;
     // }
-    if (this.uniqueConnectionCount() !== 2) {
+    if (connectionsByStop.size !== 2) {
       return null;
     }
     const route = this.getRoute();
@@ -229,8 +232,7 @@ export class TransitStop
       return null;
     }
 
-    const connectionArray = Array.from(this.connections);
-    let [connection1, connection2] = connectionArray;
+    let [[connection1], [connection2]] = Array.from(connectionsByStop.values());
 
     if (connection1.isParallelTo(connection2)) {
       return null;
@@ -425,12 +427,57 @@ export class TransitStop
     }
   }
 
-  doubleClick(a: ClickInfo): void; // just for types
-  doubleClick(): void {
+  doubleClick(a: ClickInfo): void {
+    const connectionsByStop = this.connectionsByStop();
+    const vals = Array.from(connectionsByStop.values());
+    if (a.shiftKey) {
+      if (vals.some(connections => connections.length > 1)) {
+        for (const connections of vals) {
+          if (connections.length > 1) {
+            const diff = this.pos.sub(connections[0].getOtherStop(this).pos);
+            const orth = diff.normalize().cw90();
+            const offset = this.getLateralOffset();
+            for (let i = 0; i < connections.length; i++) {
+              const connection = connections[i];
+              const lateralOffset = connection.lateralOffset;
+              const sign = connection.to === this ? 1 : -1;
+              const lateralVector = orth.mult(lateralOffset * offset * sign);
+              const newPos = this.pos.add(diff).add(lateralVector);
+              const [, newC] = this.map.createStop(
+                this.labels.size > 0 ? 'Unnamed Stop' : null,
+                newPos,
+                connection.route,
+                this,
+              );
+              newC.style = { ...connection.style };
+              newC.setWhichLateralOffset(this, lateralOffset * sign);
+            }
+            return;
+          }
+        }
+        return;
+      }
+    }
+
+    if (vals.length === 1 && vals[0].length > 1) {
+      const routes = this.getRoutes();
+      const stop = this.map.createStop(
+        routes.size === 1 && this.labels.size > 0 ? 'Unnamed Stop' : null,
+        new Vector2(this.pos.x + 10, this.pos.y + 10),
+      );
+      stop.style = this.style;
+      [...this.connections].forEach(connection => {
+        const c = this.map.createConnection(this, stop, connection.route);
+        c.style = { ...connection.style };
+      });
+      this.updateLateralConnections(stop);
+      return;
+    }
+
     const routes = this.getRoutes();
     const route = this.getRoute();
     const connectionStyle = this.getConnectionStyle();
-    const stop = this.map.createStop(
+    const [stop] = this.map.createStop(
       routes.size === 1 && this.labels.size > 0 ? 'Unnamed Stop' : null,
       new Vector2(this.pos.x + 10, this.pos.y + 10),
       route,

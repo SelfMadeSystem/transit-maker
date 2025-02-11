@@ -40,6 +40,8 @@ export class TransitConnection
   public to: TransitStop;
   public route: TransitRoute;
   public lateralOffset: number = 0;
+  public fromLateralOffset: number = 0;
+  public toLateralOffset: number = 0;
   public style: ConnectionStyle = {
     ...DEFALUT_CONNECTION_STYLE,
   };
@@ -57,6 +59,16 @@ export class TransitConnection
     this.map.connections.add(this);
     this.from.addConnection(this);
     this.to.addConnection(this);
+  }
+
+  setWhichLateralOffset(which: TransitStop, offset: number) {
+    if (which === this.from) {
+      this.fromLateralOffset = offset;
+    } else if (which === this.to) {
+      this.toLateralOffset = offset;
+    } else {
+      throw new Error('The stop must be either the from or the to stop');
+    }
   }
 
   getOtherStop(stop: TransitStop) {
@@ -137,17 +149,23 @@ export class TransitConnection
     ctx.restore();
   }
 
+  getLateralOffset() {
+    return Math.max(this.to.getLateralOffset(), this.from.getLateralOffset());
+  }
+
   getPath(): [Path2D, number, boolean] {
     let from = this.from.pos;
     let to = this.to.pos;
-    const lateralOffset =
-      this.lateralOffset *
-      Math.max(this.to.getLateralOffset(), this.from.getLateralOffset());
+    const fromLateralOffset =
+      (this.fromLateralOffset + this.lateralOffset) *
+      this.from.getLateralOffset();
+    const toLateralOffset =
+      (this.toLateralOffset + this.lateralOffset) * this.to.getLateralOffset();
 
-    if (lateralOffset !== 0) {
+    if (fromLateralOffset !== 0 || toLateralOffset !== 0) {
       const direction = from.directionTo(to).cw90();
-      from = from.add(direction.mult(lateralOffset));
-      to = to.add(direction.mult(lateralOffset));
+      from = from.add(direction.mult(fromLateralOffset));
+      to = to.add(direction.mult(toLateralOffset));
     }
 
     const fromRounding = this.from.calculateRoundingStuff();
@@ -173,11 +191,11 @@ export class TransitConnection
 
       const sign = clockwise ? 1 : -1;
 
-      if (lateralOffset * sign < edgeDist) {
+      if (fromLateralOffset * sign < edgeDist) {
         path.arc(
           center.x,
           center.y,
-          radius - lateralOffset * sign,
+          radius - fromLateralOffset * sign,
           endAngle,
           startAngle,
           clockwise,
@@ -198,11 +216,11 @@ export class TransitConnection
 
       const sign = clockwise ? 1 : -1;
 
-      if (-lateralOffset * sign < edgeDist) {
+      if (-toLateralOffset * sign < edgeDist) {
         path.arc(
           center.x,
           center.y,
-          radius + lateralOffset * sign,
+          radius + toLateralOffset * sign,
           startAngle,
           endAngle,
           !clockwise,
