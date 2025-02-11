@@ -178,6 +178,14 @@ export class Vector2 {
     );
   }
 
+  cw90(): Vector2 {
+    return new Vector2(this.y, -this.x);
+  }
+
+  ccw90(): Vector2 {
+    return new Vector2(-this.y, this.x);
+  }
+
   setMag(magnitude: number): Vector2 {
     return this.normalize().mult(magnitude);
   }

@@ -24,7 +24,7 @@ export interface Removable {
 }
 
 export interface Selectable extends Removable {
-  isOver(x: number, y: number): boolean;
+  isOver(x: number, y: number, ctx: CanvasRenderingContext2D): boolean;
   drawSelected(ctx: CanvasRenderingContext2D): void;
 }
 

@@ -74,7 +74,6 @@ export class TransitStop
   public hidden: boolean = false;
   public roundRadius: number | undefined;
   public style?: StopStyle;
-  private roundingStuffCache: RoundingCalculation | undefined = undefined;
 
   constructor(map: TransitMap, labels: Label[], pos: Vector2) {
     this.map = map;
@@ -90,6 +89,7 @@ export class TransitStop
   addConnection(connection: TransitConnection) {
     this.connections.add(connection);
     connection.route.stops.add(this);
+    this.updateLateralConnections(connection.getOtherStop(this));
   }
 
   removeConnection(connection: TransitConnection) {
@@ -98,6 +98,32 @@ export class TransitStop
     }
     this.connections.delete(connection);
     if (!this.hasRoute(connection)) connection.route.removeStop(this);
+    this.updateLateralConnections(connection.getOtherStop(this));
+  }
+
+  getLateralOffset() {
+    const firstConnection = Array.from(this.connections)[0];
+    if (!firstConnection) {
+      return 0;
+    }
+    return (
+      firstConnection.route.style.lineWidth +
+      firstConnection.route.style.margin +
+      2
+    );
+  }
+
+  updateLateralConnections(otherStop: TransitStop) {
+    const connections = Array.from(this.connections).filter(
+      c => c.getOtherStop(this) === otherStop,
+    );
+    if (connections.length > 0) {
+      connections.forEach(
+        (c, i) =>
+          (c.lateralOffset =
+            (i - (connections.length - 1) / 2) * (c.to === this ? -1 : 1)),
+      );
+    }
   }
 
   hasRoute(connection: TransitConnection): boolean {
@@ -148,6 +174,16 @@ export class TransitStop
     };
   }
 
+  uniqueConnectionCount(): number {
+    const otherStops = new Set<TransitStop>();
+
+    for (const connection of this.connections) {
+      otherStops.add(connection.getOtherStop(this));
+    }
+
+    return otherStops.size;
+  }
+
   setLabels(labels: Label[]) {
     this.labels = new Set(labels);
     for (const label of this.labels) {
@@ -180,18 +216,16 @@ export class TransitStop
   }
 
   calculateRoundingStuff(): RoundingCalculation {
-    if (this.roundingStuffCache !== undefined) {
-      return this.roundingStuffCache;
-    }
-    if (this.connections.size !== 2) {
-      this.roundingStuffCache = null;
-      return this.roundingStuffCache;
+    // if (this.roundingStuffCache !== undefined) {
+    //   return this.roundingStuffCache;
+    // }
+    if (this.uniqueConnectionCount() !== 2) {
+      return null;
     }
     const route = this.getRoute();
 
     let radius = this.roundRadius ?? route.style.roundRadius;
     if (radius <= 0) {
-      this.roundingStuffCache = null;
       return null;
     }
 
@@ -208,7 +242,7 @@ export class TransitStop
     const vector1 = otherPoint1.sub(this.pos);
     const vector2 = otherPoint2.sub(this.pos);
 
-    const minDist = Math.min(vector1.length(), vector2.length());
+    const minDist = Math.min(vector1.length(), vector2.length()) / 2;
 
     const checkAngle = vector1.angleTo(vector2);
 
@@ -221,8 +255,8 @@ export class TransitStop
     const avgDir = dirThis.add(dirOther).normalize();
     const angle = dirThis.angleBetween(dirOther) / 2;
     let dist = radius / Math.sin(angle);
-    if (dist > minDist / 2) {
-      dist = minDist / 2;
+    if (dist > minDist) {
+      dist = minDist;
       radius = dist * Math.sin(angle);
     }
     const centerOffset = avgDir.mult(dist);
@@ -231,7 +265,7 @@ export class TransitStop
     const stop = this.pos.add(stopOffset);
     const edgeDist = radius / Math.tan(angle);
 
-    return (this.roundingStuffCache = {
+    return {
       ogPos: this.pos,
       centerOffset,
       center,
@@ -240,11 +274,10 @@ export class TransitStop
       radius,
       edgeDist,
       angle,
-    });
+    };
   }
 
   draw(ctx: CanvasRenderingContext2D) {
-    this.roundingStuffCache = undefined;
     if (this.hidden) {
       return;
     }

@@ -85,7 +85,11 @@ export class TransitMap {
     connection2.style = { ...connection.style };
   }
 
-  getSelectable(x: number, y: number): SelectableItem | null {
+  getSelectable(
+    x: number,
+    y: number,
+    ctx: CanvasRenderingContext2D,
+  ): SelectableItem | null {
     for (const stop of this.stops) {
       if (stop.isOver(x, y)) {
         return stop;
@@ -97,7 +101,7 @@ export class TransitMap {
       }
     }
     for (const connection of this.connections) {
-      if (connection.isOver(x, y)) {
+      if (connection.isOver(x, y, ctx)) {
         return connection;
       }
     }

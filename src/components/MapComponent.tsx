@@ -80,10 +80,10 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
         const { x, y } = mouseToPos({ mouseX, mouseY });
 
         if (e.button === 0) {
-          setSelection(map.getSelectable(x, y));
+          setSelection(map.getSelectable(x, y, ctx));
           panning = true;
         } else if (e.button === 2) {
-          const selectable = map.getSelectable(x, y);
+          const selectable = map.getSelectable(x, y, ctx);
           if (selectable && 'rightClick' in selectable) {
             selectable.rightClick({
               selected,
@@ -97,7 +97,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
       },
       mouseDbClick(_, { mouseX, mouseY }) {
         const { x, y } = mouseToPos({ mouseX, mouseY });
-        const selectable = map.getSelectable(x, y);
+        const selectable = map.getSelectable(x, y, ctx);
 
         if (selectable && 'doubleClick' in selectable) {
           selectable.doubleClick({

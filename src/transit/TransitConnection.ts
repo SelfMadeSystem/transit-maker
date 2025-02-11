@@ -39,6 +39,7 @@ export class TransitConnection
   public from: TransitStop;
   public to: TransitStop;
   public route: TransitRoute;
+  public lateralOffset: number = 0;
   public style: ConnectionStyle = {
     ...DEFALUT_CONNECTION_STYLE,
   };
@@ -139,6 +140,15 @@ export class TransitConnection
   getPath(): [Path2D, number, boolean] {
     let from = this.from.pos;
     let to = this.to.pos;
+    const lateralOffset =
+      this.lateralOffset *
+      Math.max(this.to.getLateralOffset(), this.from.getLateralOffset());
+
+    if (lateralOffset !== 0) {
+      const direction = from.directionTo(to).cw90();
+      from = from.add(direction.mult(lateralOffset));
+      to = to.add(direction.mult(lateralOffset));
+    }
 
     const fromRounding = this.from.calculateRoundingStuff();
     const toRounding = this.to.calculateRoundingStuff();
@@ -155,27 +165,53 @@ export class TransitConnection
     const path = d3path();
 
     if (fromRounding) {
-      const { center, ogPos, radius } = fromRounding;
+      const { center, ogPos, radius, edgeDist } = fromRounding;
       const startAngle = wrapAngle2PI(center.angleTo(from));
       const endAngle = wrapAngle2PI(center.angleTo(ogPos));
       const clockwise =
         wrapAngle2PI(angleDelta(startAngle, endAngle)) < Math.PI;
 
-      path.arc(center.x, center.y, radius, endAngle, startAngle, clockwise);
+      const sign = clockwise ? 1 : -1;
+
+      if (lateralOffset * sign < edgeDist) {
+        path.arc(
+          center.x,
+          center.y,
+          radius - lateralOffset * sign,
+          endAngle,
+          startAngle,
+          clockwise,
+        );
+      } else {
+        path.moveTo(from.x, from.y);
+      }
     } else {
       path.moveTo(from.x, from.y);
     }
 
-    path.lineTo(to.x, to.y);
-
     if (toRounding) {
-      const { center, ogPos, radius } = toRounding;
+      const { center, ogPos, radius, edgeDist } = toRounding;
       const startAngle = center.angleTo(to);
       const endAngle = center.angleTo(ogPos);
       const clockwise =
         wrapAngle2PI(angleDelta(startAngle, endAngle)) < Math.PI;
 
-      path.arc(center.x, center.y, radius, startAngle, endAngle, !clockwise);
+      const sign = clockwise ? 1 : -1;
+
+      if (-lateralOffset * sign < edgeDist) {
+        path.arc(
+          center.x,
+          center.y,
+          radius + lateralOffset * sign,
+          startAngle,
+          endAngle,
+          !clockwise,
+        );
+      } else {
+        path.lineTo(to.x, to.y);
+      }
+    } else {
+      path.lineTo(to.x, to.y);
     }
 
     const str = path.toString();
@@ -190,28 +226,11 @@ export class TransitConnection
     return [path2d, length, !!(fromRounding || toRounding)];
   }
 
-  isOver(x: number, y: number) {
-    const width = 5;
-    const x1 = this.from.pos.x;
-    const y1 = this.from.pos.y;
-    const x2 = this.to.pos.x;
-    const y2 = this.to.pos.y;
-
-    const withinBoundingBox =
-      Math.min(x1, x2) <= x + width &&
-      x <= Math.max(x1, x2) + width &&
-      Math.min(y1, y2) <= y + width &&
-      y <= Math.max(y1, y2) + width;
-
-    if (!withinBoundingBox) {
-      return false;
-    }
-
-    const distance = Math.abs(
-      (y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1,
-    );
-    const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-    return distance / length < width;
+  isOver(x: number, y: number, ctx: CanvasRenderingContext2D) {
+    const width = this.route.style.lineWidth + this.route.style.margin * 2 + 2;
+    const [path] = this.getPath();
+    ctx.lineWidth = width;
+    return ctx.isPointInStroke(path, x, y);
   }
 
   getAngle(which: TransitStop): number {
