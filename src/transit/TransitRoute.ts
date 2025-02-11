@@ -1,31 +1,22 @@
 import { id } from '../utils/id';
 import { TransitMap } from './TransitMap';
 import { DEFAULT_STOP_STYLE, StopStyle, TransitStop } from './TransitStop';
-import { z } from 'zod';
 
 // The REM has the `split` style. It's very weird, I've never seen it on any other transit map.
-export const RouteStyle = z.object({
-  color: z.string(),
-  lineWidth: z.number(),
-  strokeType: z.enum(['solid', 'split']),
-  innerWidth: z.number(), // only for split lines
-  dottedWidth: z.number(), // only for dotted lines
-  dashedWidth: z.number(), // only for dashed lines
-  roundRadius: z.number(),
-  margin: z.number(),
-  stopStyle: StopStyle,
-  terminusStyle: StopStyle,
-});
+export type StrokeType = 'solid' | 'split';
 
-export type RouteStyle = z.infer<typeof RouteStyle>;
-export type StrokeType = RouteStyle['strokeType'];
-
-export const SerializedRoute = z.object({
-  id: z.number(),
-  name: z.string(),
-  style: RouteStyle,
-});
-export type SerializedRoute = z.infer<typeof SerializedRoute>;
+export type RouteStyle = {
+  color: string;
+  lineWidth: number;
+  strokeType: StrokeType;
+  innerWidth: number; // only for split lines
+  dottedWidth: number; // only for dotted lines
+  dashedWidth: number; // only for dashed lines
+  roundRadius: number;
+  margin: number;
+  stopStyle: StopStyle;
+  terminusStyle: StopStyle;
+};
 
 export class TransitRoute {
   public id: number = id();
@@ -63,14 +54,6 @@ export class TransitRoute {
 
   removeStop(stop: TransitStop) {
     this.stops.delete(stop);
-  }
-
-  serialize(): SerializedRoute {
-    return {
-      id: this.id,
-      name: this.name,
-      style: this.style,
-    };
   }
 }
 

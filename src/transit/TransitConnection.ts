@@ -7,19 +7,14 @@ import { TransitRoute } from './TransitRoute';
 import { TransitStop } from './TransitStop';
 import { DoubleClickable, RightClickable, Selectable } from './types';
 import { path as d3path } from 'd3-path';
-import { z } from 'zod';
+
+export type ConnectionStrokeType = 'solid' | 'dotted' | 'dashed';
 
 // Styles only for this individual connection. Other styles should be specific
 // to the route.
-export const ConnectionStyle = z.object({
-  strokeType: z.union([
-    z.literal('solid'),
-    z.literal('dotted'),
-    z.literal('dashed'),
-  ]),
-});
-export type ConnectionStyle = z.infer<typeof ConnectionStyle>;
-export type ConnectionStrokeType = ConnectionStyle['strokeType'];
+export type ConnectionStyle = {
+  strokeType: ConnectionStrokeType;
+};
 
 export function styleEquals(a: ConnectionStyle, b: ConnectionStyle): boolean {
   return a.strokeType === b.strokeType;
@@ -28,15 +23,6 @@ export function styleEquals(a: ConnectionStyle, b: ConnectionStyle): boolean {
 export const DEFALUT_CONNECTION_STYLE: ConnectionStyle = {
   strokeType: 'solid',
 };
-
-export const SerializedConnection = z.object({
-  id: z.number(),
-  from: z.number(),
-  to: z.number(),
-  route: z.number(),
-  style: ConnectionStyle,
-});
-export type SerializedConnection = z.infer<typeof SerializedConnection>;
 
 export class TransitConnection
   implements Selectable, DoubleClickable, RightClickable
@@ -325,14 +311,4 @@ export class TransitConnection
   }
 
   rightClick(): void {}
-
-  serialize(): SerializedConnection {
-    return {
-      id: this.id,
-      from: this.from.id,
-      to: this.to.id,
-      route: this.route.id,
-      style: this.style,
-    };
-  }
 }

@@ -4,7 +4,7 @@ import {
   ConnectionStrokeType,
   TransitConnection,
 } from '../transit/TransitConnection';
-import { TransitMap, deserializeMap } from '../transit/TransitMap';
+import { TransitMap } from '../transit/TransitMap';
 import {
   StrokeType,
   TransitRoute,
@@ -17,7 +17,7 @@ import { StopColorEditor } from './StopColorEditor';
 import { useContext, useState } from 'react';
 
 export function SelectedUi() {
-  const { selected, map, setMap } = useContext(EditorContext);
+  const { selected, map } = useContext(EditorContext);
 
   if (selected instanceof TransitStop) {
     return <TransitStopUi key={selected.id} stop={selected} />;
@@ -27,7 +27,7 @@ export function SelectedUi() {
       <TransitConnectionUi key={selected.id} connection={selected} map={map} />
     );
   }
-  return <TransitRoutesUi routes={map.routes} map={map} setMap={setMap} />;
+  return <TransitRoutesUi routes={map.routes} map={map} />;
 }
 
 function TransitStopUi({ stop }: { stop: TransitStop }) {
@@ -254,11 +254,9 @@ function TransitConnectionUi({
 function TransitRoutesUi({
   routes: _routes,
   map,
-  setMap,
 }: {
   routes: Set<TransitRoute>;
   map: TransitMap;
-  setMap: React.Dispatch<React.SetStateAction<TransitMap>>;
 }) {
   const [routes, setRoutes] = useState(_routes);
   const [route, setRoute] = useState<TransitRoute | null>(null);
@@ -272,33 +270,6 @@ function TransitRoutesUi({
       setRoute(route);
       setRoutes(new Set(routes));
     }
-  }
-
-  function serializeMap() {
-    const serialized = map.serialize();
-    const json = JSON.stringify(serialized);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'transit-map.json';
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function loadMap(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) {
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      const newMap = deserializeMap(JSON.parse(result));
-      setMap(newMap);
-      setRoutes(newMap.routes);
-    };
-    reader.readAsText(file);
   }
 
   return (
@@ -327,18 +298,6 @@ function TransitRoutesUi({
       ) : (
         <button onClick={addRoute}>Add route</button>
       )}
-      <div className="flex flex-col gap-2">
-        <button
-          className="cursor-pointer bg-gray-900 text-white"
-          onClick={serializeMap}
-        >
-          Save map
-        </button>
-        <label className="cursor-pointer bg-gray-900 text-center text-white">
-          <div>Load map</div>
-          <input type="file" onChange={loadMap} className="hidden" />
-        </label>
-      </div>
     </>
   );
 }

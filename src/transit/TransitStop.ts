@@ -18,38 +18,26 @@ import {
   RightClickable,
   Selectable,
 } from './types';
-import { z } from 'zod';
 
-const hexColorRegex = /^#([0-9A-F]{3}){1,2}$/i;
+export type StopColor = string | 'route';
 
-export const StopColor = z.union([
-  z.string().regex(hexColorRegex, 'Invalid hex color'),
-  z.literal('route'),
-]);
-
-export type StopColor = z.infer<typeof StopColor>;
-
-export const StopStyle = z.object({
-  fillColor: StopColor,
-  strokeColor: StopColor,
-  edges: z.number().int().min(0),
-  edgeOrientation: z.number().int().min(0),
-  edgeFollowsRoute: z.boolean(),
-  radius: z.number().min(0),
-  strokeWidth: z.number().min(0),
-});
-
-export type StopStyle = z.infer<typeof StopStyle>;
-
-export const SerializedStop = z.object({
-  id: z.number(),
-  pos: Vector2.schema,
-  labels: z.array(z.number()),
-  hidden: z.boolean(),
-  roundRadius: z.number().nullable(),
-  style: StopStyle.optional(),
-});
-export type SerializedStop = z.infer<typeof SerializedStop>;
+export type StopStyle = {
+  fillColor: StopColor;
+  strokeColor: StopColor;
+  /**
+   * 0: circle :)
+   * 1-2: not supported
+   * 3+: polygon with `edges` edges and `radius` radius
+   */
+  edges: number;
+  /**
+   * Two orientations for even-numbered edges and three for odd-numbered edges.
+   */
+  edgeOrientation: number;
+  edgeFollowsRoute: boolean;
+  radius: number;
+  strokeWidth: number;
+};
 
 export const DEFAULT_STOP_STYLE: StopStyle = {
   fillColor: '#000000',
@@ -419,16 +407,5 @@ export class TransitStop
     stop.connections.forEach(connection => {
       connection.style = { ...connectionStyle };
     });
-  }
-
-  serialize(): SerializedStop {
-    return {
-      id: this.id,
-      pos: this.pos,
-      labels: Array.from(this.labels).map(label => label.id),
-      hidden: this.hidden,
-      roundRadius: this.roundRadius ?? null,
-      style: this.style,
-    };
   }
 }

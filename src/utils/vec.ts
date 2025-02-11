@@ -1,5 +1,4 @@
 import { mod } from './mathUtils';
-import { z } from 'zod';
 
 export class Vector3 {
   constructor(
@@ -124,13 +123,6 @@ export class Vector2 {
     public readonly x: number,
     public readonly y: number,
   ) {}
-
-  static schema = z
-    .object({
-      x: z.number(),
-      y: z.number(),
-    })
-    .transform(obj => new Vector2(obj.x, obj.y));
 
   static fromAngle(angle: number): Vector2 {
     return new Vector2(Math.cos(angle), Math.sin(angle));
