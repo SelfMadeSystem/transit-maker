@@ -60,6 +60,10 @@ export class TransitMap {
     return stop;
   }
 
+  createLabel(text: string, pos: Vector2) {
+    return new Label(this, text, pos);
+  }
+
   createConnection(from: TransitStop, to: TransitStop, route: TransitRoute) {
     return new TransitConnection(this, from, to, route);
   }
@@ -91,14 +95,14 @@ export class TransitMap {
     y: number,
     ctx: CanvasRenderingContext2D,
   ): SelectableItem | null {
+    for (const label of this.labels) {
+      if (label.isOver(x, y)) {
+        return label;
+      }
+    }
     for (const stop of this.stops) {
       if (stop.isOver(x, y)) {
         return stop;
-      }
-      for (const label of stop.labels) {
-        if (label.isOver(x, y)) {
-          return label;
-        }
       }
     }
     for (const connection of this.connections) {

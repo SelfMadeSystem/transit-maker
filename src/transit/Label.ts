@@ -93,7 +93,7 @@ export class Label implements Selectable, Movable, Removable {
       topLeft.x - 2,
       topLeft.y - 2,
       dimensions.x + 4,
-      dimensions.y * 2 + 4,
+      dimensions.y + 4,
     );
   }
 
@@ -107,10 +107,10 @@ export class Label implements Selectable, Movable, Removable {
     const topLeft = drawPos.sub(tl);
     const bottomRight = drawPos.add(br);
     return (
-      x >= topLeft.x &&
-      x <= bottomRight.x &&
-      y >= topLeft.y &&
-      y <= bottomRight.y
+      x >= topLeft.x - 2 &&
+      x <= bottomRight.x + 2 &&
+      y >= topLeft.y - 2 &&
+      y <= bottomRight.y + 2
     );
   }
 

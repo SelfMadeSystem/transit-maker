@@ -3,6 +3,7 @@ import { Label } from '../transit/Label';
 import { PosWithKeys, SelectableItem } from '../transit/types';
 import { Vector2 } from '../utils/vec';
 import createCanvasComponent from './CanvasComponent';
+import { waitForInput } from './context-menu';
 
 export const MapComponent = createCanvasComponent<EditorContextType>({
   autoResize: true,
@@ -114,7 +115,16 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
         } else if (selectable instanceof Label) {
           renameLabel(selectable);
         } else if (!selectable) {
-          map.createStop('Unnamed Stop', new Vector2(x, y));
+          waitForInput(['Create Stop', 'Create Label'], mouseX, mouseY).then(
+            result => {
+              if (result === 'Create Stop') {
+                map.createStop('Unnamed Stop', new Vector2(x, y));
+              } else if (result === 'Create Label') {
+                map.createLabel('Unnamed Label', new Vector2(x, y));
+              }
+            },
+          );
+          // map.createStop('Unnamed Stop', new Vector2(x, y));
         }
       },
       mouseMove(e, { mouseX, mouseY }) {
