@@ -2,7 +2,7 @@ import { Vector2 } from '../utils/vec';
 import { Label } from './Label';
 import { TransitMap } from './TransitMap';
 import { TransitStop } from './TransitStop';
-import { Movable } from './types';
+import { ActionableItem, Movable } from './types';
 
 /**
  * An action that can be applied and undone on a transit map.
@@ -91,3 +91,16 @@ export const connectStopsAction = createActionFunction(
     };
   },
 );
+
+export const removeAction = createActionFunction((_, obj: ActionableItem) => {
+  obj.remove();
+  return {
+    label: 'Remove',
+    undo() {
+      obj.reAdd();
+    },
+    redo() {
+      obj.remove();
+    },
+  };
+});

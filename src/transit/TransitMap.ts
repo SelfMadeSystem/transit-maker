@@ -128,13 +128,6 @@ export class TransitMap {
     return null;
   }
 
-  /**
-   * @deprecated
-   */
-  remove(selectable: ActionableItem) {
-    selectable.remove();
-  }
-
   connectionsByRoute(): Map<TransitRoute, TransitConnection[]> {
     const connections: Map<TransitRoute, TransitConnection[]> = new Map();
     for (const connection of this.connections) {

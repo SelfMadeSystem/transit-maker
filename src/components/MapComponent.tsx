@@ -4,6 +4,7 @@ import {
   createLabelAction,
   createStopAction,
   moveMovableAction,
+  removeAction,
 } from '../transit/Action';
 import { Label } from '../transit/Label';
 import { ActionableItem, PosWithKeys } from '../transit/types';
@@ -198,7 +199,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           switch (e.key) {
             case 'Delete':
             case 'Backspace':
-              map.remove(selected);
+              removeAction(map, selected);
               setSelection(null);
               break;
             case 'Enter':
