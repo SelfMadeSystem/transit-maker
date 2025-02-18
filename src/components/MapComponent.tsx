@@ -1,5 +1,9 @@
 import { EditorContextType } from '../EditorContext';
-import { createIsolatedStopAction } from '../transit/Action';
+import {
+  MoveAction,
+  createStopAction,
+  moveMovableAction,
+} from '../transit/Action';
 import { Label } from '../transit/Label';
 import { ActionableItem, PosWithKeys } from '../transit/types';
 import { Vector2 } from '../utils/vec';
@@ -28,6 +32,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
     let ogMouseX = 0;
     let ogMouseY = 0;
     let ogPos: Vector2 | null = null;
+    let moveAction: MoveAction | null = null;
 
     function setSelection(item: ActionableItem | null) {
       setSelected(item);
@@ -119,7 +124,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           waitForInput(['Create Stop', 'Create Label'], mouseX, mouseY).then(
             result => {
               if (result === 'Create Stop') {
-                const action = createIsolatedStopAction(
+                const action = createStopAction(
                   'Unnamed Stop',
                   new Vector2(x, y),
                 );
@@ -146,6 +151,9 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
             );
 
             if ('moveTo' in selected) {
+              if (!moveAction) {
+                moveAction = moveMovableAction(selected);
+              }
               const l: PosWithKeys = {
                 pos: new Vector2(ogPos!.x + deltaPos.x, ogPos!.y + deltaPos.y),
                 shiftKey: e.shiftKey,
@@ -153,6 +161,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
                 altKey: e.altKey,
               };
               selected.moveTo(l);
+              moveAction.pos = selected.getPos();
             }
           } else {
             offsetX += deltaX;
@@ -164,6 +173,10 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
       },
       mouseUp() {
         panning = false;
+        if (moveAction) {
+          history.add(moveAction);
+          moveAction = null;
+        }
       },
       keyDown(e) {
         if (

@@ -2,6 +2,7 @@ import { Vector2 } from '../utils/vec';
 import { Label } from './Label';
 import { TransitMap } from './TransitMap';
 import { TransitStop } from './TransitStop';
+import { Movable } from './types';
 
 /**
  * An action that can be applied and undone on a transit map.
@@ -13,7 +14,11 @@ export interface Action {
   redo?: (map: TransitMap) => void;
 }
 
-export function createIsolatedStopAction(label: string, pos: Vector2): Action {
+export interface MoveAction extends Action {
+  pos: Vector2;
+}
+
+export function createStopAction(label: string, pos: Vector2): Action {
   let stop: TransitStop | null = null;
 
   return {
@@ -32,4 +37,20 @@ export function createIsolatedStopAction(label: string, pos: Vector2): Action {
       }
     },
   };
+}
+
+export function moveMovableAction(stop: Movable): MoveAction {
+  const ogPos = stop.getPos();
+  const action: MoveAction = {
+    label: 'Move',
+    pos: ogPos,
+    apply() {
+      stop.setPos(action.pos);
+    },
+    undo() {
+      stop.setPos(ogPos);
+    },
+  };
+
+  return action;
 }

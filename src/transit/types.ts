@@ -16,6 +16,7 @@ export type ClickInfo = PosWithKeys & {
 
 export interface Movable extends Actionable {
   getPos(): Vector2;
+  setPos(pos: Vector2): void;
   moveTo(l: PosWithKeys): void;
 }
 

@@ -128,6 +128,10 @@ export class Label implements Actionable, Movable {
     return this.pos;
   }
 
+  setPos(pos: Vector2) {
+    this.pos = pos;
+  }
+
   moveTo({ pos }: PosWithKeys) {
     this.pos = pos;
   }

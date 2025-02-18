@@ -389,6 +389,10 @@ export class TransitStop implements Actionable, Movable {
     return this.pos;
   }
 
+  setPos(pos: Vector2): void {
+    this.pos = pos;
+  }
+
   getSnapLines(): SnapLine[] {
     const snapLines = [];
 
