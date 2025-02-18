@@ -452,7 +452,9 @@ export class TransitStop implements Actionable, Movable {
     const connectionsByStop = this.connectionsByStop();
     if (connectionsByStop.size === 1) {
       const [connection] = Array.from(connectionsByStop.values())[0];
-      return connection.getOtherStop(this).pos.sub(this.pos);
+      const [to, from] = connection.getFromToPosInfo();
+
+      return to.sub(from);
     }
     return v;
   }
@@ -504,7 +506,7 @@ export class TransitStop implements Actionable, Movable {
     return action;
   }
 
-  private createSplitConnections(): void {
+  private createSplitConnections(): Action | null {
     const connectionsByStop = this.connectionsByStop();
     const vals = Array.from(connectionsByStop.values());
 
@@ -514,26 +516,44 @@ export class TransitStop implements Actionable, Movable {
           const diff = this.pos.sub(connections[0].getOtherStop(this).pos);
           const orth = diff.normalize().cw90();
           const offset = this.getLateralOffset();
+
+          const newStops: TransitStop[] = [];
           for (let i = 0; i < connections.length; i++) {
             const connection = connections[i];
             const lateralOffset = connection.lateralOffset;
             const sign = connection.to === this ? 1 : -1;
             const lateralVector = orth.mult(lateralOffset * offset * sign);
             const newPos = this.pos.add(diff).add(lateralVector);
-            const [, newC] = this.map.createStop(
-              this.labels.size > 0 ? 'Unnamed Stop' : null,
-              newPos,
-              connection.route,
+            const newStop = new TransitStop(this.map, [], newPos);
+            newStop.style = this.style;
+            newStops.push(newStop);
+            const newC = new TransitConnection(
+              this.map,
               this,
+              newStop,
+              connection.route,
             );
             newC.style = { ...connection.style };
             newC.setWhichLateralOffset(this, lateralOffset * sign);
           }
-          return;
+
+          const action: Action = {
+            label: 'Split Connections',
+            undo: () => {
+              newStops.forEach(stop => stop.remove());
+            },
+            redo: () => {
+              newStops.forEach(stop => stop.reAdd());
+            },
+          };
+
+          this.map.history.add(action);
+          return action;
         }
       }
+      return null;
     } else {
-      this.createConnection();
+      return this.createConnection();
     }
   }
 }

@@ -175,7 +175,7 @@ export class TransitConnection implements Actionable {
     return Math.max(this.to.getLateralOffset(), this.from.getLateralOffset());
   }
 
-  getPath(): [Path2D, number, boolean] {
+  getFromToPosInfo() {
     let from = this.from.pos;
     let to = this.to.pos;
     const fromLateralOffset =
@@ -202,6 +202,26 @@ export class TransitConnection implements Actionable {
       const direction = to.directionTo(from);
       to = to.add(direction.mult(toRounding.edgeDist));
     }
+
+    return [
+      from,
+      to,
+      fromLateralOffset,
+      toLateralOffset,
+      fromRounding,
+      toRounding,
+    ] as const;
+  }
+
+  getPath(): [Path2D, number, boolean] {
+    const [
+      from,
+      to,
+      fromLateralOffset,
+      toLateralOffset,
+      fromRounding,
+      toRounding,
+    ] = this.getFromToPosInfo();
     const path = d3path();
 
     if (fromRounding) {
