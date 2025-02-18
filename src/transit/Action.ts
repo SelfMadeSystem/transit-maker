@@ -80,7 +80,12 @@ export const moveMovableAction = (stop: Movable) => {
 
 export const connectStopsAction = createActionFunction(
   (map: TransitMap, stop1: TransitStop, stop2: TransitStop) => {
-    const connection = map.createConnection(stop1, stop2, stop1.getRoute());
+    const connection = new TransitConnection(
+      map,
+      stop1,
+      stop2,
+      stop1.getRoute(),
+    );
     return {
       label: 'Connect Stops',
       undo() {

@@ -1,5 +1,4 @@
 import { id } from '../utils/id';
-import { Vector2 } from '../utils/vec';
 import { History } from './History';
 import { Label } from './Label';
 import { TransitConnection } from './TransitConnection';
@@ -33,51 +32,6 @@ export class TransitMap {
     this.stops = new Set();
     this.connections = new Set();
     this.defaultRoute = createDefaultRoute(this);
-  }
-
-  /**
-   * @deprecated
-   */
-  createStop(name: string | null, pos: Vector2): TransitStop;
-  createStop(
-    name: string | null,
-    pos: Vector2,
-    route: TransitRoute,
-    from: TransitStop,
-  ): [TransitStop, TransitConnection];
-  createStop(
-    name: string | null,
-    pos: Vector2,
-    route?: TransitRoute,
-    from?: TransitStop,
-  ) {
-    const stop = new TransitStop(
-      this,
-      name ? [new Label(this, name)] : [],
-      pos,
-    );
-    if (from) {
-      if (!route) {
-        throw new Error('Must provide route when creating stop with from');
-      }
-      const connection = new TransitConnection(this, from, stop, route);
-      return [stop, connection];
-    }
-    return stop;
-  }
-
-  /**
-   * @deprecated
-   */
-  createLabel(text: string, pos: Vector2) {
-    return new Label(this, text, pos);
-  }
-
-  /**
-   * @deprecated
-   */
-  createConnection(from: TransitStop, to: TransitStop, route: TransitRoute) {
-    return new TransitConnection(this, from, to, route);
   }
 
   getSelectable(
