@@ -1,7 +1,8 @@
 import { EditorContext } from './EditorContext';
+import { History } from './transit/History';
 import { TransitMap } from './transit/TransitMap';
 import { TransitRoute } from './transit/TransitRoute';
-import { SelectableItem } from './transit/types';
+import { ActionableItem } from './transit/types';
 import { Vector2 } from './utils/vec';
 import { useState } from 'react';
 
@@ -36,11 +37,13 @@ function createTransitMap(): TransitMap {
 }
 
 export function EditorProvider({ children }: { children: React.ReactNode }) {
-  const [selected, setSelected] = useState<SelectableItem | null>(null);
+  const [selected, setSelected] = useState<ActionableItem | null>(null);
   const [map] = useState(createTransitMap);
+  const [history] = useState(() => new History());
   return (
     <EditorContext.Provider
       value={{
+        history,
         map,
         selected,
         setSelected,

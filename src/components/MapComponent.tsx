@@ -1,6 +1,7 @@
 import { EditorContextType } from '../EditorContext';
+import { createIsolatedStopAction } from '../transit/Action';
 import { Label } from '../transit/Label';
-import { PosWithKeys, SelectableItem } from '../transit/types';
+import { ActionableItem, PosWithKeys } from '../transit/types';
 import { Vector2 } from '../utils/vec';
 import createCanvasComponent from './CanvasComponent';
 import { waitForInput } from './context-menu';
@@ -15,7 +16,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
       height: '100%',
     },
   },
-  setup(canvas, { map, selected, setSelected }) {
+  setup(canvas, { map, history, selected, setSelected }) {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Failed to get 2d context');
     let zoom = 1;
@@ -28,7 +29,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
     let ogMouseY = 0;
     let ogPos: Vector2 | null = null;
 
-    function setSelection(item: SelectableItem | null) {
+    function setSelection(item: ActionableItem | null) {
       setSelected(item);
       if (item && 'getPos' in item) {
         ogPos = item.getPos();
@@ -118,7 +119,13 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           waitForInput(['Create Stop', 'Create Label'], mouseX, mouseY).then(
             result => {
               if (result === 'Create Stop') {
-                map.createStop('Unnamed Stop', new Vector2(x, y));
+                const action = createIsolatedStopAction(
+                  'Unnamed Stop',
+                  new Vector2(x, y),
+                );
+                history.add(action);
+                action.apply(map);
+                // map.createStop('Unnamed Stop', new Vector2(x, y));
               } else if (result === 'Create Label') {
                 map.createLabel('Unnamed Label', new Vector2(x, y));
               }
@@ -164,6 +171,19 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           e.target instanceof HTMLTextAreaElement
         ) {
           return;
+        }
+
+        switch (e.key) {
+          case 'z':
+            if (e.ctrlKey) {
+              history.undo(map);
+            }
+            return;
+          case 'y':
+            if (e.ctrlKey) {
+              history.redo(map);
+            }
+            return;
         }
 
         if (selected) {

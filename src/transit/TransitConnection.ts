@@ -5,7 +5,7 @@ import { SnapLine } from './Snapping';
 import { TransitMap } from './TransitMap';
 import { TransitRoute } from './TransitRoute';
 import { TransitStop } from './TransitStop';
-import { DoubleClickable, RightClickable, Selectable } from './types';
+import { Actionable } from './types';
 import { path as d3path } from 'd3-path';
 
 export type ConnectionStrokeType = 'solid' | 'dotted' | 'dashed';
@@ -24,9 +24,7 @@ export const DEFALUT_CONNECTION_STYLE: ConnectionStyle = {
   strokeType: 'solid',
 };
 
-export class TransitConnection
-  implements Selectable, DoubleClickable, RightClickable
-{
+export class TransitConnection implements Actionable {
   public id: number = id();
   // TODO: Add support for:
   // - split routes (e.g. REM connection between Bois-Franc, Marie-Curie,
@@ -56,9 +54,19 @@ export class TransitConnection
     this.from = from;
     this.to = to;
     this.route = route;
+    this.reAdd();
+  }
+
+  reAdd(): void {
     this.map.connections.add(this);
     this.from.addConnection(this);
     this.to.addConnection(this);
+  }
+
+  remove(): void {
+    this.map.connections.delete(this);
+    this.from.removeConnection(this);
+    this.to.removeConnection(this);
   }
 
   setWhichLateralOffset(which: TransitStop, offset: number) {
@@ -335,12 +343,6 @@ export class TransitConnection
     const cardinalSnapLines = this.getCardinalSnapLines(other, length);
 
     return [...snapLines, ...cardinalSnapLines];
-  }
-
-  remove(): void {
-    this.map.connections.delete(this);
-    this.from.removeConnection(this);
-    this.to.removeConnection(this);
   }
 
   doubleClick(): void {

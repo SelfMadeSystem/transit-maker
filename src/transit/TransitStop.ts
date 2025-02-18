@@ -10,14 +10,7 @@ import {
 } from './TransitConnection';
 import { TransitMap } from './TransitMap';
 import { TransitRoute } from './TransitRoute';
-import {
-  ClickInfo,
-  DoubleClickable,
-  Movable,
-  PosWithKeys,
-  RightClickable,
-  Selectable,
-} from './types';
+import { Actionable, ClickInfo, Movable, PosWithKeys } from './types';
 
 export type StopColor = string | 'route';
 
@@ -60,9 +53,7 @@ export type RoundingCalculation = {
   angle: number;
 } | null;
 
-export class TransitStop
-  implements Selectable, Movable, RightClickable, DoubleClickable
-{
+export class TransitStop implements Actionable, Movable {
   public id: number = id();
   // TODO: Add support for:
   // - "long" transfer stations (e.g. Lucien-L'Allier in Montreal is like 3×
@@ -78,17 +69,47 @@ export class TransitStop
   constructor(map: TransitMap, labels: Label[], pos: Vector2) {
     this.map = map;
     this.labels = new Set(labels);
+    this.pos = pos;
+    this.connections = new Set();
+    this.reAdd(true);
+  }
+
+  reAdd(first = false): void {
+    this.map.stops.add(this);
     for (const label of this.labels) {
       label.stop = this;
     }
-    this.pos = pos;
-    this.connections = new Set();
-    this.map.stops.add(this);
+    if (first) return;
+    for (const connection of this.connections) {
+      connection.reAdd();
+    }
+    for (const label of this.labels) {
+      label.stop = this;
+      label.reAdd();
+    }
+  }
+
+  remove(): void {
+    if (!this.map.stops.has(this)) {
+      return;
+    }
+    this.map.stops.delete(this);
+    for (const connection of this.connections) {
+      const otherStop = connection.getOtherStop(this);
+      otherStop.removeConnection(connection);
+      this.map.connections.delete(connection);
+    }
+    for (const label of this.labels) {
+      label.stop = null;
+      label.remove();
+    }
   }
 
   addConnection(connection: TransitConnection) {
+    if (this.connections.has(connection)) {
+      return; // don't unnecessarily update lateral connections
+    }
     this.connections.add(connection);
-    connection.route.stops.add(this);
     this.updateLateralConnections(connection.getOtherStop(this));
   }
 
@@ -97,7 +118,6 @@ export class TransitStop
       return;
     }
     this.connections.delete(connection);
-    if (!this.hasRoute(connection)) connection.route.removeStop(this);
     this.updateLateralConnections(connection.getOtherStop(this));
   }
 
@@ -406,24 +426,6 @@ export class TransitStop
   rightClick({ selected }: ClickInfo): void {
     if (selected instanceof TransitStop && selected !== this) {
       this.map.createConnection(selected, this, selected.getRoute());
-    }
-  }
-
-  remove(): void {
-    if (!this.map.stops.has(this)) {
-      return;
-    }
-    this.map.stops.delete(this);
-    for (const route of this.getRoutes()) {
-      route.stops.delete(this);
-    }
-    for (const connection of this.connections) {
-      const otherStop = connection.getOtherStop(this);
-      otherStop.removeConnection(connection);
-      this.map.connections.delete(connection);
-    }
-    for (const label of this.labels) {
-      label.remove();
     }
   }
 

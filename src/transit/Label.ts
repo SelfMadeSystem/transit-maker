@@ -2,11 +2,11 @@ import { id } from '../utils/id';
 import { Vector2 } from '../utils/vec';
 import { TransitMap } from './TransitMap';
 import { TransitStop } from './TransitStop';
-import { Movable, PosWithKeys, Removable, Selectable } from './types';
+import { Actionable, Movable, PosWithKeys } from './types';
 
 const LabelFont = '10px sans-serif';
 
-export class Label implements Selectable, Movable, Removable {
+export class Label implements Actionable, Movable {
   // TODO: Add support for:
   // - text formatting (e.g. bold for important/transfer stations)
   // - line icon identifier (e.g. blue circle with white "5" for line 5 in Montreal)
@@ -29,7 +29,17 @@ export class Label implements Selectable, Movable, Removable {
     this.text = text;
     this.pos = pos;
     this.stop = null;
+    this.reAdd();
+  }
+
+  reAdd() {
     this.map.labels.add(this);
+    this.stop?.labels.add(this);
+  }
+
+  remove(): void {
+    this.map.labels.delete(this);
+    this.stop?.labels.delete(this);
   }
 
   disconnectFromStop() {
@@ -120,10 +130,5 @@ export class Label implements Selectable, Movable, Removable {
 
   moveTo({ pos }: PosWithKeys) {
     this.pos = pos;
-  }
-
-  remove(): void {
-    this.map.labels.delete(this);
-    this.stop?.labels.delete(this);
   }
 }

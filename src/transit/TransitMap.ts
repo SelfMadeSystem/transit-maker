@@ -4,7 +4,7 @@ import { Label } from './Label';
 import { TransitConnection } from './TransitConnection';
 import { TransitRoute, createDefaultRoute } from './TransitRoute';
 import { TransitStop } from './TransitStop';
-import { SelectableItem } from './types';
+import { ActionableItem } from './types';
 
 export class TransitMap {
   public id: number = id();
@@ -83,7 +83,6 @@ export class TransitMap {
       new Vector2((from.pos.x + to.pos.x) / 2, (from.pos.y + to.pos.y) / 2),
     );
 
-    route.addStop(stop);
     const connection1 = new TransitConnection(this, from, stop, route);
     const connection2 = new TransitConnection(this, stop, to, route);
     connection1.style = { ...connection.style };
@@ -94,7 +93,7 @@ export class TransitMap {
     x: number,
     y: number,
     ctx: CanvasRenderingContext2D,
-  ): SelectableItem | null {
+  ): ActionableItem | null {
     for (const label of this.labels) {
       if (label.isOver(x, y)) {
         return label;
@@ -113,7 +112,7 @@ export class TransitMap {
     return null;
   }
 
-  remove(selectable: SelectableItem) {
+  remove(selectable: ActionableItem) {
     selectable.remove();
   }
 
@@ -128,7 +127,7 @@ export class TransitMap {
     return connections;
   }
 
-  draw(ctx: CanvasRenderingContext2D, selected: SelectableItem | null) {
+  draw(ctx: CanvasRenderingContext2D, selected: ActionableItem | null) {
     const connectionsByRoute = this.connectionsByRoute().values();
     for (const connections of connectionsByRoute) {
       for (const connection of connections) {

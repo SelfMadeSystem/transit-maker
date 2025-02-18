@@ -11,29 +11,21 @@ export type PosWithKeys = {
 };
 
 export type ClickInfo = PosWithKeys & {
-  selected: SelectableItem | null;
+  selected: ActionableItem | null;
 };
 
-export interface Movable {
+export interface Movable extends Actionable {
   getPos(): Vector2;
   moveTo(l: PosWithKeys): void;
 }
 
-export interface Removable {
+export interface Actionable {
   remove(): void;
-}
-
-export interface Selectable extends Removable {
+  reAdd(): void;
   isOver(x: number, y: number, ctx: CanvasRenderingContext2D): boolean;
   drawSelected(ctx: CanvasRenderingContext2D): void;
+  doubleClick?(a: ClickInfo): void;
+  rightClick?(a: ClickInfo): void;
 }
 
-export interface DoubleClickable {
-  doubleClick(a: ClickInfo): void;
-}
-
-export interface RightClickable {
-  rightClick(a: ClickInfo): void;
-}
-
-export type SelectableItem = Label | TransitStop | TransitConnection;
+export type ActionableItem = Label | TransitStop | TransitConnection;
