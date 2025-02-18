@@ -35,6 +35,9 @@ export class TransitMap {
     this.defaultRoute = createDefaultRoute(this);
   }
 
+  /**
+   * @deprecated
+   */
   createStop(name: string | null, pos: Vector2): TransitStop;
   createStop(
     name: string | null,
@@ -63,14 +66,24 @@ export class TransitMap {
     return stop;
   }
 
+  /**
+   * @deprecated
+   */
   createLabel(text: string, pos: Vector2) {
     return new Label(this, text, pos);
   }
 
+  /**
+   * @deprecated
+   */
   createConnection(from: TransitStop, to: TransitStop, route: TransitRoute) {
     return new TransitConnection(this, from, to, route);
   }
 
+  /**
+   * TODO: Replace this
+   * @deprecated
+   */
   splitConnection(connection: TransitConnection) {
     if (!this.connections.has(connection)) {
       return;
@@ -115,6 +128,9 @@ export class TransitMap {
     return null;
   }
 
+  /**
+   * @deprecated
+   */
   remove(selectable: ActionableItem) {
     selectable.remove();
   }

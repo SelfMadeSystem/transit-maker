@@ -1,6 +1,6 @@
 import { id } from '../utils/id';
 import { Vector2 } from '../utils/vec';
-import { connectStopsAction } from './Action';
+import { Action, connectStopsAction } from './Action';
 import { Label } from './Label';
 import { SnapInfo, SnapLine } from './Snapping';
 import {
@@ -144,6 +144,12 @@ export class TransitStop implements Actionable, Movable {
           (c.lateralOffset =
             (i - (connections.length - 1) / 2) * (c.to === this ? -1 : 1)),
       );
+    }
+  }
+
+  normalizeConnections() {
+    for (const connection of this.connections) {
+      connection.setFrom(this);
     }
   }
 
@@ -435,64 +441,99 @@ export class TransitStop implements Actionable, Movable {
   }
 
   doubleClick(a: ClickInfo): void {
+    if (a.shiftKey) {
+      this.createSplitConnections();
+    } else {
+      this.createConnection();
+    }
+  }
+
+  private getDiffIfOneConnectionElse(v: Vector2): Vector2 {
+    const connectionsByStop = this.connectionsByStop();
+    if (connectionsByStop.size === 1) {
+      const [connection] = Array.from(connectionsByStop.values())[0];
+      return connection.getOtherStop(this).pos.sub(this.pos);
+    }
+    return v;
+  }
+
+  private createConnection(): Action {
     const connectionsByStop = this.connectionsByStop();
     const vals = Array.from(connectionsByStop.values());
-    if (a.shiftKey) {
-      if (vals.some(connections => connections.length > 1)) {
-        for (const connections of vals) {
-          if (connections.length > 1) {
-            const diff = this.pos.sub(connections[0].getOtherStop(this).pos);
-            const orth = diff.normalize().cw90();
-            const offset = this.getLateralOffset();
-            for (let i = 0; i < connections.length; i++) {
-              const connection = connections[i];
-              const lateralOffset = connection.lateralOffset;
-              const sign = connection.to === this ? 1 : -1;
-              const lateralVector = orth.mult(lateralOffset * offset * sign);
-              const newPos = this.pos.add(diff).add(lateralVector);
-              const [, newC] = this.map.createStop(
-                this.labels.size > 0 ? 'Unnamed Stop' : null,
-                newPos,
-                connection.route,
-                this,
-              );
-              newC.style = { ...connection.style };
-              newC.setWhichLateralOffset(this, lateralOffset * sign);
-            }
-            return;
-          }
-        }
-        return;
-      }
-    }
+
+    const diff = this.getDiffIfOneConnectionElse(new Vector2(20, 20));
+    const stop = new TransitStop(this.map, [], this.pos.sub(diff));
+    stop.style = this.style;
 
     if (vals.length === 1 && vals[0].length > 1) {
-      const routes = this.getRoutes();
-      const stop = this.map.createStop(
-        routes.size === 1 && this.labels.size > 0 ? 'Unnamed Stop' : null,
-        new Vector2(this.pos.x + 10, this.pos.y + 10),
-      );
-      stop.style = this.style;
-      [...this.connections].forEach(connection => {
-        const c = this.map.createConnection(this, stop, connection.route);
-        c.style = { ...connection.style };
-      });
+      this.normalizeConnections();
+      [...this.connections]
+        .sort((a, b) => b.lateralOffset - a.lateralOffset)
+        .forEach(connection => {
+          const c = new TransitConnection(
+            this.map,
+            this,
+            stop,
+            connection.route,
+          );
+          c.style = { ...connection.style };
+        });
       this.updateLateralConnections(stop);
-      return;
+    } else {
+      const connection = new TransitConnection(
+        this.map,
+        this,
+        stop,
+        this.getRoute(),
+      );
+      const connectionStyle = this.getConnectionStyle();
+      connection.style = { ...connectionStyle };
     }
 
-    const routes = this.getRoutes();
-    const route = this.getRoute();
-    const connectionStyle = this.getConnectionStyle();
-    const [stop] = this.map.createStop(
-      routes.size === 1 && this.labels.size > 0 ? 'Unnamed Stop' : null,
-      new Vector2(this.pos.x + 10, this.pos.y + 10),
-      route,
-      this,
-    );
-    stop.style = this.style;
-    stop.connections.forEach(connection => {
-      connection.style = { ...connectionStyle };
-    });
+    const action: Action = {
+      label: 'Create Connection',
+      undo: () => {
+        stop.remove();
+      },
+      redo: () => {
+        stop.reAdd();
+      },
+    };
+
+    this.map.history.add(action);
+    return action;
+  }
+
+  private createSplitConnections(): void {
+    const connectionsByStop = this.connectionsByStop();
+    const vals = Array.from(connectionsByStop.values());
+
+    if (vals.some(connections => connections.length > 1)) {
+      for (const connections of vals) {
+        if (connections.length > 1) {
+          const diff = this.pos.sub(connections[0].getOtherStop(this).pos);
+          const orth = diff.normalize().cw90();
+          const offset = this.getLateralOffset();
+          for (let i = 0; i < connections.length; i++) {
+            const connection = connections[i];
+            const lateralOffset = connection.lateralOffset;
+            const sign = connection.to === this ? 1 : -1;
+            const lateralVector = orth.mult(lateralOffset * offset * sign);
+            const newPos = this.pos.add(diff).add(lateralVector);
+            const [, newC] = this.map.createStop(
+              this.labels.size > 0 ? 'Unnamed Stop' : null,
+              newPos,
+              connection.route,
+              this,
+            );
+            newC.style = { ...connection.style };
+            newC.setWhichLateralOffset(this, lateralOffset * sign);
+          }
+          return;
+        }
+      }
+    } else {
+      this.createConnection();
+    }
   }
 }

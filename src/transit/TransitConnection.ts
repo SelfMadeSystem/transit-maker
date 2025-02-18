@@ -87,6 +87,20 @@ export class TransitConnection implements Actionable {
     return stop === this.from || stop === this.to;
   }
 
+  setFrom(stop: TransitStop) {
+    if (this.from === stop) {
+      return;
+    }
+    if (this.to !== stop) {
+      throw new Error('The stop must be either the from or the to stop');
+    }
+
+    [this.from, this.to] = [this.to, this.from];
+    this.lateralOffset = -this.lateralOffset;
+    this.fromLateralOffset = -this.fromLateralOffset;
+    this.toLateralOffset = -this.toLateralOffset;
+  }
+
   preDraw(ctx: CanvasRenderingContext2D): void {
     if (this.route.style.margin <= 0) {
       return;
@@ -121,8 +135,8 @@ export class TransitConnection implements Actionable {
         break;
     }
 
-    const [path, length, rounded] = this.getPath();
-    if (rounded) ctx.lineDashOffset = lineWidth * 2 - length / 2;
+    const [path, length] = this.getPath();
+    ctx.lineDashOffset = lineWidth * 2 - length / 2;
 
     ctx.lineWidth = lineWidth;
     ctx.strokeStyle = this.route.style.color;
