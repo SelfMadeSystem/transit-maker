@@ -1,5 +1,6 @@
 import { Vector2 } from '../utils/vec';
 import { Label } from './Label';
+import { TransitConnection } from './TransitConnection';
 import { TransitMap } from './TransitMap';
 import { TransitStop } from './TransitStop';
 import { ActionableItem, Movable } from './types';
@@ -104,3 +105,35 @@ export const removeAction = createActionFunction((_, obj: ActionableItem) => {
     },
   };
 });
+
+export const splitConnectionAction = createActionFunction(
+  (map: TransitMap, connection: TransitConnection) => {
+    connection.remove();
+    const from = connection.from;
+    const to = connection.to;
+
+    const route = connection.route;
+    const stop = new TransitStop(
+      map,
+      [new Label(map, 'Unnamed Stop')],
+      new Vector2((from.pos.x + to.pos.x) / 2, (from.pos.y + to.pos.y) / 2),
+    );
+
+    const connection1 = new TransitConnection(map, from, stop, route);
+    const connection2 = new TransitConnection(map, stop, to, route);
+    connection1.style = { ...connection.style };
+    connection2.style = { ...connection.style };
+
+    return {
+      label: 'Split Connection',
+      undo() {
+        stop.remove();
+        connection.reAdd();
+      },
+      redo() {
+        stop.reAdd();
+        connection.remove();
+      },
+    };
+  },
+);

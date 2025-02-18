@@ -80,31 +80,6 @@ export class TransitMap {
     return new TransitConnection(this, from, to, route);
   }
 
-  /**
-   * TODO: Replace this
-   * @deprecated
-   */
-  splitConnection(connection: TransitConnection) {
-    if (!this.connections.has(connection)) {
-      return;
-    }
-    connection.remove();
-    const from = connection.from;
-    const to = connection.to;
-
-    const route = connection.route;
-    const stop = new TransitStop(
-      this,
-      [new Label(this, 'Unnamed Stop')],
-      new Vector2((from.pos.x + to.pos.x) / 2, (from.pos.y + to.pos.y) / 2),
-    );
-
-    const connection1 = new TransitConnection(this, from, stop, route);
-    const connection2 = new TransitConnection(this, stop, to, route);
-    connection1.style = { ...connection.style };
-    connection2.style = { ...connection.style };
-  }
-
   getSelectable(
     x: number,
     y: number,

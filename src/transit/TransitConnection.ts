@@ -1,6 +1,7 @@
 import { id } from '../utils/id';
 import { angleDelta, wrapAngle2PI } from '../utils/mathUtils';
 import { Vector2 } from '../utils/vec';
+import { splitConnectionAction } from './Action';
 import { SnapLine } from './Snapping';
 import { TransitMap } from './TransitMap';
 import { TransitRoute } from './TransitRoute';
@@ -380,7 +381,7 @@ export class TransitConnection implements Actionable {
   }
 
   doubleClick(): void {
-    this.map.splitConnection(this);
+    splitConnectionAction(this.map, this);
   }
 
   rightClick(): void {}
