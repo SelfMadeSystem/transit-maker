@@ -6,13 +6,15 @@ import { createContext } from 'react';
 export type EditorContextType = {
   map: TransitMap;
   history: History;
+  historyUpdate: number;
   selected: ActionableItem | null;
   setSelected: React.Dispatch<React.SetStateAction<ActionableItem | null>>;
 };
 
 export const EditorContext = createContext<EditorContextType>({
-  history: new History(),
   map: new TransitMap(),
+  history: new History(() => {}),
+  historyUpdate: 0,
   selected: null,
   setSelected: () => {},
 });

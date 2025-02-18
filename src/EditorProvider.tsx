@@ -39,12 +39,19 @@ function createTransitMap(): TransitMap {
 export function EditorProvider({ children }: { children: React.ReactNode }) {
   const [selected, setSelected] = useState<ActionableItem | null>(null);
   const [map] = useState(createTransitMap);
-  const [history] = useState(() => new History());
+  const [historyUpdate, setHistoryUpdate] = useState(0);
+  const [history] = useState(
+    () =>
+      new History(() => {
+        setHistoryUpdate(prev => prev + 1);
+      }),
+  );
   return (
     <EditorContext.Provider
       value={{
-        history,
         map,
+        history,
+        historyUpdate,
         selected,
         setSelected,
       }}
