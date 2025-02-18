@@ -1,5 +1,6 @@
 import { Vector2 } from '../utils/vec';
 import { Label } from './Label';
+import { TransitConnection } from './TransitConnection';
 import { TransitMap } from './TransitMap';
 import { TransitStop } from './TransitStop';
 import { Movable } from './types';
@@ -74,4 +75,27 @@ export function moveMovableAction(stop: Movable): MoveAction {
   };
 
   return action;
+}
+
+export function connectStopsAction(
+  stop1: TransitStop,
+  stop2: TransitStop,
+): Action {
+  let connection: TransitConnection | null = null;
+  return {
+    label: 'Connect Stops',
+    apply(map) {
+      connection = map.createConnection(stop1, stop2, stop1.getRoute());
+    },
+    undo() {
+      if (connection) {
+        connection.remove();
+      }
+    },
+    redo() {
+      if (connection) {
+        connection.reAdd();
+      }
+    },
+  };
 }

@@ -21,7 +21,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
       height: '100%',
     },
   },
-  setup(canvas, { map, history, selected, setSelected }) {
+  setup(canvas, { map, selected, setSelected }) {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Failed to get 2d context');
     let zoom = 1;
@@ -129,15 +129,14 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
                   'Unnamed Stop',
                   new Vector2(x, y),
                 );
-                history.add(action);
+                map.history.add(action);
                 action.apply(map);
-                // map.createStop('Unnamed Stop', new Vector2(x, y));
               } else if (result === 'Create Label') {
                 const action = createLabelAction(
                   'Unnamed Label',
                   new Vector2(x, y),
                 );
-                history.add(action);
+                map.history.add(action);
                 action.apply(map);
               }
             },
@@ -180,7 +179,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
       mouseUp() {
         panning = false;
         if (moveAction) {
-          history.add(moveAction);
+          map.history.add(moveAction);
           moveAction = null;
         }
       },
@@ -195,12 +194,12 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
         switch (e.key) {
           case 'z':
             if (e.ctrlKey) {
-              history.undo(map);
+              map.history.undo(map);
             }
             return;
           case 'y':
             if (e.ctrlKey) {
-              history.redo(map);
+              map.history.redo(map);
             }
             return;
         }

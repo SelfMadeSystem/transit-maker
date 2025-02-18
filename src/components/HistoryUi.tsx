@@ -3,7 +3,10 @@ import { HistoryAction } from '../transit/History';
 import { useContext } from 'react';
 
 export function HistoryUi() {
-  const { history, historyUpdate } = useContext(EditorContext);
+  const {
+    map: { history },
+    historyUpdate,
+  } = useContext(EditorContext);
 
   return (
     <div className="text-white" key={historyUpdate}>
@@ -23,7 +26,8 @@ function HistoryItem({
 }: {
   action: HistoryAction;
 }) {
-  const { history, map } = useContext(EditorContext);
+  const { map } = useContext(EditorContext);
+  const { history } = map;
 
   const onClick = () => {
     if (history.index === index - 1) {

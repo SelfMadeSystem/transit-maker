@@ -1,5 +1,6 @@
 import { id } from '../utils/id';
 import { Vector2 } from '../utils/vec';
+import { History } from './History';
 import { Label } from './Label';
 import { TransitConnection } from './TransitConnection';
 import { TransitRoute, createDefaultRoute } from './TransitRoute';
@@ -23,8 +24,10 @@ export class TransitMap {
   public stops: Set<TransitStop>;
   public connections: Set<TransitConnection>;
   public defaultRoute: TransitRoute;
+  public history: History;
 
   constructor() {
+    this.history = new History(() => {});
     this.routes = new Set();
     this.labels = new Set();
     this.stops = new Set();

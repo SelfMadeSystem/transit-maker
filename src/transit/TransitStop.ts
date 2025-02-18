@@ -1,5 +1,6 @@
 import { id } from '../utils/id';
 import { Vector2 } from '../utils/vec';
+import { connectStopsAction } from './Action';
 import { Label } from './Label';
 import { SnapInfo, SnapLine } from './Snapping';
 import {
@@ -429,7 +430,9 @@ export class TransitStop implements Actionable, Movable {
 
   rightClick({ selected }: ClickInfo): void {
     if (selected instanceof TransitStop && selected !== this) {
-      this.map.createConnection(selected, this, selected.getRoute());
+      const action = connectStopsAction(this, selected);
+      this.map.history.add(action);
+      action.apply(this.map);
     }
   }
 
