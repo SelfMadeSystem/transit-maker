@@ -1,6 +1,5 @@
 import { Vector2 } from '../utils/vec';
 import { Label } from './Label';
-import { TransitConnection } from './TransitConnection';
 import { TransitMap } from './TransitMap';
 import { TransitStop } from './TransitStop';
 import { Movable } from './types';
@@ -10,92 +9,85 @@ import { Movable } from './types';
  */
 export interface Action {
   label: string;
-  apply: (map: TransitMap) => void;
   undo: (map: TransitMap) => void;
-  redo?: (map: TransitMap) => void;
+  redo: (map: TransitMap) => void;
 }
 
 export interface MoveAction extends Action {
   pos: Vector2;
 }
 
-export function createStopAction(label: string, pos: Vector2): Action {
-  let stop: TransitStop | null = null;
+function createActionFunction<
+  T extends Action,
+  Params extends [TransitMap, ...unknown[]],
+>(a: (...params: Params) => T): (...params: Params) => T {
+  return (...params: Params) => {
+    const map = params[0];
+    const action = a(...params);
+    map.history.add(action);
+    return action;
+  };
+}
 
-  return {
-    label: 'Create Stop',
-    apply(map) {
-      stop = new TransitStop(map, [new Label(map, label)], pos);
-    },
-    undo() {
-      if (stop) {
+export const createStopAction = createActionFunction(
+  (map: TransitMap, label: string, pos: Vector2) => {
+    const stop = new TransitStop(map, [new Label(map, label)], pos);
+
+    return {
+      label: 'Create Stop',
+      undo() {
         stop.remove();
-      }
-    },
-    redo() {
-      if (stop) {
+      },
+      redo() {
         stop.reAdd();
-      }
-    },
-  };
-}
+      },
+    };
+  },
+);
 
-export function createLabelAction(label: string, pos: Vector2): Action {
-  let labelObj: Label | null = null;
+export const createLabelAction = createActionFunction(
+  (map: TransitMap, label: string, pos: Vector2) => {
+    const labelObj = new Label(map, label, pos);
 
-  return {
-    label: 'Create Label',
-    apply(map) {
-      labelObj = new Label(map, label, pos);
-    },
-    undo() {
-      if (labelObj) {
+    return {
+      label: 'Create Label',
+      undo() {
         labelObj.remove();
-      }
-    },
-    redo() {
-      if (labelObj) {
+      },
+      redo() {
         labelObj.reAdd();
-      }
-    },
-  };
-}
+      },
+    };
+  },
+);
 
-export function moveMovableAction(stop: Movable): MoveAction {
+export const moveMovableAction = (stop: Movable) => {
   const ogPos = stop.getPos();
   const action: MoveAction = {
     label: 'Move',
     pos: ogPos,
-    apply() {
-      stop.setPos(action.pos);
-    },
     undo() {
       stop.setPos(ogPos);
+    },
+    redo() {
+      stop.setPos(action.pos);
     },
   };
 
   return action;
-}
+};
 
-export function connectStopsAction(
-  stop1: TransitStop,
-  stop2: TransitStop,
-): Action {
-  let connection: TransitConnection | null = null;
-  return {
-    label: 'Connect Stops',
-    apply(map) {
-      connection = map.createConnection(stop1, stop2, stop1.getRoute());
-    },
-    undo() {
-      if (connection) {
+export const connectStopsAction = createActionFunction(
+  (map: TransitMap, stop1: TransitStop, stop2: TransitStop) => {
+    const connection = map.createConnection(stop1, stop2, stop1.getRoute());
+    return {
+      label: 'Connect Stops',
+      undo() {
         connection.remove();
-      }
-    },
-    redo() {
-      if (connection) {
+      },
+      redo() {
         connection.reAdd();
-      }
-    },
-  };
-}
+      },
+    };
+  },
+);

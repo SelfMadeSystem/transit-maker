@@ -125,19 +125,9 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           waitForInput(['Create Stop', 'Create Label'], mouseX, mouseY).then(
             result => {
               if (result === 'Create Stop') {
-                const action = createStopAction(
-                  'Unnamed Stop',
-                  new Vector2(x, y),
-                );
-                map.history.add(action);
-                action.apply(map);
+                createStopAction(map, 'Unnamed Stop', new Vector2(x, y));
               } else if (result === 'Create Label') {
-                const action = createLabelAction(
-                  'Unnamed Label',
-                  new Vector2(x, y),
-                );
-                map.history.add(action);
-                action.apply(map);
+                createLabelAction(map, 'Unnamed Label', new Vector2(x, y));
               }
             },
           );

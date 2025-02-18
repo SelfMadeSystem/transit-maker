@@ -430,9 +430,7 @@ export class TransitStop implements Actionable, Movable {
 
   rightClick({ selected }: ClickInfo): void {
     if (selected instanceof TransitStop && selected !== this) {
-      const action = connectStopsAction(this, selected);
-      this.map.history.add(action);
-      action.apply(this.map);
+      connectStopsAction(this.map, this, selected);
     }
   }
 
