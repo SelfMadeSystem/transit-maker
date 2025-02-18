@@ -1,6 +1,7 @@
 import { EditorContextType } from '../EditorContext';
 import {
   MoveAction,
+  createLabelAction,
   createStopAction,
   moveMovableAction,
 } from '../transit/Action';
@@ -132,7 +133,12 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
                 action.apply(map);
                 // map.createStop('Unnamed Stop', new Vector2(x, y));
               } else if (result === 'Create Label') {
-                map.createLabel('Unnamed Label', new Vector2(x, y));
+                const action = createLabelAction(
+                  'Unnamed Label',
+                  new Vector2(x, y),
+                );
+                history.add(action);
+                action.apply(map);
               }
             },
           );

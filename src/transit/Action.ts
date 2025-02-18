@@ -39,6 +39,27 @@ export function createStopAction(label: string, pos: Vector2): Action {
   };
 }
 
+export function createLabelAction(label: string, pos: Vector2): Action {
+  let labelObj: Label | null = null;
+
+  return {
+    label: 'Create Label',
+    apply(map) {
+      labelObj = new Label(map, label, pos);
+    },
+    undo() {
+      if (labelObj) {
+        labelObj.remove();
+      }
+    },
+    redo() {
+      if (labelObj) {
+        labelObj.reAdd();
+      }
+    },
+  };
+}
+
 export function moveMovableAction(stop: Movable): MoveAction {
   const ogPos = stop.getPos();
   const action: MoveAction = {
