@@ -60,6 +60,9 @@ export const ContextMenuContainer = () => {
       style={{
         pointerEvents: 'none',
       }}
+      onContextMenu={e => {
+        e.preventDefault();
+      }}
     >
       {menu && (
         <div

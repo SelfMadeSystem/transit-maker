@@ -92,6 +92,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           setSelection(map.getSelectable(x, y, ctx));
           panning = true;
         } else if (e.button === 2) {
+          // Right click
           const selectable = map.getSelectable(x, y, ctx);
           if (selectable && 'rightClick' in selectable) {
             selectable.rightClick({
@@ -101,6 +102,16 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
               shiftKey: e.shiftKey,
               pos: new Vector2(x, y),
             });
+          } else {
+            waitForInput(['Create Stop', 'Create Label'], mouseX, mouseY).then(
+              result => {
+                if (result === 'Create Stop') {
+                  createStopAction(map, 'Unnamed Stop', new Vector2(x, y));
+                } else if (result === 'Create Label') {
+                  createLabelAction(map, 'Unnamed Label', new Vector2(x, y));
+                }
+              },
+            );
           }
         }
         prevMouseX = mouseX;
@@ -122,17 +133,8 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           });
         } else if (selectable instanceof Label) {
           renameLabel(selectable);
-        } else if (!selectable) {
-          waitForInput(['Create Stop', 'Create Label'], mouseX, mouseY).then(
-            result => {
-              if (result === 'Create Stop') {
-                createStopAction(map, 'Unnamed Stop', new Vector2(x, y));
-              } else if (result === 'Create Label') {
-                createLabelAction(map, 'Unnamed Label', new Vector2(x, y));
-              }
-            },
-          );
-          // map.createStop('Unnamed Stop', new Vector2(x, y));
+        } else {
+          createStopAction(map, 'Unnamed Stop', new Vector2(x, y));
         }
       },
       mouseMove(e, { mouseX, mouseY }) {

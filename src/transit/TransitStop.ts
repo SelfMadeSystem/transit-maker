@@ -454,7 +454,11 @@ export class TransitStop implements Actionable, Movable {
       const [connection] = Array.from(connectionsByStop.values())[0];
       const [to, from] = connection.getFromToPosInfo();
 
-      return to.sub(from);
+      const diff = to.sub(from);
+      if (to === this.pos) {
+        return diff;
+      }
+      return diff.mult(-1);
     }
     return v;
   }
@@ -464,7 +468,7 @@ export class TransitStop implements Actionable, Movable {
     const vals = Array.from(connectionsByStop.values());
 
     const diff = this.getDiffIfOneConnectionElse(new Vector2(20, 20));
-    const stop = new TransitStop(this.map, [], this.pos.sub(diff));
+    const stop = new TransitStop(this.map, [], this.pos.add(diff));
     stop.style = this.style;
 
     if (vals.length === 1 && vals[0].length > 1) {
