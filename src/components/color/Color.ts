@@ -53,10 +53,13 @@ export class Color {
   }
 
   static fromColorJS(color: ColorJS) {
-    console.log(color.r * 255, color.g * 255, color.b * 255);
-    const c = new Color(color.r * 255, color.g * 255, color.b * 255, color.a);
-    console.log(c);
-    return c;
+    return new Color(
+      color.r * 255,
+      color.g * 255,
+      color.b * 255,
+      color.a,
+      color.h,
+    );
   }
 
   private getHue() {
