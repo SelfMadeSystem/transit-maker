@@ -12,8 +12,8 @@ import {
 } from '../transit/TransitRoute';
 import { StopStyle, TransitStop } from '../transit/TransitStop';
 import { Vector2 } from '../utils/vec';
-import { ColorEditor } from './ColorEditor';
 import { StopColorEditor } from './StopColorEditor';
+import ColorInput from './color/ColorInput';
 import { useContext, useState } from 'react';
 
 export function SelectedUi() {
@@ -335,10 +335,7 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
     <div className="flex flex-col gap-2">
       <label className="flex items-center gap-2">
         <div className="text-white">Color:</div>
-        <ColorEditor
-          color={color}
-          onChange={c => setColor((style.color = c))}
-        />
+        <ColorInput color={color} setColor={c => setColor((style.color = c))} />
       </label>
       <label className="flex items-center gap-2">
         <div className="text-white">Line width:</div>

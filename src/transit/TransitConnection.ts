@@ -140,7 +140,7 @@ export class TransitConnection implements Actionable {
     ctx.lineDashOffset = lineWidth * 2 - length / 2;
 
     ctx.lineWidth = lineWidth;
-    ctx.strokeStyle = this.route.style.color;
+    ctx.strokeStyle = this.route.style.color.hex();
     ctx.stroke(path);
     ctx.restore();
   }

@@ -1,3 +1,4 @@
+import { Color } from '../components/color/Color';
 import { id } from '../utils/id';
 import { TransitMap } from './TransitMap';
 import { DEFAULT_STOP_STYLE, StopStyle } from './TransitStop';
@@ -6,7 +7,7 @@ import { DEFAULT_STOP_STYLE, StopStyle } from './TransitStop';
 export type StrokeType = 'solid' | 'split';
 
 export type RouteStyle = {
-  color: string;
+  color: Color;
   lineWidth: number;
   strokeType: StrokeType;
   innerWidth: number; // only for split lines
@@ -24,7 +25,7 @@ export class TransitRoute {
   public name: string;
   public style: RouteStyle;
 
-  constructor(map: TransitMap, name: string, color: string) {
+  constructor(map: TransitMap, name: string, color: Color) {
     this.map = map;
     this.name = name;
     this.style = {
@@ -49,7 +50,7 @@ export class TransitRoute {
 
 // TODO: Some way to make this map-specific
 export const createDefaultRoute = (map: TransitMap) => {
-  const route = new TransitRoute(map, 'Transfer', 'white');
+  const route = new TransitRoute(map, 'Transfer', new Color(255, 255, 255));
   route.style.roundRadius = 0;
   route.style.margin = 0;
   return route;

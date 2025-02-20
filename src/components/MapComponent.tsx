@@ -34,7 +34,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
     let ogMouseX = 0;
     let ogMouseY = 0;
     let ogPos: Vector2 | null = null;
-    let moveAction: MoveAction | null = null;
+    let moveAction: MoveAction<unknown> | null = null;
 
     function setSelection(item: ActionableItem | null) {
       setSelected(item);
@@ -106,9 +106,17 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
             waitForInput(['Create Stop', 'Create Label'], mouseX, mouseY).then(
               result => {
                 if (result === 'Create Stop') {
-                  createStopAction(map, 'Unnamed Stop', new Vector2(x, y));
+                  selected = createStopAction(
+                    map,
+                    'Unnamed Stop',
+                    new Vector2(x, y),
+                  ).data;
                 } else if (result === 'Create Label') {
-                  createLabelAction(map, 'Unnamed Label', new Vector2(x, y));
+                  selected = createLabelAction(
+                    map,
+                    'Unnamed Label',
+                    new Vector2(x, y),
+                  ).data;
                 }
               },
             );
@@ -134,7 +142,11 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
         } else if (selectable instanceof Label) {
           renameLabel(selectable);
         } else {
-          createStopAction(map, 'Unnamed Stop', new Vector2(x, y));
+          selected = createStopAction(
+            map,
+            'Unnamed Stop',
+            new Vector2(x, y),
+          ).data;
         }
       },
       mouseMove(e, { mouseX, mouseY }) {

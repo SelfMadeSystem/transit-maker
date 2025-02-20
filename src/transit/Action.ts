@@ -8,18 +8,19 @@ import { ActionableItem, Movable } from './types';
 /**
  * An action that can be applied and undone on a transit map.
  */
-export interface Action {
+export type Action<T> = {
   label: string;
   undo: (map: TransitMap) => void;
   redo: (map: TransitMap) => void;
-}
+  data: T;
+};
 
-export interface MoveAction extends Action {
+export interface MoveAction<T> extends Action<T> {
   pos: Vector2;
 }
 
 function createActionFunction<
-  T extends Action,
+  T extends Action<unknown>,
   Params extends [TransitMap, ...unknown[]],
 >(a: (...params: Params) => T): (...params: Params) => T {
   return (...params: Params) => {
@@ -42,6 +43,7 @@ export const createStopAction = createActionFunction(
       redo() {
         stop.reAdd();
       },
+      data: stop,
     };
   },
 );
@@ -58,13 +60,14 @@ export const createLabelAction = createActionFunction(
       redo() {
         labelObj.reAdd();
       },
+      data: labelObj,
     };
   },
 );
 
 export const moveMovableAction = (stop: Movable) => {
   const ogPos = stop.getPos();
-  const action: MoveAction = {
+  const action: MoveAction<Vector2> = {
     label: 'Move',
     pos: ogPos,
     undo() {
@@ -73,6 +76,7 @@ export const moveMovableAction = (stop: Movable) => {
     redo() {
       stop.setPos(action.pos);
     },
+    data: ogPos,
   };
 
   return action;
@@ -94,6 +98,7 @@ export const connectStopsAction = createActionFunction(
       redo() {
         connection.reAdd();
       },
+      data: connection,
     };
   },
 );
@@ -108,6 +113,7 @@ export const removeAction = createActionFunction((_, obj: ActionableItem) => {
     redo() {
       obj.remove();
     },
+    data: obj,
   };
 });
 
@@ -139,6 +145,7 @@ export const splitConnectionAction = createActionFunction(
         stop.reAdd();
         connection.remove();
       },
+      data: { stop, connection1, connection2 },
     };
   },
 );

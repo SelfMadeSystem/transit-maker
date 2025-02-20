@@ -1,3 +1,4 @@
+import { Color } from '../components/color/Color';
 import { id } from '../utils/id';
 import { Vector2 } from '../utils/vec';
 import { Action, connectStopsAction } from './Action';
@@ -13,7 +14,7 @@ import { TransitMap } from './TransitMap';
 import { TransitRoute } from './TransitRoute';
 import { Actionable, ClickInfo, Movable, PosWithKeys } from './types';
 
-export type StopColor = string | 'route';
+export type StopColor = Color | 'route';
 
 export type StopStyle = {
   fillColor: StopColor;
@@ -34,7 +35,7 @@ export type StopStyle = {
 };
 
 export const DEFAULT_STOP_STYLE: StopStyle = {
-  fillColor: '#000000',
+  fillColor: new Color(255, 128, 128),
   strokeColor: 'route',
   edges: 0,
   edgeOrientation: 0,
@@ -229,13 +230,13 @@ export class TransitStop implements Actionable, Movable {
     if (c === 'route') {
       const routes = this.getRoutes();
       if (routes.size === 1) {
-        return routes.values().next().value!.style.color;
+        return routes.values().next().value!.style.color.hex();
       } else {
-        return this.map.defaultRoute.style.color;
+        return this.map.defaultRoute.style.color.hex();
       }
     }
     if (c) {
-      return c;
+      return c.hex();
     }
     return '#000';
   }

@@ -1,5 +1,6 @@
 import type { StopColor } from '../transit/TransitStop';
-import { ColorEditor } from './ColorEditor';
+import { Color } from './color/Color';
+import ColorInput from './color/ColorInput';
 import { useState } from 'react';
 
 export function StopColorEditor({
@@ -18,11 +19,11 @@ export function StopColorEditor({
         checked={isRoute}
         onChange={() => {
           setIsRoute(!isRoute);
-          onChange(isRoute ? 'black' : 'route');
+          onChange(isRoute ? new Color(0, 0, 0) : 'route');
         }}
       />
       {isRoute ? null : (
-        <ColorEditor color={stopColor} onChange={e => onChange(e)} />
+        <ColorInput color={stopColor as Color} setColor={e => onChange(e)} />
       )}
     </div>
   );
