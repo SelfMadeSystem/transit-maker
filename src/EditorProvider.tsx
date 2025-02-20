@@ -13,29 +13,11 @@ function createTransitMap(cb: () => void): TransitMap {
   const route = new TransitRoute(map, 'Metro', new Color(0, 0, 255));
 
   const stop1 = createStopAction(map, 'A', new Vector2(50, 50)).data;
-  const stop2 = createStopAction(map, 'B', new Vector2(100, 100)).data;
+  const stop2 = createStopAction(map, '', new Vector2(100, 100)).data;
   stop2.hidden = true;
   connectStopsAction(map, stop1, stop2).data.route = route;
-  connectStopsAction(map, stop2, stop1).data.route = route;
-  connectStopsAction(map, stop1, stop2).data.route = route;
-  connectStopsAction(map, stop2, stop1).data.route = route;
-  connectStopsAction(map, stop1, stop2).data.route = route;
-  connectStopsAction(map, stop2, stop1).data.route = route;
-  connectStopsAction(map, stop1, stop2).data.route = route;
-  connectStopsAction(map, stop2, stop1).data.route = route;
-  connectStopsAction(map, stop1, stop2).data.route = route;
-  connectStopsAction(map, stop2, stop1).data.route = route;
   const stop3 = createStopAction(map, 'B', new Vector2(100, 100)).data;
   connectStopsAction(map, stop3, stop2).data.route = route;
-  connectStopsAction(map, stop2, stop3).data.route = route;
-  connectStopsAction(map, stop3, stop2).data.route = route;
-  connectStopsAction(map, stop2, stop3).data.route = route;
-  connectStopsAction(map, stop3, stop2).data.route = route;
-  connectStopsAction(map, stop2, stop3).data.route = route;
-  connectStopsAction(map, stop3, stop2).data.route = route;
-  connectStopsAction(map, stop2, stop3).data.route = route;
-  connectStopsAction(map, stop3, stop2).data.route = route;
-  connectStopsAction(map, stop2, stop3).data.route = route;
   stop3.setPos(new Vector2(100, 150));
 
   map.history.changeCb = cb;
