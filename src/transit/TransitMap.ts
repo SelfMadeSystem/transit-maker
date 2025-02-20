@@ -42,22 +42,27 @@ export class TransitMap {
     y: number,
     ctx: CanvasRenderingContext2D,
   ): ActionableItem | null {
-    for (const label of this.labels) {
+    const labelsArray = Array.from(this.labels).reverse();
+    const stopsArray = Array.from(this.stops).reverse();
+    const connectionsArray = Array.from(this.connections).reverse();
+    const imagesArray = Array.from(this.images).reverse();
+
+    for (const label of labelsArray) {
       if (label.isOver(x, y)) {
         return label;
       }
     }
-    for (const stop of this.stops) {
+    for (const stop of stopsArray) {
       if (stop.isOver(x, y)) {
         return stop;
       }
     }
-    for (const connection of this.connections) {
+    for (const connection of connectionsArray) {
       if (connection.isOver(x, y, ctx)) {
         return connection;
       }
     }
-    for (const image of this.images) {
+    for (const image of imagesArray) {
       if (image.isOver(x, y)) {
         return image;
       }

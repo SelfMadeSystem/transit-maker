@@ -42,13 +42,14 @@ export class DecorationImage implements Actionable, Movable {
 
   drawSelected(ctx: CanvasRenderingContext2D) {
     ctx.strokeStyle = 'white';
-    ctx.lineWidth = 1;
     const size = this.getSize();
+    const scale = size.length() / 50;
+    ctx.lineWidth = scale;
     ctx.strokeRect(
-      this.pos.x - size.x / 2,
-      this.pos.y - size.y / 2,
-      size.x,
-      size.y,
+      this.pos.x - size.x / 2 - scale * 2,
+      this.pos.y - size.y / 2 - scale * 2,
+      size.x + scale * 4,
+      size.y + scale * 4,
     );
   }
 
