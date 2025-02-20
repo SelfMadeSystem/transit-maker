@@ -213,6 +213,11 @@ export class TransitConnection implements Actionable {
     return [from, to, lateralOffset, fromRounding, toRounding] as const;
   }
 
+  getDrawPos(which: TransitStop) {
+    const [from, to] = this.getFromToPosInfo();
+    return which === this.from ? from : to;
+  }
+
   getPath(): [Path2D, number, boolean] {
     const [from, to, lateralOffset, fromRounding, toRounding] =
       this.getFromToPosInfo();
@@ -320,34 +325,37 @@ export class TransitConnection implements Actionable {
 
   getDirectSnapLines(which: TransitStop): SnapLine[] {
     const other = this.getOtherStop(which);
-    const diff = which.pos.sub(other.pos).normalize();
+    const pos = this.getDrawPos(which);
+    const otherPos = this.getDrawPos(other);
+    const diff = pos.sub(otherPos).normalize();
     const dist = other.pos.dist(which.pos);
 
     return [
-      new SnapLine(which.pos, diff, 0, dist),
-      new SnapLine(which.pos, diff.rotateBy(Math.PI / 2), 1, dist),
-      new SnapLine(which.pos, diff.rotateBy(-Math.PI / 2), 1, dist),
+      new SnapLine(pos, diff, 0, dist),
+      new SnapLine(pos, diff.rotateBy(Math.PI / 2), 1, dist),
+      new SnapLine(pos, diff.rotateBy(-Math.PI / 2), 1, dist),
     ];
   }
 
   getCardinalSnapLines(which: TransitStop, length: number | null): SnapLine[] {
+    const pos = this.getDrawPos(which);
     if (length === null) {
       return [
-        new SnapLine(which.pos, new Vector2(1, 0), 2),
-        new SnapLine(which.pos, new Vector2(0, 1), 2),
-        new SnapLine(which.pos, new Vector2(1, 1).normalize(), 3),
-        new SnapLine(which.pos, new Vector2(1, -1).normalize(), 3),
+        new SnapLine(pos, new Vector2(1, 0), 2),
+        new SnapLine(pos, new Vector2(0, 1), 2),
+        new SnapLine(pos, new Vector2(1, 1).normalize(), 3),
+        new SnapLine(pos, new Vector2(1, -1).normalize(), 3),
       ];
     } else {
       return [
-        new SnapLine(which.pos, new Vector2(1, 0), 2, length),
-        new SnapLine(which.pos, new Vector2(-1, 0), 2, length),
-        new SnapLine(which.pos, new Vector2(0, 1), 2, length),
-        new SnapLine(which.pos, new Vector2(0, -1), 2, length),
-        new SnapLine(which.pos, new Vector2(1, 1).normalize(), 3, length),
-        new SnapLine(which.pos, new Vector2(1, -1).normalize(), 3, length),
-        new SnapLine(which.pos, new Vector2(-1, 1).normalize(), 3, length),
-        new SnapLine(which.pos, new Vector2(-1, -1).normalize(), 3, length),
+        new SnapLine(pos, new Vector2(1, 0), 2, length),
+        new SnapLine(pos, new Vector2(-1, 0), 2, length),
+        new SnapLine(pos, new Vector2(0, 1), 2, length),
+        new SnapLine(pos, new Vector2(0, -1), 2, length),
+        new SnapLine(pos, new Vector2(1, 1).normalize(), 3, length),
+        new SnapLine(pos, new Vector2(1, -1).normalize(), 3, length),
+        new SnapLine(pos, new Vector2(-1, 1).normalize(), 3, length),
+        new SnapLine(pos, new Vector2(-1, -1).normalize(), 3, length),
       ];
     }
   }
