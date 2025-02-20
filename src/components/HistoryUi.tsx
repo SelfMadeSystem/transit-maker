@@ -9,7 +9,7 @@ export function HistoryUi() {
   } = useContext(EditorContext);
 
   return (
-    <div className="text-white" key={historyUpdate}>
+    <div className="max-h-[50vh] overflow-auto text-white" key={historyUpdate}>
       {history.historyActions().map((action, i) => (
         <HistoryItem key={i} action={action} />
       ))}

@@ -234,18 +234,18 @@ export class TransitConnection implements Actionable {
 
       const sign = clockwise ? 1 : -1;
 
-      if (fromLateralOffset * sign < edgeDist) {
-        path.arc(
-          center.x,
-          center.y,
-          radius - fromLateralOffset * sign,
-          endAngle,
-          startAngle,
-          clockwise,
-        );
-      } else {
-        path.moveTo(from.x, from.y);
-      }
+      // if (fromLateralOffset * sign < edgeDist) {
+      path.arc(
+        center.x,
+        center.y,
+        radius - fromLateralOffset * sign,
+        endAngle,
+        startAngle,
+        clockwise,
+      );
+      // } else {
+      // path.moveTo(from.x, from.y);
+      // }
     } else {
       path.moveTo(from.x, from.y);
     }
@@ -259,18 +259,18 @@ export class TransitConnection implements Actionable {
 
       const sign = clockwise ? 1 : -1;
 
-      if (-toLateralOffset * sign < edgeDist) {
-        path.arc(
-          center.x,
-          center.y,
-          radius + toLateralOffset * sign,
-          startAngle,
-          endAngle,
-          !clockwise,
-        );
-      } else {
-        path.lineTo(to.x, to.y);
-      }
+      // if (-toLateralOffset * sign < edgeDist) {
+      path.arc(
+        center.x,
+        center.y,
+        radius + toLateralOffset * sign,
+        startAngle,
+        endAngle,
+        !clockwise,
+      );
+      // } else {
+      // path.lineTo(to.x, to.y);
+      // }
     } else {
       path.lineTo(to.x, to.y);
     }

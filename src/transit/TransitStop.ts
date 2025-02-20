@@ -246,6 +246,7 @@ export class TransitStop implements Actionable, Movable {
   }
 
   calculateRoundingStuff(): RoundingCalculation {
+    // FIXME: Incorrect when connection has lateral offset
     const connectionsByStop = this.connectionsByStop();
     // if (this.roundingStuffCache !== undefined) {
     //   return this.roundingStuffCache;
@@ -255,7 +256,7 @@ export class TransitStop implements Actionable, Movable {
     }
     const route = this.getRoute();
 
-    let radius = this.roundRadius ?? route.style.roundRadius;
+    const radius = this.roundRadius ?? route.style.roundRadius;
     if (radius <= 0) {
       return null;
     }
@@ -272,8 +273,6 @@ export class TransitStop implements Actionable, Movable {
     const vector1 = otherPoint1.sub(this.pos);
     const vector2 = otherPoint2.sub(this.pos);
 
-    const minDist = Math.min(vector1.length(), vector2.length()) / 2;
-
     const checkAngle = vector1.angleTo(vector2);
 
     if (checkAngle < Math.PI / 2) {
@@ -284,11 +283,13 @@ export class TransitStop implements Actionable, Movable {
     const dirOther = connection1.getDirectionVector(this);
     const avgDir = dirThis.add(dirOther).normalize();
     const angle = dirThis.angleBetween(dirOther) / 2;
-    let dist = radius / Math.sin(angle);
-    if (dist > minDist) {
-      dist = minDist;
-      radius = dist * Math.sin(angle);
-    }
+    const dist = radius / Math.sin(angle);
+    // FIXME: This is incorrect somehow
+    // const minDist = Math.min(vector1.length(), vector2.length()) / 2;
+    // if (dist > minDist) {
+    //   dist = minDist;
+    //   radius = dist * Math.sin(angle);
+    // }
     const centerOffset = avgDir.mult(dist);
     const center = this.pos.add(centerOffset);
     const stopOffset = avgDir.mult(dist - radius);
