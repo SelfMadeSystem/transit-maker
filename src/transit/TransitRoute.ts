@@ -36,7 +36,7 @@ export class TransitRoute {
       dottedWidth: 2,
       dashedWidth: 2,
       roundRadius: 10,
-      margin: 1,
+      margin: 0,
       stopStyle: {
         ...DEFAULT_STOP_STYLE,
       },
