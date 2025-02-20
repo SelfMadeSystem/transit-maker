@@ -454,13 +454,8 @@ export class TransitStop implements Actionable, Movable {
     const connectionsByStop = this.connectionsByStop();
     if (connectionsByStop.size === 1) {
       const [connection] = Array.from(connectionsByStop.values())[0];
-      const [to, from] = connection.getFromToPosInfo();
-
-      const diff = to.sub(from);
-      if (to === this.pos) {
-        return diff;
-      }
-      return diff.mult(-1);
+      const otherStop = connection.getOtherStop(this);
+      return this.pos.sub(otherStop.pos);
     }
     return v;
   }
