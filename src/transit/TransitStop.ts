@@ -256,7 +256,7 @@ export class TransitStop implements Actionable, Movable {
     }
     const route = this.getRoute();
 
-    const radius = this.roundRadius ?? route.style.roundRadius;
+    let radius = this.roundRadius ?? route.style.roundRadius;
     if (radius <= 0) {
       return null;
     }
@@ -283,13 +283,13 @@ export class TransitStop implements Actionable, Movable {
     const dirOther = connection1.getDirectionVector(this);
     const avgDir = dirThis.add(dirOther).normalize();
     const angle = dirThis.angleBetween(dirOther) / 2;
-    const dist = radius / Math.sin(angle);
+    let dist = radius / Math.sin(angle);
     // FIXME: This is incorrect somehow
-    // const minDist = Math.min(vector1.length(), vector2.length()) / 2;
-    // if (dist > minDist) {
-    //   dist = minDist;
-    //   radius = dist * Math.sin(angle);
-    // }
+    const minDist = Math.min(vector1.length(), vector2.length()) / 2;
+    if (dist > minDist) {
+      dist = minDist;
+      radius = dist * Math.sin(angle);
+    }
     const centerOffset = avgDir.mult(dist);
     const center = this.pos.add(centerOffset);
     const stopOffset = avgDir.mult(dist - radius);
@@ -450,7 +450,7 @@ export class TransitStop implements Actionable, Movable {
     }
   }
 
-  private getDiffIfOneConnectionElse(v: Vector2): Vector2 {
+  getDiffIfOneConnectionElse(v: Vector2): Vector2 {
     const connectionsByStop = this.connectionsByStop();
     if (connectionsByStop.size === 1) {
       const [connection] = Array.from(connectionsByStop.values())[0];
@@ -465,7 +465,7 @@ export class TransitStop implements Actionable, Movable {
     return v;
   }
 
-  private createConnection(): Action {
+  createConnection() {
     const connectionsByStop = this.connectionsByStop();
     const vals = Array.from(connectionsByStop.values());
 
@@ -513,7 +513,7 @@ export class TransitStop implements Actionable, Movable {
     return action;
   }
 
-  private createSplitConnections(): Action | null {
+  createSplitConnections() {
     const connectionsByStop = this.connectionsByStop();
     const vals = Array.from(connectionsByStop.values());
 

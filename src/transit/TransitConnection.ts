@@ -1,6 +1,6 @@
 import { id } from '../utils/id';
 import { angleDelta, wrapAngle2PI } from '../utils/mathUtils';
-import { Vector2 } from '../utils/vec';
+import { Vector2, lineLineIntersection, sameHalfPlane } from '../utils/vec';
 import { splitConnectionAction } from './Action';
 import { SnapLine } from './Snapping';
 import { TransitMap } from './TransitMap';
@@ -167,7 +167,7 @@ export class TransitConnection implements Actionable {
     ctx.strokeStyle = 'white';
     ctx.lineWidth =
       this.route.style.lineWidth + this.route.style.margin * 2 + 2;
-    const [path] = this.getPath();
+    const [path] = this.getPath(ctx);
     ctx.stroke(path);
     ctx.restore();
   }
@@ -214,7 +214,7 @@ export class TransitConnection implements Actionable {
     ] as const;
   }
 
-  getPath(): [Path2D, number, boolean] {
+  getPath(ctx?: CanvasRenderingContext2D): [Path2D, number, boolean] {
     const [
       from,
       to,
@@ -226,7 +226,7 @@ export class TransitConnection implements Actionable {
     const path = d3path();
 
     if (fromRounding) {
-      const { center, ogPos, radius, edgeDist } = fromRounding;
+      const { center, ogPos, radius } = fromRounding;
       const startAngle = wrapAngle2PI(center.angleTo(from));
       const endAngle = wrapAngle2PI(center.angleTo(ogPos));
       const clockwise =
@@ -234,24 +234,40 @@ export class TransitConnection implements Actionable {
 
       const sign = clockwise ? 1 : -1;
 
-      // if (fromLateralOffset * sign < edgeDist) {
-      path.arc(
-        center.x,
-        center.y,
-        radius - fromLateralOffset * sign,
-        endAngle,
-        startAngle,
-        clockwise,
-      );
-      // } else {
-      // path.moveTo(from.x, from.y);
-      // }
+      if (ctx) {
+        ctx.save();
+        ctx.fillStyle = 'red';
+        ctx.fillRect(from.x - 2, from.y - 2, 4, 4);
+        ctx.fillStyle = 'blue';
+        ctx.fillRect(center.x - 2, center.y - 2, 4, 4);
+        ctx.fillStyle = 'green';
+        ctx.fillRect(ogPos.x - 2, ogPos.y - 2, 4, 4);
+        ctx.restore();
+      }
+
+      if (sameHalfPlane(from, this.to.pos, center, ogPos)) {
+        const r = radius - fromLateralOffset * sign;
+
+        if (r < 0) {
+          console.error('from: r < 0', r);
+        }
+
+        path.arc(center.x, center.y, r, endAngle, startAngle, clockwise);
+      } else {
+        const newPos = lineLineIntersection(from, to, center, ogPos);
+        if (!newPos) {
+          console.error('no intersection');
+          path.lineTo(from.x, from.y);
+        } else {
+          path.moveTo(newPos.x, newPos.y);
+        }
+      }
     } else {
       path.moveTo(from.x, from.y);
     }
 
     if (toRounding) {
-      const { center, ogPos, radius, edgeDist } = toRounding;
+      const { center, ogPos, radius } = toRounding;
       const startAngle = center.angleTo(to);
       const endAngle = center.angleTo(ogPos);
       const clockwise =
@@ -259,18 +275,23 @@ export class TransitConnection implements Actionable {
 
       const sign = clockwise ? 1 : -1;
 
-      // if (-toLateralOffset * sign < edgeDist) {
-      path.arc(
-        center.x,
-        center.y,
-        radius + toLateralOffset * sign,
-        startAngle,
-        endAngle,
-        !clockwise,
-      );
-      // } else {
-      // path.lineTo(to.x, to.y);
-      // }
+      if (sameHalfPlane(to, this.from.pos, center, ogPos)) {
+        const r = radius + toLateralOffset * sign;
+
+        if (r < 0) {
+          console.error('to: r < 0', r);
+        }
+
+        path.arc(center.x, center.y, r, startAngle, endAngle, !clockwise);
+      } else {
+        const newPos = lineLineIntersection(from, to, center, ogPos);
+        if (!newPos) {
+          console.error('no intersection');
+          path.lineTo(from.x, from.y);
+        } else {
+          path.moveTo(newPos.x, newPos.y);
+        }
+      }
     } else {
       path.lineTo(to.x, to.y);
     }
