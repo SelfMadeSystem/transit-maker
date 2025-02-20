@@ -8,14 +8,14 @@ import { ActionableItem, Movable } from './types';
 /**
  * An action that can be applied and undone on a transit map.
  */
-export type Action<T> = {
+export type Action<T = unknown> = {
   label: string;
   undo: (map: TransitMap) => void;
   redo: (map: TransitMap) => void;
   data: T;
 };
 
-export interface MoveAction<T> extends Action<T> {
+export interface MoveAction<T = unknown> extends Action<T> {
   pos: Vector2;
 }
 

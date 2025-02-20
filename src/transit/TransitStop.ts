@@ -35,7 +35,7 @@ export type StopStyle = {
 };
 
 export const DEFAULT_STOP_STYLE: StopStyle = {
-  fillColor: new Color(255, 128, 128),
+  fillColor: new Color(0, 0, 0),
   strokeColor: 'route',
   edges: 0,
   edgeOrientation: 0,
@@ -497,7 +497,7 @@ export class TransitStop implements Actionable, Movable {
       connection.style = { ...connectionStyle };
     }
 
-    const action: Action = {
+    const action = {
       label: 'Create Connection',
       undo: () => {
         stop.remove();
@@ -505,7 +505,8 @@ export class TransitStop implements Actionable, Movable {
       redo: () => {
         stop.reAdd();
       },
-    };
+      data: stop,
+    } satisfies Action;
 
     this.map.history.add(action);
     return action;
@@ -542,7 +543,7 @@ export class TransitStop implements Actionable, Movable {
             newC.setWhichLateralOffset(this, lateralOffset * sign);
           }
 
-          const action: Action = {
+          const action = {
             label: 'Split Connections',
             undo: () => {
               newStops.forEach(stop => stop.remove());
@@ -550,7 +551,8 @@ export class TransitStop implements Actionable, Movable {
             redo: () => {
               newStops.forEach(stop => stop.reAdd());
             },
-          };
+            data: newStops,
+          } satisfies Action;
 
           this.map.history.add(action);
           return action;
