@@ -267,8 +267,8 @@ export class TransitStop implements Actionable, Movable {
       return null;
     }
 
-    const otherPoint1 = connection1.getOtherStop(this).pos;
-    const otherPoint2 = connection2.getOtherStop(this).pos;
+    const otherPoint1 = connection1.getOtherDrawPos(this, false);
+    const otherPoint2 = connection2.getOtherDrawPos(this, false);
 
     const vector1 = otherPoint1.sub(this.pos);
     const vector2 = otherPoint2.sub(this.pos);
@@ -436,6 +436,11 @@ export class TransitStop implements Actionable, Movable {
     this.pos = l.pos;
   }
 
+  inheritStyle(stop: TransitStop) {
+    if (stop.style) this.style = { ...stop.style };
+    this.hidden = stop.hidden;
+  }
+
   rightClick({ selected }: ClickInfo): void {
     if (selected instanceof TransitStop && selected !== this) {
       connectStopsAction(this.map, this, selected);
@@ -454,8 +459,9 @@ export class TransitStop implements Actionable, Movable {
     const connectionsByStop = this.connectionsByStop();
     if (connectionsByStop.size === 1) {
       const [connection] = Array.from(connectionsByStop.values())[0];
-      const otherStop = connection.getOtherStop(this);
-      return this.pos.sub(otherStop.pos);
+      const p1 = connection.getDrawPos(this);
+      const p2 = connection.getOtherDrawPos(this);
+      return p1.sub(p2);
     }
     return v;
   }
@@ -527,7 +533,7 @@ export class TransitStop implements Actionable, Movable {
             const lateralVector = orth.mult(lateralOffset * offset * sign);
             const newPos = this.pos.add(diff).add(lateralVector);
             const newStop = new TransitStop(this.map, [], newPos);
-            newStop.style = this.style;
+            newStop.inheritStyle(this);
             newStops.push(newStop);
             const newC = new TransitConnection(
               this.map,

@@ -178,7 +178,7 @@ export class TransitConnection implements Actionable {
     return Math.max(this.to.getLateralOffset(), this.from.getLateralOffset());
   }
 
-  getFromToPosInfo() {
+  getFromToPosInfo(rounding = true) {
     let from = this.from.pos;
     let to = this.to.pos;
     const lateralOffset = this.lateralOffset * this.from.getLateralOffset();
@@ -197,25 +197,32 @@ export class TransitConnection implements Actionable {
       if (!this.toConnection) to = to.add(direction.mult(lateralOffset));
     }
 
-    const fromRounding = this.from.calculateRoundingStuff();
-    const toRounding = this.to.calculateRoundingStuff();
+    if (rounding) {
+      const fromRounding = this.from.calculateRoundingStuff();
+      const toRounding = this.to.calculateRoundingStuff();
 
-    if (fromRounding) {
-      const direction = from.directionTo(to);
-      from = from.add(direction.mult(fromRounding.edgeDist));
+      if (fromRounding) {
+        const direction = from.directionTo(to);
+        from = from.add(direction.mult(fromRounding.edgeDist));
+      }
+
+      if (toRounding) {
+        const direction = to.directionTo(from);
+        to = to.add(direction.mult(toRounding.edgeDist));
+      }
+      return [from, to, lateralOffset, fromRounding, toRounding] as const;
     }
-
-    if (toRounding) {
-      const direction = to.directionTo(from);
-      to = to.add(direction.mult(toRounding.edgeDist));
-    }
-
-    return [from, to, lateralOffset, fromRounding, toRounding] as const;
+    return [from, to, lateralOffset] as const;
   }
 
-  getDrawPos(which: TransitStop) {
-    const [from, to] = this.getFromToPosInfo();
+  getDrawPos(which: TransitStop, rounding = true) {
+    const [from, to] = this.getFromToPosInfo(rounding);
     return which === this.from ? from : to;
+  }
+
+  getOtherDrawPos(which: TransitStop, rounding = true) {
+    const [from, to] = this.getFromToPosInfo(rounding);
+    return which === this.from ? to : from;
   }
 
   getPath(): [Path2D, number, boolean] {
@@ -298,9 +305,9 @@ export class TransitConnection implements Actionable {
     if (which !== this.from && which !== this.to) {
       throw new Error('The stop must be either the from or the to stop');
     }
-    const from = which;
-    const to = this.getOtherStop(from);
-    return Math.atan2(to.pos.y - from.pos.y, to.pos.x - from.pos.x);
+    const from = this.getDrawPos(which, false);
+    const to = this.getOtherDrawPos(which, false);
+    return Math.atan2(to.y - from.y, to.x - from.x);
   }
 
   isParallelTo(other: TransitConnection): boolean {
@@ -318,9 +325,9 @@ export class TransitConnection implements Actionable {
     if (which !== this.from && which !== this.to) {
       throw new Error('The stop must be either the from or the to stop');
     }
-    const from = which;
-    const to = this.getOtherStop(from);
-    return from.pos.directionTo(to.pos);
+    const from = this.getDrawPos(which, false);
+    const to = this.getOtherDrawPos(which, false);
+    return from.directionTo(to);
   }
 
   getDirectSnapLines(which: TransitStop): SnapLine[] {
