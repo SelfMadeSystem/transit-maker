@@ -39,8 +39,8 @@ export class TransitConnection implements Actionable {
   public to: TransitStop;
   public route: TransitRoute;
   public lateralOffset: number = 0;
-  public fromLateralOffset: number = 0;
-  public toLateralOffset: number = 0;
+  public fromConnection: TransitConnection | null = null;
+  public toConnection: TransitConnection | null = null;
   public style: ConnectionStyle = {
     ...DEFALUT_CONNECTION_STYLE,
   };
@@ -70,11 +70,11 @@ export class TransitConnection implements Actionable {
     this.to.removeConnection(this);
   }
 
-  setWhichLateralOffset(which: TransitStop, offset: number) {
+  setWhichConnection(which: TransitStop, connection: TransitConnection) {
     if (which === this.from) {
-      this.fromLateralOffset = offset;
+      this.fromConnection = connection;
     } else if (which === this.to) {
-      this.toLateralOffset = offset;
+      this.toConnection = connection;
     } else {
       throw new Error('The stop must be either the from or the to stop');
     }
@@ -98,8 +98,10 @@ export class TransitConnection implements Actionable {
 
     [this.from, this.to] = [this.to, this.from];
     this.lateralOffset = -this.lateralOffset;
-    this.fromLateralOffset = -this.toLateralOffset;
-    this.toLateralOffset = -this.fromLateralOffset;
+    [this.fromConnection, this.toConnection] = [
+      this.toConnection,
+      this.fromConnection,
+    ];
   }
 
   preDraw(ctx: CanvasRenderingContext2D): void {
@@ -179,16 +181,20 @@ export class TransitConnection implements Actionable {
   getFromToPosInfo() {
     let from = this.from.pos;
     let to = this.to.pos;
-    const fromLateralOffset =
-      (this.fromLateralOffset + this.lateralOffset) *
-      this.from.getLateralOffset();
-    const toLateralOffset =
-      (this.toLateralOffset + this.lateralOffset) * this.to.getLateralOffset();
+    const lateralOffset = this.lateralOffset * this.from.getLateralOffset();
 
-    if (fromLateralOffset !== 0 || toLateralOffset !== 0) {
+    if (this.fromConnection) {
+      const posInfo = this.fromConnection.getFromToPosInfo();
+      from = posInfo[this.fromConnection.from === this.from ? 0 : 1];
+    }
+    if (this.toConnection) {
+      const posInfo = this.toConnection.getFromToPosInfo();
+      to = posInfo[this.toConnection.to === this.to ? 1 : 0];
+    }
+    if (lateralOffset) {
       const direction = from.directionTo(to).cw90();
-      from = from.add(direction.mult(fromLateralOffset));
-      to = to.add(direction.mult(toLateralOffset));
+      if (!this.fromConnection) from = from.add(direction.mult(lateralOffset));
+      if (!this.toConnection) to = to.add(direction.mult(lateralOffset));
     }
 
     const fromRounding = this.from.calculateRoundingStuff();
@@ -204,25 +210,12 @@ export class TransitConnection implements Actionable {
       to = to.add(direction.mult(toRounding.edgeDist));
     }
 
-    return [
-      from,
-      to,
-      fromLateralOffset,
-      toLateralOffset,
-      fromRounding,
-      toRounding,
-    ] as const;
+    return [from, to, lateralOffset, fromRounding, toRounding] as const;
   }
 
   getPath(): [Path2D, number, boolean] {
-    const [
-      from,
-      to,
-      fromLateralOffset,
-      toLateralOffset,
-      fromRounding,
-      toRounding,
-    ] = this.getFromToPosInfo();
+    const [from, to, lateralOffset, fromRounding, toRounding] =
+      this.getFromToPosInfo();
     const path = d3path();
 
     if (fromRounding) {
@@ -234,7 +227,7 @@ export class TransitConnection implements Actionable {
 
       const sign = clockwise ? 1 : -1;
 
-      const r = radius - fromLateralOffset * sign;
+      const r = radius - lateralOffset * sign;
 
       if (r > 0 && sameHalfPlane(from, this.to.pos, center, ogPos)) {
         path.arc(center.x, center.y, r, endAngle, startAngle, clockwise);
@@ -260,7 +253,7 @@ export class TransitConnection implements Actionable {
 
       const sign = clockwise ? 1 : -1;
 
-      const r = radius + toLateralOffset * sign;
+      const r = radius + lateralOffset * sign;
 
       if (r > 0 && sameHalfPlane(to, this.from.pos, center, ogPos)) {
         path.arc(center.x, center.y, r, startAngle, endAngle, !clockwise);

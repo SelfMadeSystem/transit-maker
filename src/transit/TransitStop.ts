@@ -536,7 +536,7 @@ export class TransitStop implements Actionable, Movable {
               connection.route,
             );
             newC.style = { ...connection.style };
-            newC.setWhichLateralOffset(this, lateralOffset * sign);
+            newC.setWhichConnection(this, connection);
           }
 
           const action = {
