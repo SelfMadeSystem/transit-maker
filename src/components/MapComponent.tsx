@@ -228,6 +228,15 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
         offsetY = mouseY - (mouseY - offsetY) * (1 + delta);
       },
       paste(e) {
+        if (
+          e.target instanceof HTMLInputElement ||
+          e.target instanceof HTMLTextAreaElement ||
+          (e.target &&
+            'isContentEditable' in e.target &&
+            e.target.isContentEditable)
+        ) {
+          return;
+        }
         e.preventDefault();
         e.stopPropagation();
 
