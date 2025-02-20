@@ -1,5 +1,6 @@
 import { Color } from './Color';
 import { HueSelectionCanvas, SaturationValueCanvas } from './ColorCanvas';
+import ColorJS from 'colorjs.io';
 import { useEffect, useRef, useState } from 'react';
 
 export type ColorCanvasProps = {
@@ -10,6 +11,7 @@ export type ColorCanvasProps = {
 export default function ColorInput({ color, setColor }: ColorCanvasProps) {
   const parentRef = useRef<HTMLDivElement>(null);
   const [editing, setEditing] = useState(false);
+  const [hex, setHex] = useState(color.hex());
 
   useEffect(() => {
     const close = (e: MouseEvent) => {
@@ -44,7 +46,9 @@ export default function ColorInput({ color, setColor }: ColorCanvasProps) {
               saturation={color.saturation}
               value={color.value}
               setSv={(s, v) => {
-                setColor(color.withSv(s, v));
+                const c = color.withSv(s, v);
+                setColor(c);
+                setHex(c.hex());
               }}
             />
           </div>
@@ -52,10 +56,27 @@ export default function ColorInput({ color, setColor }: ColorCanvasProps) {
             <HueSelectionCanvas
               hue={color.hue}
               setHue={hue => {
-                setColor(color.withHue(hue));
+                const c = color.withHue(hue);
+                setColor(c);
+                setHex(c.hex());
               }}
             />
           </div>
+          <input
+            type="text"
+            className="w-full bg-gray-800 p-1 text-white"
+            value={hex}
+            onChange={e => {
+              const newHex = e.target.value;
+              setHex(newHex);
+              try {
+                const c = Color.fromColorJS(new ColorJS(newHex));
+                setColor(c);
+              } catch (e) {
+                console.error(e);
+              }
+            }}
+          />
         </div>
       )}
     </div>

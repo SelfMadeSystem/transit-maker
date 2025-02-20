@@ -1,3 +1,5 @@
+import ColorJS from 'colorjs.io';
+
 export function hsvToRgb(h: number, s: number, v: number) {
   const c = v * s;
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
@@ -32,13 +34,13 @@ export function hsvToRgb(h: number, s: number, v: number) {
 }
 
 export class Color {
-  public readonly r: number;
-  public readonly g: number;
-  public readonly b: number;
-  public readonly a: number;
-  public readonly hue: number;
-  public readonly saturation: number;
-  public readonly value: number;
+  public readonly r: number; // 0-255
+  public readonly g: number; // 0-255
+  public readonly b: number; // 0-255
+  public readonly a: number; // 0-1
+  public readonly hue: number; // 0-360
+  public readonly saturation: number; // 0-1
+  public readonly value: number; // 0-1
 
   constructor(r: number, g: number, b: number, a = 1, hue?: number) {
     this.r = r;
@@ -48,6 +50,13 @@ export class Color {
     this.hue = hue ?? this.getHue();
     this.saturation = this.getSaturation();
     this.value = this.getValue();
+  }
+
+  static fromColorJS(color: ColorJS) {
+    console.log(color.r * 255, color.g * 255, color.b * 255);
+    const c = new Color(color.r * 255, color.g * 255, color.b * 255, color.a);
+    console.log(c);
+    return c;
   }
 
   private getHue() {
@@ -65,6 +74,9 @@ export class Color {
       hue = (60 * (b - r)) / (max - min) + 120;
     } else {
       hue = (60 * (r - g)) / (max - min) + 240;
+    }
+    if (hue < 0) {
+      hue += 360;
     }
     return hue;
   }
