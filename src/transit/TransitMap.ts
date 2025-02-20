@@ -1,4 +1,5 @@
 import { id } from '../utils/id';
+import { DecorationImage } from './DecorationImage';
 import { History } from './History';
 import { Label } from './Label';
 import { TransitConnection } from './TransitConnection';
@@ -22,6 +23,7 @@ export class TransitMap {
   public labels: Set<Label>;
   public stops: Set<TransitStop>;
   public connections: Set<TransitConnection>;
+  public images: Set<DecorationImage>;
   public defaultRoute: TransitRoute;
   public history: History;
 
@@ -31,6 +33,7 @@ export class TransitMap {
     this.labels = new Set();
     this.stops = new Set();
     this.connections = new Set();
+    this.images = new Set();
     this.defaultRoute = createDefaultRoute(this);
   }
 
@@ -54,6 +57,11 @@ export class TransitMap {
         return connection;
       }
     }
+    for (const image of this.images) {
+      if (image.isOver(x, y)) {
+        return image;
+      }
+    }
     return null;
   }
 
@@ -70,6 +78,12 @@ export class TransitMap {
 
   draw(ctx: CanvasRenderingContext2D, selected: ActionableItem | null) {
     const connectionsByRoute = this.connectionsByRoute().values();
+    for (const image of this.images) {
+      if (selected === image) {
+        image.drawSelected(ctx);
+      }
+      image.draw(ctx);
+    }
     for (const connections of connectionsByRoute) {
       for (const connection of connections) {
         if (selected === connection) {

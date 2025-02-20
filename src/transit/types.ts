@@ -1,4 +1,5 @@
 import { Vector2 } from '../utils/vec';
+import { DecorationImage } from './DecorationImage';
 import { Label } from './Label';
 import { TransitConnection } from './TransitConnection';
 import { TransitStop } from './TransitStop';
@@ -29,4 +30,8 @@ export interface Actionable {
   rightClick?(a: ClickInfo): void;
 }
 
-export type ActionableItem = Label | TransitStop | TransitConnection;
+export type ActionableItem =
+  | Label
+  | TransitStop
+  | TransitConnection
+  | DecorationImage;

@@ -1,4 +1,5 @@
 import { Vector2 } from '../utils/vec';
+import { DecorationImage } from './DecorationImage';
 import { Label } from './Label';
 import { TransitConnection } from './TransitConnection';
 import { TransitMap } from './TransitMap';
@@ -65,6 +66,23 @@ export const createLabelAction = createActionFunction(
         labelObj.reAdd();
       },
       data: labelObj,
+    };
+  },
+);
+
+export const createImageAction = createActionFunction(
+  (map: TransitMap, image: HTMLImageElement, pos: Vector2) => {
+    const decoration = new DecorationImage(map, image, pos);
+
+    return {
+      label: 'Create Image',
+      undo() {
+        decoration.remove();
+      },
+      redo() {
+        decoration.reAdd();
+      },
+      data: decoration,
     };
   },
 );

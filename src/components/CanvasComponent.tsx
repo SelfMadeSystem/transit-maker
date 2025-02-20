@@ -53,6 +53,9 @@ type ReturnType<T extends Record<string, unknown>> = {
       percentY: number;
     },
   ) => void;
+  cut?: (e: ClipboardEvent) => void;
+  copy?: (e: ClipboardEvent) => void;
+  paste?: (e: ClipboardEvent) => void;
 };
 
 type CreateProps<T extends Record<string, unknown>> = {
@@ -289,6 +292,18 @@ export default function createCanvasComponent<
             },
             { signal },
           );
+        }
+
+        if (result?.cut) {
+          window.addEventListener('cut', result.cut, { signal });
+        }
+
+        if (result?.copy) {
+          window.addEventListener('copy', result.copy, { signal });
+        }
+
+        if (result?.paste) {
+          window.addEventListener('paste', result.paste, { signal });
         }
 
         if (autoResize) {

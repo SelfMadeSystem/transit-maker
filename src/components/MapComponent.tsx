@@ -1,6 +1,7 @@
 import { EditorContextType } from '../EditorContext';
 import {
   MoveAction,
+  createImageAction,
   createLabelAction,
   createStopAction,
   moveMovableAction,
@@ -173,9 +174,9 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
             offsetX += deltaX;
             offsetY += deltaY;
           }
-          prevMouseX = mouseX;
-          prevMouseY = mouseY;
         }
+        prevMouseX = mouseX;
+        prevMouseY = mouseY;
       },
       mouseUp() {
         panning = false;
@@ -225,6 +226,36 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
         zoom = Math.max(0.1, zoom * (1 + delta));
         offsetX = mouseX - (mouseX - offsetX) * (1 + delta);
         offsetY = mouseY - (mouseY - offsetY) * (1 + delta);
+      },
+      paste(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const items = e.clipboardData?.items;
+
+        if (!items) {
+          return;
+        }
+
+        for (const item of items) {
+          if (item.type.indexOf('image') !== -1) {
+            const blob = item.getAsFile();
+            if (blob) {
+              const url = URL.createObjectURL(blob);
+              const img = new Image();
+              img.src = url;
+              img.onload = () => {
+                const { x, y } = mouseToPos({
+                  mouseX: prevMouseX,
+                  mouseY: prevMouseY,
+                });
+                setSelected(
+                  createImageAction(map, img, new Vector2(x, y)).data,
+                );
+              };
+            }
+          }
+        }
       },
     };
   },
