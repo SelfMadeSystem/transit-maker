@@ -326,6 +326,7 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
   const [lineWidth, setLineWidth] = useState(style.lineWidth);
   const [strokeType, setStrokeType] = useState(style.strokeType);
   const [innerWidth, setInnerWidth] = useState(style.innerWidth);
+  const [innerColor, setInnerColor] = useState(style.innerColor);
   const [dottedWidth, setDottedWidth] = useState(style.dottedWidth);
   const [dashedWidth, setDashedWidth] = useState(style.dashedWidth);
   const [margin, setMargin] = useState(style.margin);
@@ -363,18 +364,27 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
         </select>
       </label>
       {strokeType === 'split' ? (
-        <label className="flex items-center gap-2">
-          <div className="text-white">Inner width:</div>
-          <input
-            type="number"
-            value={innerWidth}
-            min="0"
-            onChange={e =>
-              setInnerWidth((style.innerWidth = parseFloat(e.target.value)))
-            }
-            className="bg-gray-900 text-white"
-          />
-        </label>
+        <>
+          <label className="flex items-center gap-2">
+            <div className="text-white">Inner width:</div>
+            <input
+              type="number"
+              value={innerWidth}
+              min="0"
+              onChange={e =>
+                setInnerWidth((style.innerWidth = parseFloat(e.target.value)))
+              }
+              className="bg-gray-900 text-white"
+            />
+          </label>
+          <label className="flex items-center gap-2">
+            <div className="text-white">Inner color:</div>
+            <ColorInput
+              color={innerColor}
+              setColor={c => setInnerColor((style.innerColor = c))}
+            />
+          </label>
+        </>
       ) : null}
       <label className="flex items-center gap-2">
         <div className="text-white">Dotted width:</div>

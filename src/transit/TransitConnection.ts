@@ -155,6 +155,7 @@ export class TransitConnection implements Actionable {
       const [path] = this.getPath();
       ctx.save();
       ctx.lineCap = 'round';
+      ctx.strokeStyle = this.route.style.innerColor.hex();
       ctx.lineWidth = this.route.style.innerWidth;
       ctx.stroke(path);
       ctx.restore();
@@ -330,22 +331,38 @@ export class TransitConnection implements Actionable {
     return from.directionTo(to);
   }
 
-  getDirectSnapLines(which: TransitStop): SnapLine[] {
+  getDirectSnapLines(which: TransitStop, delta: Vector2): SnapLine[] {
     const other = this.getOtherStop(which);
-    const pos = this.getDrawPos(which);
-    const otherPos = this.getDrawPos(other);
+    const pos =
+      this.toConnection || this.fromConnection
+        ? this.getDrawPos(which, false)
+        : which.pos;
+    const otherPos =
+      this.toConnection || this.fromConnection
+        ? this.getOtherDrawPos(which, false)
+        : other.pos;
     const diff = pos.sub(otherPos).normalize();
     const dist = other.pos.dist(which.pos);
 
+    const p = pos.sub(delta);
     return [
-      new SnapLine(pos, diff, 0, dist),
-      new SnapLine(pos, diff.rotateBy(Math.PI / 2), 1, dist),
-      new SnapLine(pos, diff.rotateBy(-Math.PI / 2), 1, dist),
+      new SnapLine(p, diff, 0, dist),
+      new SnapLine(p, diff.rotateBy(Math.PI / 2), 1, dist),
+      new SnapLine(p, diff.rotateBy(-Math.PI / 2), 1, dist),
     ];
   }
 
   getCardinalSnapLines(which: TransitStop, length: number | null): SnapLine[] {
-    const pos = this.getDrawPos(which);
+    if (
+      (which === this.from && this.fromConnection) ||
+      (which === this.to && this.toConnection)
+    ) {
+      return [];
+    }
+    const delta = this.getOtherStop(which).pos.sub(
+      this.getOtherDrawPos(which, false),
+    );
+    const pos = this.getDrawPos(which, false).add(delta);
     if (length === null) {
       return [
         new SnapLine(pos, new Vector2(1, 0), 2),
@@ -372,6 +389,7 @@ export class TransitConnection implements Actionable {
 
     const others = which.getConnectingStops();
     const other = this.getOtherStop(which);
+    const otherDelta = other.pos.sub(this.getOtherDrawPos(which, false));
 
     for (const connection of other.connections) {
       if (connection === this) {
@@ -381,7 +399,7 @@ export class TransitConnection implements Actionable {
       if (others.includes(other2)) {
         continue;
       }
-      snapLines.push(...connection.getDirectSnapLines(other));
+      snapLines.push(...connection.getDirectSnapLines(other, otherDelta));
     }
 
     const length = snapLines.length === 3 ? snapLines[0].length : null;
