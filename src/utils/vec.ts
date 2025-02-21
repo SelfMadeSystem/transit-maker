@@ -194,7 +194,7 @@ export class Vector2 {
     return this.normalize().mult(magnitude);
   }
 
-  heading(): number {
+  angle(): number {
     return Math.atan2(this.y, this.x);
   }
 
@@ -219,7 +219,7 @@ export class Vector2 {
   }
 
   angleTo(other: Vector2): number {
-    return other.sub(this).heading();
+    return other.sub(this).angle();
   }
 
   lerp(other: Vector2, amount: number): Vector2 {

@@ -8,8 +8,8 @@ export class DecorationImage implements Transformable, Actionable, Movable {
   public image: HTMLImageElement;
   public map: TransitMap;
   public pos: Vector2;
-  public scale: number = 0.5;
-  public rotation: number = 1;
+  public scale: Vector2 = new Vector2(1, 1);
+  public rotation: number = 0;
 
   constructor(map: TransitMap, image: HTMLImageElement, pos: Vector2) {
     this.map = map;
@@ -26,20 +26,31 @@ export class DecorationImage implements Transformable, Actionable, Movable {
     this.map.images.delete(this);
   }
 
-  scaleBy(s: number) {
-    this.scale *= s;
+  getScale(): Vector2 {
+    return this.scale;
   }
 
-  rotateBy(angle: number) {
-    this.rotation += angle;
+  setScale(scale: Vector2) {
+    this.scale = scale;
+  }
+
+  setRotation(angle: number) {
+    this.rotation = angle;
   }
 
   getRotation() {
     return this.rotation;
   }
 
+  getNormalSize(): Vector2 {
+    return new Vector2(this.image.width, this.image.height);
+  }
+
   getSize() {
-    return new Vector2(this.image.width, this.image.height).mult(this.scale);
+    return new Vector2(this.image.width, this.image.height).mult(
+      this.scale.x,
+      this.scale.y,
+    );
   }
 
   draw(ctx: CanvasRenderingContext2D) {

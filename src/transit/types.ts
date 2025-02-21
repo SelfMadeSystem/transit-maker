@@ -22,10 +22,13 @@ export interface Movable extends Actionable {
 }
 
 export interface Transformable extends Movable {
-  scaleBy(s: number): void;
-  rotateBy(angle: number): void;
+  getNormalSize(): Vector2;
   getSize(): Vector2;
+  getScale(): Vector2;
+  setScale(scale: Vector2): void;
   getRotation(): number;
+  setRotation(rotation: number): void;
+
   /**
    * Center of the object
    */

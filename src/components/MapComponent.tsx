@@ -9,11 +9,15 @@ import {
 } from '../transit/Action';
 import { Label } from '../transit/Label';
 import {
+  TransformableState,
   drawTransformableRegion,
   getHandle,
   getCursor as getHandleCursor,
+  getTransformableState,
+  isTransformable,
+  transform,
 } from '../transit/Transformable';
-import { ActionableItem, PosWithKeys } from '../transit/types';
+import { ActionableItem, PosWithKeys, Transformable } from '../transit/types';
 import { Vector2 } from '../utils/vec';
 import createCanvasComponent from './CanvasComponent';
 import { waitForInput } from './context-menu';
@@ -35,6 +39,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
     let offsetX = 200;
     let offsetY = 0;
     let panning = false;
+    let transformableState: TransformableState | null = null;
     let prevMouseX = 0;
     let prevMouseY = 0;
     let ogMouseX = 0;
@@ -102,10 +107,22 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
       mouseDown(e, { mouseX, mouseY }) {
         e.preventDefault();
         e.stopPropagation();
-        const { x, y } = mouseToPos({ mouseX, mouseY });
+        const mousePos = mouseToPos({ mouseX, mouseY });
+        const { x, y } = mousePos;
 
+        transformableState = null;
         if (e.button === 0) {
-          setSelection(map.getSelectable(x, y, ctx));
+          if (isTransformable(selected)) {
+            transformableState = getTransformableState(
+              selected as ActionableItem & Transformable,
+              zoom,
+              mousePos,
+            );
+          }
+
+          if (transformableState === null) {
+            setSelection(map.getSelectable(x, y, ctx));
+          }
           panning = true;
         } else if (e.button === 2) {
           // Right click
@@ -116,20 +133,18 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
               altKey: e.altKey,
               ctrlKey: e.ctrlKey,
               shiftKey: e.shiftKey,
-              pos: new Vector2(x, y),
+              pos: mousePos,
             });
           } else {
             waitForInput(['Create Stop', 'Create Label'], mouseX, mouseY).then(
               result => {
                 if (result === 'Create Stop') {
                   setSelected(
-                    createStopAction(map, 'Unnamed Stop', new Vector2(x, y))
-                      .data,
+                    createStopAction(map, 'Unnamed Stop', mousePos).data,
                   );
                 } else if (result === 'Create Label') {
                   setSelected(
-                    createLabelAction(map, 'Unnamed Label', new Vector2(x, y))
-                      .data,
+                    createLabelAction(map, 'Unnamed Label', mousePos).data,
                   );
                 }
               },
@@ -166,7 +181,11 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           e.preventDefault();
           const deltaX = mouseX - prevMouseX;
           const deltaY = mouseY - prevMouseY;
-          if (selected) {
+          if (transformableState) {
+            e.preventDefault();
+            const mousePos = mouseToPos({ mouseX, mouseY });
+            transform(transformableState, mousePos);
+          } else if (selected) {
             const deltaPos = new Vector2(
               (mouseX - ogMouseX) / zoom,
               (mouseY - ogMouseY) / zoom,
@@ -195,6 +214,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
       },
       mouseUp() {
         panning = false;
+        transformableState = null;
         if (moveAction) {
           map.history.add(moveAction);
           moveAction = null;
