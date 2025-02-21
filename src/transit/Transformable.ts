@@ -295,51 +295,53 @@ function transformUniformScale(ogState: TransformableState, pwk: PosWithKeys) {
   const posDiff = { x: 0, y: 0 };
   const scale = { ...ogState.scale };
   const isX = ogState.handle.includes('r') || ogState.handle.includes('l');
-  const scaleBy = isX ? diff.x : diff.y;
+  const ogRatio = ogState.scale.x / ogState.scale.y;
+  const scaleByX = isX ? diff.x / ogState.size.x : diff.y / ogState.size.y;
+  const scaleByY = scaleByX / ogRatio;
   switch (ogState.handle) {
     case 't':
-      posDiff.y += scaleBy / 2;
-      scale.x -= scaleBy / ogState.size.x;
-      scale.y -= scaleBy / ogState.size.y;
+      posDiff.y += (scaleByY * ogState.size.y) / 2;
+      scale.x -= scaleByX;
+      scale.y -= scaleByY;
       break;
     case 'r':
-      posDiff.x += scaleBy / 2;
-      scale.x += scaleBy / ogState.size.x;
-      scale.y += scaleBy / ogState.size.y;
+      posDiff.x += (scaleByX * ogState.size.x) / 2;
+      scale.x += scaleByX;
+      scale.y += scaleByY;
       break;
     case 'b':
-      posDiff.y += scaleBy / 2;
-      scale.x += scaleBy / ogState.size.x;
-      scale.y += scaleBy / ogState.size.y;
+      posDiff.y += (scaleByY * ogState.size.y) / 2;
+      scale.x += scaleByX;
+      scale.y += scaleByY;
       break;
     case 'l':
-      posDiff.x += scaleBy / 2;
-      scale.x -= scaleBy / ogState.size.x;
-      scale.y -= scaleBy / ogState.size.y;
+      posDiff.x += (scaleByX * ogState.size.x) / 2;
+      scale.x -= scaleByX;
+      scale.y -= scaleByY;
       break;
     case 'tr':
-      posDiff.x += scaleBy / 2;
-      posDiff.y -= scaleBy / 2;
-      scale.x += scaleBy / ogState.size.x;
-      scale.y += scaleBy / ogState.size.y;
+      posDiff.x += (scaleByX * ogState.size.x) / 2;
+      posDiff.y -= (scaleByY * ogState.size.y) / 2;
+      scale.x += scaleByX;
+      scale.y += scaleByY;
       break;
     case 'br':
-      posDiff.x += scaleBy / 2;
-      posDiff.y += scaleBy / 2;
-      scale.x += scaleBy / ogState.size.x;
-      scale.y += scaleBy / ogState.size.y;
+      posDiff.x += (scaleByX * ogState.size.x) / 2;
+      posDiff.y += (scaleByY * ogState.size.y) / 2;
+      scale.x += scaleByX;
+      scale.y += scaleByY;
       break;
     case 'bl':
-      posDiff.x += scaleBy / 2;
-      posDiff.y -= scaleBy / 2;
-      scale.x -= scaleBy / ogState.size.x;
-      scale.y -= scaleBy / ogState.size.y;
+      posDiff.x += (scaleByX * ogState.size.x) / 2;
+      posDiff.y -= (scaleByY * ogState.size.y) / 2;
+      scale.x -= scaleByX;
+      scale.y -= scaleByY;
       break;
     case 'tl':
-      posDiff.x += scaleBy / 2;
-      posDiff.y += scaleBy / 2;
-      scale.x -= scaleBy / ogState.size.x;
-      scale.y -= scaleBy / ogState.size.y;
+      posDiff.x += (scaleByX * ogState.size.x) / 2;
+      posDiff.y += (scaleByY * ogState.size.y) / 2;
+      scale.x -= scaleByX;
+      scale.y -= scaleByY;
       break;
   }
   const newPos = ogState.pos.add(
