@@ -1,5 +1,6 @@
 import { id } from '../utils/id';
 import { Vector2 } from '../utils/vec';
+import { isOverTransformable } from './Transformable';
 import { TransitMap } from './TransitMap';
 import { Actionable, Movable, PosWithKeys, Transformable } from './types';
 
@@ -78,13 +79,7 @@ export class DecorationImage implements Transformable, Actionable, Movable {
   }
 
   isOver(x: number, y: number) {
-    const size = this.getSize();
-    return (
-      x >= this.pos.x - size.x / 2 &&
-      x <= this.pos.x + size.x / 2 &&
-      y >= this.pos.y - size.y / 2 &&
-      y <= this.pos.y + size.y / 2
-    );
+    return isOverTransformable(this, new Vector2(x, y));
   }
 
   getPos(): Vector2 {

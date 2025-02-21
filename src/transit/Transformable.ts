@@ -1,6 +1,6 @@
 import { wrapAngle2PI } from '../utils/mathUtils';
 import { Vector2, pointSegmentDistance } from '../utils/vec';
-import { ActionableItem, Transformable } from './types';
+import { ActionableItem, PosWithKeys, Transformable } from './types';
 
 const HANDLE_SIZE = 10;
 const ROTATE_HANDLE_OFFSET = 20;
@@ -67,6 +67,18 @@ export function drawTransformableRegion(
   ctx.restore();
 }
 
+export function isOverTransformable(t: Transformable, pos: Vector2): boolean {
+  const size = t.getSize();
+  const halfSize = size.div(2);
+  pos = pos.sub(t.getPos()).rotateBy(-t.getRotation());
+  return (
+    pos.x >= -halfSize.x &&
+    pos.x <= halfSize.x &&
+    pos.y >= -halfSize.y &&
+    pos.y <= halfSize.y
+  );
+}
+
 export type Handle =
   | 'rotate'
   | 't'
@@ -122,18 +134,13 @@ export function getHandle(
       new Vector2(-halfSize.x, -halfSize.y),
     ],
   } satisfies Partial<Record<Handle, [Vector2, Vector2]>>;
-  let minDist = Infinity;
   for (const edge in edges) {
     const [start, end] = edges[edge as keyof typeof edges];
     const dist = pointSegmentDistance(pos, start, end);
     if (dist < edgeSize) {
       return edge as Handle;
     }
-    if (dist < minDist) {
-      minDist = dist;
-    }
   }
-  console.log(minDist);
   return null;
 }
 
@@ -222,33 +229,40 @@ export function getTransformableState(
   };
 }
 
-export function transform(ogState: TransformableState, mousePos: Vector2) {
+export function transform(ogState: TransformableState, pwk: PosWithKeys) {
   switch (ogState.handle) {
     case 'rotate':
-      transformRotate(ogState, mousePos);
+      transformRotate(ogState, pwk);
       break;
     case 't':
     case 'l':
     case 'b':
     case 'r':
-      transformScale(ogState, mousePos);
+      transformScale(ogState, pwk);
       break;
     case 'tr':
     case 'br':
     case 'bl':
     case 'tl':
-      transformUniformScale(ogState, mousePos);
+      transformUniformScale(ogState, pwk);
       break;
   }
 }
 
-function transformRotate(ogState: TransformableState, mousePos: Vector2) {
-  const angle = mousePos.sub(ogState.pos).angle();
+function transformRotate(ogState: TransformableState, pwk: PosWithKeys) {
+  let angle = pwk.pos.sub(ogState.pos).angle();
+  if (pwk.shiftKey) {
+    angle = Math.round(angle / (Math.PI / 4)) * (Math.PI / 4);
+  }
   ogState.t.setRotation(angle + Math.PI / 2);
 }
 
-function transformScale(ogState: TransformableState, mousePos: Vector2) {
-  const diff = mousePos.sub(ogState.mousePos).rotateBy(-ogState.rotation);
+function transformScale(ogState: TransformableState, pwk: PosWithKeys) {
+  if (pwk.shiftKey) {
+    transformUniformScale(ogState, pwk);
+    return;
+  }
+  const diff = pwk.pos.sub(ogState.mousePos).rotateBy(-ogState.rotation);
   const posDiff = { x: 0, y: 0 };
   const scale = { ...ogState.scale };
   switch (ogState.handle) {
@@ -276,13 +290,33 @@ function transformScale(ogState: TransformableState, mousePos: Vector2) {
   ogState.t.setPos(newPos);
 }
 
-function transformUniformScale(ogState: TransformableState, mousePos: Vector2) {
-  const diff = mousePos.sub(ogState.mousePos).rotateBy(-ogState.rotation);
+function transformUniformScale(ogState: TransformableState, pwk: PosWithKeys) {
+  const diff = pwk.pos.sub(ogState.mousePos).rotateBy(-ogState.rotation);
   const posDiff = { x: 0, y: 0 };
   const scale = { ...ogState.scale };
-  const isX = true;
+  const isX = ogState.handle.includes('r') || ogState.handle.includes('l');
   const scaleBy = isX ? diff.x : diff.y;
   switch (ogState.handle) {
+    case 't':
+      posDiff.y += scaleBy / 2;
+      scale.x -= scaleBy / ogState.size.x;
+      scale.y -= scaleBy / ogState.size.y;
+      break;
+    case 'r':
+      posDiff.x += scaleBy / 2;
+      scale.x += scaleBy / ogState.size.x;
+      scale.y += scaleBy / ogState.size.y;
+      break;
+    case 'b':
+      posDiff.y += scaleBy / 2;
+      scale.x += scaleBy / ogState.size.x;
+      scale.y += scaleBy / ogState.size.y;
+      break;
+    case 'l':
+      posDiff.x += scaleBy / 2;
+      scale.x -= scaleBy / ogState.size.x;
+      scale.y -= scaleBy / ogState.size.y;
+      break;
     case 'tr':
       posDiff.x += scaleBy / 2;
       posDiff.y -= scaleBy / 2;

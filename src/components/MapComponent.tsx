@@ -184,7 +184,12 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           if (transformableState) {
             e.preventDefault();
             const mousePos = mouseToPos({ mouseX, mouseY });
-            transform(transformableState, mousePos);
+            transform(transformableState, {
+              pos: mousePos,
+              shiftKey: e.shiftKey,
+              ctrlKey: e.ctrlKey,
+              altKey: e.altKey,
+            });
           } else if (selected) {
             const deltaPos = new Vector2(
               (mouseX - ogMouseX) / zoom,
