@@ -473,6 +473,12 @@ export class TransitStop implements Actionable, Movable {
     const diff = this.getDiffIfOneConnectionElse(new Vector2(20, 20));
     const stop = new TransitStop(this.map, [], this.pos.add(diff));
     stop.style = this.style;
+    if (this.labels.size > 0) {
+      const label = Array.from(this.labels)[0];
+      const newLabel = new Label(this.map, label.text, label.pos);
+      newLabel.inheritStyle(label);
+      stop.addLabel(newLabel);
+    }
 
     if (vals.length === 1 && vals[0].length > 1) {
       this.normalizeConnections();
