@@ -1,14 +1,15 @@
 import { id } from '../utils/id';
 import { Vector2 } from '../utils/vec';
 import { TransitMap } from './TransitMap';
-import { Actionable, Movable, PosWithKeys } from './types';
+import { Actionable, Movable, PosWithKeys, Transformable } from './types';
 
-export class DecorationImage implements Actionable, Movable {
+export class DecorationImage implements Transformable, Actionable, Movable {
   public id: number = id();
   public image: HTMLImageElement;
   public map: TransitMap;
   public pos: Vector2;
-  public scale: number = 1;
+  public scale: number = 0.5;
+  public rotation: number = 1;
 
   constructor(map: TransitMap, image: HTMLImageElement, pos: Vector2) {
     this.map = map;
@@ -25,23 +26,35 @@ export class DecorationImage implements Actionable, Movable {
     this.map.images.delete(this);
   }
 
+  scaleBy(s: number) {
+    this.scale *= s;
+  }
+
+  rotateBy(angle: number) {
+    this.rotation += angle;
+  }
+
+  getRotation() {
+    return this.rotation;
+  }
+
   getSize() {
     return new Vector2(this.image.width, this.image.height).mult(this.scale);
   }
 
   draw(ctx: CanvasRenderingContext2D) {
+    ctx.save();
     const size = this.getSize();
-    ctx.drawImage(
-      this.image,
-      this.pos.x - size.x / 2,
-      this.pos.y - size.y / 2,
-      size.x,
-      size.y,
-    );
+    ctx.translate(this.pos.x, this.pos.y);
+    ctx.rotate(this.rotation);
+    ctx.drawImage(this.image, -size.x / 2, -size.y / 2, size.x, size.y);
+    ctx.restore();
   }
 
-  drawSelected(ctx: CanvasRenderingContext2D) {
-    ctx.strokeStyle = 'white';
+  drawSelected(_ctx: CanvasRenderingContext2D) {
+    // import('./Transformable.ts').drawTransformableRegion is used instead
+    // of this method
+    /* ctx.strokeStyle = 'white';
     const size = this.getSize();
     const scale = size.length() / 50;
     ctx.lineWidth = scale;
@@ -50,7 +63,7 @@ export class DecorationImage implements Actionable, Movable {
       this.pos.y - size.y / 2 - scale * 2,
       size.x + scale * 4,
       size.y + scale * 4,
-    );
+    ); */
   }
 
   isOver(x: number, y: number) {

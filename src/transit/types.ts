@@ -21,6 +21,17 @@ export interface Movable extends Actionable {
   moveTo(l: PosWithKeys): void;
 }
 
+export interface Transformable extends Movable {
+  scaleBy(s: number): void;
+  rotateBy(angle: number): void;
+  getSize(): Vector2;
+  getRotation(): number;
+  /**
+   * Center of the object
+   */
+  getPos(): Vector2;
+}
+
 export interface Actionable {
   remove(): void;
   reAdd(): void;

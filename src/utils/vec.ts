@@ -140,7 +140,7 @@ export class Vector2 {
     return new Vector2(this.x * x, this.y * y);
   }
 
-  divide(x: number, y = x): Vector2 {
+  div(x: number, y = x): Vector2 {
     return new Vector2(this.x / x, this.y / y);
   }
 
@@ -158,6 +158,10 @@ export class Vector2 {
 
   length(): number {
     return Math.sqrt(this.x * this.x + this.y * this.y);
+  }
+
+  lenSq(): number {
+    return this.x * this.x + this.y * this.y;
   }
 
   normalize(): Vector2 {
@@ -196,6 +200,10 @@ export class Vector2 {
 
   dist(other: Vector2): number {
     return this.sub(other).length();
+  }
+
+  distSq(other: Vector2): number {
+    return this.sub(other).lenSq();
   }
 
   cross(other: Vector2): number {
@@ -269,6 +277,25 @@ export function pointLineDistance(
   const line = lineEnd.sub(lineStart);
   const pointToLine = lineStart.sub(point);
   return Math.abs(line.cw90().dot(pointToLine)) / line.length();
+}
+
+/**
+ * Gets the distance between a point and a line segment defined by two points
+ */
+export function pointSegmentDistance(
+  point: Vector2,
+  lineStart: Vector2,
+  lineEnd: Vector2,
+): number {
+  const l2 = lineStart.distSq(lineEnd);
+
+  if (l2 === 0) return point.dist(lineStart);
+
+  let t = point.sub(lineStart).dot(lineEnd.sub(lineStart)) / l2;
+  t = Math.max(0, Math.min(1, t));
+
+  const projection = lineStart.add(lineEnd.sub(lineStart).mult(t));
+  return point.dist(projection);
 }
 
 /**

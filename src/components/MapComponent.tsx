@@ -8,6 +8,11 @@ import {
   removeAction,
 } from '../transit/Action';
 import { Label } from '../transit/Label';
+import {
+  drawTransformableRegion,
+  getHandle,
+  getCursor as getHandleCursor,
+} from '../transit/Transformable';
 import { ActionableItem, PosWithKeys } from '../transit/types';
 import { Vector2 } from '../utils/vec';
 import createCanvasComponent from './CanvasComponent';
@@ -58,19 +63,29 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
       mouseX: number;
       mouseY: number;
     }) {
-      return {
-        x: (mouseX - offsetX) / zoom,
-        y: (mouseY - offsetY) / zoom,
-      };
+      return new Vector2((mouseX - offsetX) / zoom, (mouseY - offsetY) / zoom);
     }
 
     return {
       update() {
+        canvas.style.cursor = '';
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.save();
         ctx.translate(offsetX, offsetY);
         ctx.scale(zoom, zoom);
         map.draw(ctx, selected);
+        if (selected && 'getSize' in selected) {
+          drawTransformableRegion(ctx, zoom, selected);
+          const mousePos = mouseToPos({
+            mouseX: prevMouseX,
+            mouseY: prevMouseY,
+          });
+          const handle = getHandle(mousePos, zoom, selected);
+          if (handle) {
+            const cursor = getHandleCursor(handle, selected);
+            canvas.style.cursor = cursor;
+          }
+        }
         ctx.restore();
       },
       propsUpdate: {
