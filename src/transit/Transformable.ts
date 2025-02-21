@@ -1,5 +1,6 @@
 import { wrapAngle2PI } from '../utils/mathUtils';
 import { Vector2, pointSegmentDistance } from '../utils/vec';
+import { Action, createActionFunction } from './Action';
 import { ActionableItem, PosWithKeys, Transformable } from './types';
 
 const HANDLE_SIZE = 10;
@@ -229,126 +230,148 @@ export function getTransformableState(
   };
 }
 
-export function transform(ogState: TransformableState, pwk: PosWithKeys) {
-  switch (ogState.handle) {
+export function transform(state: TransformableState, pwk: PosWithKeys) {
+  switch (state.handle) {
     case 'rotate':
-      transformRotate(ogState, pwk);
+      transformRotate(state, pwk);
       break;
     case 't':
     case 'l':
     case 'b':
     case 'r':
-      transformScale(ogState, pwk);
+      transformScale(state, pwk);
       break;
     case 'tr':
     case 'br':
     case 'bl':
     case 'tl':
-      transformUniformScale(ogState, pwk);
+      transformUniformScale(state, pwk);
       break;
   }
 }
 
-function transformRotate(ogState: TransformableState, pwk: PosWithKeys) {
-  let angle = pwk.pos.sub(ogState.pos).angle();
+export const createTransformAction = createActionFunction(
+  (_, state: TransformableState): Action => {
+    const pos = state.t.getPos();
+    const rotation = state.t.getRotation();
+    const scale = state.t.getScale();
+    return {
+      label: 'Transform',
+      undo() {
+        state.t.setPos(state.pos);
+        state.t.setRotation(state.rotation);
+        state.t.setScale(state.scale);
+      },
+      redo() {
+        state.t.setPos(pos);
+        state.t.setRotation(rotation);
+        state.t.setScale(scale);
+      },
+      data: state,
+    };
+  },
+);
+
+function transformRotate(state: TransformableState, pwk: PosWithKeys) {
+  let angle = pwk.pos.sub(state.pos).angle();
   if (pwk.shiftKey) {
     angle = Math.round(angle / (Math.PI / 4)) * (Math.PI / 4);
   }
-  ogState.t.setRotation(angle + Math.PI / 2);
+  state.t.setRotation(angle + Math.PI / 2);
 }
 
-function transformScale(ogState: TransformableState, pwk: PosWithKeys) {
+function transformScale(state: TransformableState, pwk: PosWithKeys) {
   if (pwk.shiftKey) {
-    transformUniformScale(ogState, pwk);
+    transformUniformScale(state, pwk);
     return;
   }
-  const diff = pwk.pos.sub(ogState.mousePos).rotateBy(-ogState.rotation);
+  const diff = pwk.pos.sub(state.mousePos).rotateBy(-state.rotation);
   const posDiff = { x: 0, y: 0 };
-  const scale = { ...ogState.scale };
-  switch (ogState.handle) {
+  const scale = { ...state.scale };
+  switch (state.handle) {
     case 't':
       posDiff.y += diff.y / 2;
-      scale.y -= diff.y / ogState.size.y;
+      scale.y -= diff.y / state.size.y;
       break;
     case 'l':
       posDiff.x += diff.x / 2;
-      scale.x -= diff.x / ogState.size.x;
+      scale.x -= diff.x / state.size.x;
       break;
     case 'b':
       posDiff.y += diff.y / 2;
-      scale.y += diff.y / ogState.size.y;
+      scale.y += diff.y / state.size.y;
       break;
     case 'r':
       posDiff.x += diff.x / 2;
-      scale.x += diff.x / ogState.size.x;
+      scale.x += diff.x / state.size.x;
       break;
   }
-  const newPos = ogState.pos.add(
-    new Vector2(posDiff.x, posDiff.y).rotateBy(ogState.rotation),
+  const newPos = state.pos.add(
+    new Vector2(posDiff.x, posDiff.y).rotateBy(state.rotation),
   );
-  ogState.t.setScale(new Vector2(scale.x, scale.y));
-  ogState.t.setPos(newPos);
+  state.t.setScale(new Vector2(scale.x, scale.y));
+  state.t.setPos(newPos);
 }
 
-function transformUniformScale(ogState: TransformableState, pwk: PosWithKeys) {
-  const diff = pwk.pos.sub(ogState.mousePos).rotateBy(-ogState.rotation);
+function transformUniformScale(state: TransformableState, pwk: PosWithKeys) {
+  const diff = pwk.pos.sub(state.mousePos).rotateBy(-state.rotation);
   const posDiff = { x: 0, y: 0 };
-  const scale = { ...ogState.scale };
-  const isX = ogState.handle.includes('r') || ogState.handle.includes('l');
-  const ogRatio = ogState.scale.x / ogState.scale.y;
-  const scaleByX = isX ? diff.x / ogState.size.x : diff.y / ogState.size.y;
+  const scale = { ...state.scale };
+  const isX = state.handle.includes('r') || state.handle.includes('l');
+  const ogRatio = state.scale.x / state.scale.y;
+  const scaleByX = isX ? diff.x / state.size.x : diff.y / state.size.y;
   const scaleByY = scaleByX / ogRatio;
-  switch (ogState.handle) {
+  switch (state.handle) {
     case 't':
-      posDiff.y += (scaleByY * ogState.size.y) / 2;
+      posDiff.y += (scaleByY * state.size.y) / 2;
       scale.x -= scaleByX;
       scale.y -= scaleByY;
       break;
     case 'r':
-      posDiff.x += (scaleByX * ogState.size.x) / 2;
+      posDiff.x += (scaleByX * state.size.x) / 2;
       scale.x += scaleByX;
       scale.y += scaleByY;
       break;
     case 'b':
-      posDiff.y += (scaleByY * ogState.size.y) / 2;
+      posDiff.y += (scaleByY * state.size.y) / 2;
       scale.x += scaleByX;
       scale.y += scaleByY;
       break;
     case 'l':
-      posDiff.x += (scaleByX * ogState.size.x) / 2;
+      posDiff.x += (scaleByX * state.size.x) / 2;
       scale.x -= scaleByX;
       scale.y -= scaleByY;
       break;
     case 'tr':
-      posDiff.x += (scaleByX * ogState.size.x) / 2;
-      posDiff.y -= (scaleByY * ogState.size.y) / 2;
+      posDiff.x += (scaleByX * state.size.x) / 2;
+      posDiff.y -= (scaleByY * state.size.y) / 2;
       scale.x += scaleByX;
       scale.y += scaleByY;
       break;
     case 'br':
-      posDiff.x += (scaleByX * ogState.size.x) / 2;
-      posDiff.y += (scaleByY * ogState.size.y) / 2;
+      posDiff.x += (scaleByX * state.size.x) / 2;
+      posDiff.y += (scaleByY * state.size.y) / 2;
       scale.x += scaleByX;
       scale.y += scaleByY;
       break;
     case 'bl':
-      posDiff.x += (scaleByX * ogState.size.x) / 2;
-      posDiff.y -= (scaleByY * ogState.size.y) / 2;
+      posDiff.x += (scaleByX * state.size.x) / 2;
+      posDiff.y -= (scaleByY * state.size.y) / 2;
       scale.x -= scaleByX;
       scale.y -= scaleByY;
       break;
     case 'tl':
-      posDiff.x += (scaleByX * ogState.size.x) / 2;
-      posDiff.y += (scaleByY * ogState.size.y) / 2;
+      posDiff.x += (scaleByX * state.size.x) / 2;
+      posDiff.y += (scaleByY * state.size.y) / 2;
       scale.x -= scaleByX;
       scale.y -= scaleByY;
       break;
   }
-  const newPos = ogState.pos.add(
-    new Vector2(posDiff.x, posDiff.y).rotateBy(ogState.rotation),
+  const newPos = state.pos.add(
+    new Vector2(posDiff.x, posDiff.y).rotateBy(state.rotation),
   );
-  ogState.t.setScale(new Vector2(scale.x, scale.y));
-  ogState.t.setPos(newPos);
+  state.t.setScale(new Vector2(scale.x, scale.y));
+  state.t.setPos(newPos);
 }
 
 export function isTransformable(actionable: ActionableItem | null): boolean {

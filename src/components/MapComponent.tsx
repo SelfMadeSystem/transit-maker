@@ -10,6 +10,7 @@ import {
 import { Label } from '../transit/Label';
 import {
   TransformableState,
+  createTransformAction,
   drawTransformableRegion,
   getHandle,
   getCursor as getHandleCursor,
@@ -219,7 +220,10 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
       },
       mouseUp() {
         panning = false;
-        transformableState = null;
+        if (transformableState) {
+          createTransformAction(map, transformableState);
+          transformableState = null;
+        }
         if (moveAction) {
           map.history.add(moveAction);
           moveAction = null;

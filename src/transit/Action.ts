@@ -20,7 +20,7 @@ export interface MoveAction<T = unknown> extends Action<T> {
   pos: Vector2;
 }
 
-function createActionFunction<
+export function createActionFunction<
   T extends Action<unknown>,
   Params extends [TransitMap, ...unknown[]],
 >(a: (...params: Params) => T): (...params: Params) => T {
