@@ -16,7 +16,7 @@ export type Action<T = unknown> = {
   data: T;
 };
 
-export interface MoveAction<T = unknown> extends Action<T> {
+export interface MoveAction extends Action<Vector2> {
   pos: Vector2;
 }
 
@@ -92,7 +92,7 @@ export const createImageAction = createActionFunction(
 
 export const moveMovableAction = (stop: Movable) => {
   const ogPos = stop.getPos();
-  const action: MoveAction<Vector2> = {
+  const action = {
     label: 'Move',
     pos: ogPos,
     undo() {
@@ -102,7 +102,7 @@ export const moveMovableAction = (stop: Movable) => {
       stop.setPos(action.pos);
     },
     data: ogPos,
-  };
+  } satisfies MoveAction;
 
   return action;
 };

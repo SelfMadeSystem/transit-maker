@@ -46,7 +46,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
     let ogMouseX = 0;
     let ogMouseY = 0;
     let ogPos: Vector2 | null = null;
-    let moveAction: MoveAction<unknown> | null = null;
+    let moveAction: MoveAction | null = null;
 
     function setSelection(item: ActionableItem | null) {
       setSelected(item);
@@ -225,7 +225,9 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           transformableState = null;
         }
         if (moveAction) {
-          map.history.add(moveAction);
+          if (!moveAction.pos.equals(moveAction.data)) {
+            map.history.add(moveAction);
+          }
           moveAction = null;
         }
       },
