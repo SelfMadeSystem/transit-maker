@@ -27,9 +27,13 @@ export function SelectedUi() {
       <TransitConnectionUi key={selected.id} connection={selected} map={map} />
     );
   }
+  if (selected instanceof Label) {
+    return <LabelUi key={selected.id} label={selected} />;
+  }
   return <TransitRoutesUi routes={map.routes} map={map} />;
 }
 
+//#region Stop UI
 function TransitStopUi({ stop }: { stop: TransitStop }) {
   const [hidden, setHidden] = useState(stop.hidden);
   const [hasStyle, setHasStyle] = useState(stop.style !== undefined);
@@ -193,7 +197,9 @@ function StopStyleUi({ style }: { style: StopStyle }) {
     </>
   );
 }
+//#endregion
 
+//#region Connection UI
 function TransitConnectionUi({
   connection,
   map,
@@ -296,7 +302,9 @@ function TransitConnectionUi({
     </>
   );
 }
+//#endregion
 
+//#region Route UI
 function TransitRoutesUi({
   routes: _routes,
   map,
@@ -545,3 +553,91 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
     </div>
   );
 }
+//#endregion
+
+//#region Label UI
+function LabelUi({ label }: { label: Label }) {
+  const { fonts } = useContext(EditorContext);
+  const [text, setText] = useState(label.text);
+  const [font, setFont] = useState(label.style.font);
+  const [italic, setItalic] = useState(label.style.italic);
+  const [weight, setWeight] = useState(label.style.weight);
+  const [color, setColor] = useState(label.style.color);
+
+  const foundFont = fonts.find(f => f.family === font);
+
+  const isWeightValid = foundFont?.variants.includes(weight);
+
+  console.log(isWeightValid);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="flex items-center gap-2">
+        <div className="text-white">Text:</div>
+        <input
+          type="text"
+          value={text}
+          onChange={e => setText((label.text = e.target.value))}
+          className="bg-gray-900 text-white"
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Font:</div>
+        <select
+          value={font}
+          onChange={e => setFont((label.style.font = e.target.value))}
+          className="bg-gray-900 text-white"
+        >
+          {fonts.map(f => (
+            <option
+              key={f.family}
+              value={f.family}
+              style={{ fontFamily: f.family }}
+            >
+              {f.family}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Italic:</div>
+        <input
+          type="checkbox"
+          checked={italic}
+          onChange={() => setItalic((label.style.italic = !italic))}
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Weight:</div>
+        <select
+          value={isWeightValid ? weight : ''}
+          onChange={e => setWeight((label.style.weight = e.target.value))}
+          className="bg-gray-900 text-white"
+        >
+          {!isWeightValid && (
+            <option value="" disabled hidden>
+              Choose
+            </option>
+          )}
+          {foundFont?.variants.map(v => (
+            <option
+              key={v}
+              value={v}
+              style={{ fontFamily: font, fontWeight: v }}
+            >
+              {v}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Color:</div>
+        <ColorInput
+          color={color}
+          setColor={c => setColor((label.style.color = c))}
+        />
+      </label>
+    </div>
+  );
+}
+//#endregion

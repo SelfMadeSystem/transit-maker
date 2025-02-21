@@ -1,3 +1,4 @@
+import { Color } from '../components/color/Color';
 import { id } from '../utils/id';
 import { Vector2 } from '../utils/vec';
 import { isOverTransformable } from './Transformable';
@@ -5,7 +6,12 @@ import { TransitMap } from './TransitMap';
 import { TransitStop } from './TransitStop';
 import { Actionable, PosWithKeys, Transformable } from './types';
 
-const LABEL_FONT = '10px sans-serif';
+export type LabelStyle = {
+  font: string;
+  italic: boolean;
+  weight: string;
+  color: Color;
+};
 
 export class Label implements Transformable, Actionable {
   // TODO: Add support for:
@@ -20,6 +26,12 @@ export class Label implements Transformable, Actionable {
   public scale: Vector2 = new Vector2(1, 1);
   public rotation: number = 0;
   public stop: TransitStop | null;
+  public style: LabelStyle = {
+    font: 'Roboto',
+    italic: false,
+    weight: '400',
+    color: new Color(255, 255, 255),
+  };
   private cachedDimensions: [tl: Vector2, br: Vector2] | null = null;
   private cacheKey: string | null = null;
 
@@ -72,6 +84,14 @@ export class Label implements Transformable, Actionable {
     }
   }
 
+  getFont() {
+    let font = this.style.font;
+    if (font.includes(' ')) {
+      font = `'${font}'`;
+    }
+    return `${this.style.italic ? 'italic' : ''} ${this.style.weight} 10px ${font}`;
+  }
+
   draw(ctx: CanvasRenderingContext2D) {
     this.getDimensions(ctx);
     ctx.save();
@@ -79,8 +99,8 @@ export class Label implements Transformable, Actionable {
     ctx.translate(drawPos.x, drawPos.y);
     ctx.rotate(this.rotation);
     ctx.scale(this.scale.x, this.scale.y);
-    ctx.font = LABEL_FONT;
-    ctx.fillStyle = 'white';
+    ctx.font = this.getFont();
+    ctx.fillStyle = this.style.color.hex();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(this.text, 0, 0);
@@ -91,18 +111,18 @@ export class Label implements Transformable, Actionable {
     if (this.cacheKey === this.text) {
       return this.cachedDimensions as [Vector2, Vector2];
     }
-    ctx.font = LABEL_FONT;
+    ctx.font = this.getFont();
     this.cacheKey = this.text;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const textMetrics = ctx.measureText(this.cacheKey);
     const tl = new Vector2(
       textMetrics.actualBoundingBoxLeft,
-      textMetrics.actualBoundingBoxAscent,
+      textMetrics.fontBoundingBoxAscent,
     );
     const br = new Vector2(
       textMetrics.actualBoundingBoxRight,
-      textMetrics.actualBoundingBoxDescent,
+      textMetrics.fontBoundingBoxDescent,
     );
     const dimensions: [Vector2, Vector2] = [tl, br];
     this.cachedDimensions = dimensions;
@@ -174,5 +194,11 @@ export class Label implements Transformable, Actionable {
 
   moveTo({ pos }: PosWithKeys) {
     this.pos = pos;
+  }
+
+  inheritStyle(label: Label) {
+    this.style = { ...label.style };
+    this.rotation = label.rotation;
+    this.scale = label.scale;
   }
 }

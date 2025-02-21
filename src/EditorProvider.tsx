@@ -4,6 +4,8 @@ import { connectStopsAction, createStopAction } from './transit/Action';
 import { TransitMap } from './transit/TransitMap';
 import { TransitRoute } from './transit/TransitRoute';
 import { ActionableItem } from './transit/types';
+import { getAvailableFonts } from './utils/fontUtils';
+import { useAwaitOrDefault } from './utils/hooks';
 import { Vector2 } from './utils/vec';
 import { useState } from 'react';
 
@@ -33,6 +35,13 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
       setHistoryUpdate(prev => prev + 1);
     }),
   );
+  const [fontPromise] = useState(() => getAvailableFonts());
+  const fonts = useAwaitOrDefault(fontPromise, [
+    {
+      family: 'sans-serif',
+      weights: ['normal'],
+    },
+  ]);
   return (
     <EditorContext.Provider
       value={{
@@ -40,6 +49,7 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
         historyUpdate,
         selected,
         setSelected,
+        fonts,
       }}
     >
       {children}
