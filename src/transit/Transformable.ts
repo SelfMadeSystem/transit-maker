@@ -1,6 +1,6 @@
 import { wrapAngle2PI } from '../utils/mathUtils';
 import { Vector2, pointSegmentDistance } from '../utils/vec';
-import { Action, createActionFunction } from './Action';
+import { createActionFunction } from './Action';
 import { ActionableItem, PosWithKeys, Transformable } from './types';
 
 const HANDLE_SIZE = 10;
@@ -251,10 +251,17 @@ export function transform(state: TransformableState, pwk: PosWithKeys) {
 }
 
 export const createTransformAction = createActionFunction(
-  (_, state: TransformableState): Action => {
+  (_, state: TransformableState) => {
     const pos = state.t.getPos();
     const rotation = state.t.getRotation();
     const scale = state.t.getScale();
+    if (
+      pos.equals(state.pos) &&
+      rotation === state.rotation &&
+      scale.equals(state.scale)
+    ) {
+      return null;
+    }
     return {
       label: 'Transform',
       undo() {

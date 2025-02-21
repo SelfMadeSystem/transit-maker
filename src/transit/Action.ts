@@ -21,12 +21,15 @@ export interface MoveAction<T = unknown> extends Action<T> {
 }
 
 export function createActionFunction<
-  T extends Action<unknown>,
+  T extends Action<unknown> | null,
   Params extends [TransitMap, ...unknown[]],
 >(a: (...params: Params) => T): (...params: Params) => T {
   return (...params: Params) => {
     const map = params[0];
     const action = a(...params);
+    if (!action) {
+      return action;
+    }
     map.history.add(action);
     return action;
   };
