@@ -570,8 +570,6 @@ function LabelUi({ label }: { label: Label }) {
 
   const isWeightValid = foundFont?.variants.includes(weight);
 
-  console.log(isWeightValid);
-
   return (
     <div className="flex flex-col gap-2">
       <label className="flex items-center gap-2">

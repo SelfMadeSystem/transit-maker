@@ -24,7 +24,5 @@ export async function getAvailableFonts(): Promise<AvailableFont[]> {
     }
   });
 
-  console.log(fontList);
-
   return fontList;
 }
