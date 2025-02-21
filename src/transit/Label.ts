@@ -10,6 +10,8 @@ export type LabelStyle = {
   font: string;
   italic: boolean;
   weight: string;
+  textAlign: CanvasTextAlign;
+  textBaseline: CanvasTextBaseline;
   color: Color;
 };
 
@@ -30,6 +32,8 @@ export class Label implements Transformable, Actionable {
     font: 'Roboto',
     italic: false,
     weight: '400',
+    textAlign: 'left',
+    textBaseline: 'middle',
     color: new Color(255, 255, 255),
   };
   private cachedDimensions: [tl: Vector2, br: Vector2] | null = null;
@@ -101,21 +105,28 @@ export class Label implements Transformable, Actionable {
     ctx.scale(this.scale.x, this.scale.y);
     ctx.font = this.getFont();
     ctx.fillStyle = this.style.color.hex();
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.textAlign = this.style.textAlign;
+    ctx.textBaseline = this.style.textBaseline;
     ctx.fillText(this.text, 0, 0);
     ctx.restore();
   }
 
   getDimensions(ctx: CanvasRenderingContext2D): [Vector2, Vector2] {
-    if (this.cacheKey === this.text) {
+    const key =
+      this.text +
+      this.style.font +
+      this.style.weight +
+      this.style.italic +
+      this.style.textAlign +
+      this.style.textBaseline;
+    if (this.cacheKey === key) {
       return this.cachedDimensions as [Vector2, Vector2];
     }
     ctx.font = this.getFont();
-    this.cacheKey = this.text;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    const textMetrics = ctx.measureText(this.cacheKey);
+    this.cacheKey = key;
+    ctx.textAlign = this.style.textAlign;
+    ctx.textBaseline = this.style.textBaseline;
+    const textMetrics = ctx.measureText(this.text);
     const tl = new Vector2(
       textMetrics.actualBoundingBoxLeft,
       textMetrics.fontBoundingBoxAscent,
@@ -147,6 +158,32 @@ export class Label implements Transformable, Actionable {
     return isOverTransformable(this, new Vector2(x, y));
   }
 
+  private getCenterOffset(): Vector2 {
+    const offset = { x: 0, y: 0 };
+
+    const dimensions = this.cachedDimensions;
+    if (!dimensions) {
+      return new Vector2(offset.x, offset.y);
+    }
+
+    const [tl, br] = dimensions;
+
+    offset.x += (br.x - tl.x) / 2;
+    offset.y += (br.y - tl.y) / 2;
+
+    return new Vector2(offset.x, offset.y)
+      .mult(this.scale.x, this.scale.y)
+      .rotateBy(this.rotation);
+  }
+
+  getCenterPos(): Vector2 {
+    return this.getDrawPos().add(this.getCenterOffset());
+  }
+
+  setCenterPos(pos: Vector2) {
+    this.setDrawPos(pos.sub(this.getCenterOffset()));
+  }
+
   getScale(): Vector2 {
     return this.scale;
   }
@@ -156,7 +193,9 @@ export class Label implements Transformable, Actionable {
   }
 
   setRotation(angle: number) {
+    const center = this.getCenterPos();
     this.rotation = angle;
+    this.setCenterPos(center);
   }
 
   getRotation() {
@@ -182,14 +221,6 @@ export class Label implements Transformable, Actionable {
 
   setPos(pos: Vector2) {
     this.pos = pos;
-  }
-
-  getCenterPos(): Vector2 {
-    return this.getDrawPos();
-  }
-
-  setCenterPos(pos: Vector2) {
-    this.setDrawPos(pos);
   }
 
   moveTo({ pos }: PosWithKeys) {

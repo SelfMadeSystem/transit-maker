@@ -562,6 +562,8 @@ function LabelUi({ label }: { label: Label }) {
   const [font, setFont] = useState(label.style.font);
   const [italic, setItalic] = useState(label.style.italic);
   const [weight, setWeight] = useState(label.style.weight);
+  const [textAlign, setTextAlign] = useState(label.style.textAlign);
+  const [textBaseline, setTextBaseline] = useState(label.style.textBaseline);
   const [color, setColor] = useState(label.style.color);
 
   const foundFont = fonts.find(f => f.family === font);
@@ -628,6 +630,38 @@ function LabelUi({ label }: { label: Label }) {
               {v}
             </option>
           ))}
+        </select>
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Text align:</div>
+        <select
+          value={textAlign}
+          onChange={e =>
+            setTextAlign(
+              (label.style.textAlign = e.target.value as CanvasTextAlign),
+            )
+          }
+          className="bg-gray-900 text-white"
+        >
+          <option value="left">Left</option>
+          <option value="center">Center</option>
+          <option value="right">Right</option>
+        </select>
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Text baseline:</div>
+        <select
+          value={textBaseline}
+          onChange={e =>
+            setTextBaseline(
+              (label.style.textBaseline = e.target.value as CanvasTextBaseline),
+            )
+          }
+          className="bg-gray-900 text-white"
+        >
+          <option value="top">Top</option>
+          <option value="middle">Middle</option>
+          <option value="bottom">Bottom</option>
         </select>
       </label>
       <label className="flex items-center gap-2">
