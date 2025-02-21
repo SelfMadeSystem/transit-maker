@@ -202,6 +202,12 @@ function TransitConnectionUi({
   map: TransitMap;
 }) {
   const [strokeType, setStrokeType] = useState(connection.style.strokeType);
+  const [spacingMultiplier, setSpacingMultiplier] = useState(
+    connection.style.spacingMultiplier,
+  );
+  const [spacingOffset, setSpacingOffset] = useState(
+    connection.style.spacingOffset,
+  );
   const [route, setRoute] = useState(connection.route);
   const { routes } = map;
 
@@ -226,6 +232,46 @@ function TransitConnectionUi({
             <option value="dashed">Dashed</option>
           </select>
         </label>
+        {strokeType !== 'solid' && (
+          <>
+            <label className="flex items-center gap-2">
+              <div className="text-white">Spacing multiplier:</div>
+              <input
+                type="number"
+                value={spacingMultiplier}
+                min="0.5"
+                max="2"
+                step="0.01"
+                onChange={e =>
+                  setSpacingMultiplier(
+                    (connection.style.spacingMultiplier = parseFloat(
+                      e.target.value,
+                    )),
+                  )
+                }
+                className="bg-gray-900 text-white"
+              />
+            </label>
+            <label className="flex items-center gap-2">
+              <div className="text-white">Spacing offset:</div>
+              <input
+                type="number"
+                value={spacingOffset}
+                min="0.0"
+                max="1.0"
+                step="0.01"
+                onChange={e =>
+                  setSpacingOffset(
+                    (connection.style.spacingOffset = parseFloat(
+                      e.target.value,
+                    )),
+                  )
+                }
+                className="bg-gray-900 text-white"
+              />
+            </label>
+          </>
+        )}
         <label className="flex items-center gap-2">
           <div className="text-white">Route:</div>
           <select
@@ -328,7 +374,11 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
   const [innerWidth, setInnerWidth] = useState(style.innerWidth);
   const [innerColor, setInnerColor] = useState(style.innerColor);
   const [dottedWidth, setDottedWidth] = useState(style.dottedWidth);
+  const [dottedSpacing, setDottedSpacing] = useState(style.dottedSpacing);
   const [dashedWidth, setDashedWidth] = useState(style.dashedWidth);
+  const [dashedLength, setDashedLength] = useState(style.dashedLength);
+  const [dashedSpacing, setDashedSpacing] = useState(style.dashedSpacing);
+  const [dashedLineCap, setDashedLineCap] = useState(style.dashedLineCap);
   const [margin, setMargin] = useState(style.margin);
   const [roundRadius, setRoundRadius] = useState(style.roundRadius);
 
@@ -399,6 +449,18 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
         />
       </label>
       <label className="flex items-center gap-2">
+        <div className="text-white">Dotted spacing:</div>
+        <input
+          type="number"
+          value={dottedSpacing}
+          min="0"
+          onChange={e =>
+            setDottedSpacing((style.dottedSpacing = parseFloat(e.target.value)))
+          }
+          className="bg-gray-900 text-white"
+        />
+      </label>
+      <label className="flex items-center gap-2">
         <div className="text-white">Dashed width:</div>
         <input
           type="number"
@@ -409,6 +471,46 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
           }
           className="bg-gray-900 text-white"
         />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Dashed length:</div>
+        <input
+          type="number"
+          value={dashedLength}
+          min="0"
+          onChange={e =>
+            setDashedLength((style.dashedLength = parseFloat(e.target.value)))
+          }
+          className="bg-gray-900 text-white"
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Dashed spacing:</div>
+        <input
+          type="number"
+          value={dashedSpacing}
+          min="0"
+          onChange={e =>
+            setDashedSpacing((style.dashedSpacing = parseFloat(e.target.value)))
+          }
+          className="bg-gray-900 text-white"
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Dashed line cap:</div>
+        <select
+          value={dashedLineCap}
+          onChange={e =>
+            setDashedLineCap(
+              (style.dashedLineCap = e.target.value as CanvasLineCap),
+            )
+          }
+          className="bg-gray-900 text-white"
+        >
+          <option value="butt">Butt</option>
+          <option value="round">Round</option>
+          <option value="square">Square</option>
+        </select>
       </label>
       <label className="flex items-center gap-2">
         <div className="text-white">Margin:</div>

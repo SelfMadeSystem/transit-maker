@@ -15,6 +15,8 @@ export type ConnectionStrokeType = 'solid' | 'dotted' | 'dashed';
 // to the route.
 export type ConnectionStyle = {
   strokeType: ConnectionStrokeType;
+  spacingMultiplier: number;
+  spacingOffset: number; // [0, 1]
 };
 
 export function styleEquals(a: ConnectionStyle, b: ConnectionStyle): boolean {
@@ -23,6 +25,8 @@ export function styleEquals(a: ConnectionStyle, b: ConnectionStyle): boolean {
 
 export const DEFALUT_CONNECTION_STYLE: ConnectionStyle = {
   strokeType: 'solid',
+  spacingMultiplier: 1,
+  spacingOffset: 0,
 };
 
 export class TransitConnection implements Actionable {
@@ -122,6 +126,8 @@ export class TransitConnection implements Actionable {
 
   draw(ctx: CanvasRenderingContext2D) {
     let lineWidth = this.route.style.lineWidth;
+    let lineLength = 0;
+    let lineDist = 0;
     ctx.save();
     ctx.lineCap = 'round';
     switch (this.style.strokeType) {
@@ -130,16 +136,30 @@ export class TransitConnection implements Actionable {
         break;
       case 'dotted':
         lineWidth = this.route.style.dottedWidth;
-        ctx.setLineDash([0, lineWidth * 2]);
+        ctx.setLineDash([
+          0,
+          this.route.style.dottedSpacing * this.style.spacingMultiplier,
+        ]);
+        lineDist =
+          this.route.style.dottedSpacing * this.style.spacingMultiplier;
         break;
       case 'dashed':
         lineWidth = this.route.style.dashedWidth;
-        ctx.setLineDash([lineWidth * 4, lineWidth * 3]);
+        ctx.setLineDash([
+          this.route.style.dashedLength,
+          this.route.style.dashedSpacing * this.style.spacingMultiplier,
+        ]);
+        lineLength = this.route.style.dashedLength;
+        lineDist =
+          this.route.style.dashedLength +
+          this.route.style.dashedSpacing * this.style.spacingMultiplier;
+        ctx.lineCap = this.route.style.dashedLineCap;
         break;
     }
 
     const [path, length] = this.getPath();
-    ctx.lineDashOffset = lineWidth * 2 - length / 2;
+    ctx.lineDashOffset =
+      lineLength * 0.5 + lineDist * this.style.spacingOffset - length / 2;
 
     ctx.lineWidth = lineWidth;
     ctx.strokeStyle = this.route.style.color.hex();

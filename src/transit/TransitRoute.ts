@@ -10,10 +10,18 @@ export type RouteStyle = {
   color: Color;
   lineWidth: number;
   strokeType: StrokeType;
-  innerWidth: number; // only for split lines
-  innerColor: Color; // only for split lines
-  dottedWidth: number; // only for dotted lines
-  dashedWidth: number; // only for dashed lines
+  // only for split lines
+  innerWidth: number;
+  innerColor: Color;
+  // only for dotted lines
+  dottedWidth: number;
+  dottedSpacing: number;
+  // only for dashed lines
+  dashedWidth: number;
+  dashedLength: number;
+  dashedSpacing: number;
+  dashedLineCap: CanvasLineCap;
+  // etc.
   roundRadius: number;
   margin: number;
   stopStyle: StopStyle;
@@ -36,7 +44,11 @@ export class TransitRoute {
       innerWidth: 1,
       innerColor: new Color(0, 0, 0),
       dottedWidth: 2,
+      dottedSpacing: 5,
       dashedWidth: 2,
+      dashedLength: 10,
+      dashedSpacing: 5,
+      dashedLineCap: 'butt',
       roundRadius: 10,
       margin: 0,
       stopStyle: {
