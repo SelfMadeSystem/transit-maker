@@ -54,7 +54,7 @@ export function drawTransformableRegion(
   t: Transformable,
 ) {
   ctx.save();
-  const pos = t.getPos();
+  const pos = t.getCenterPos();
   ctx.translate(pos.x, pos.y);
   ctx.rotate(t.getRotation());
   const size = getSize(t, zoom);
@@ -71,7 +71,7 @@ export function drawTransformableRegion(
 export function isOverTransformable(t: Transformable, pos: Vector2): boolean {
   const size = t.getSize();
   const halfSize = size.div(2);
-  pos = pos.sub(t.getPos()).rotateBy(-t.getRotation());
+  pos = pos.sub(t.getCenterPos()).rotateBy(-t.getRotation());
   return (
     pos.x >= -halfSize.x &&
     pos.x <= halfSize.x &&
@@ -97,7 +97,7 @@ export function getHandle(
   t: Transformable,
 ): Handle | null {
   const rotation = -t.getRotation();
-  pos = pos.sub(t.getPos()).rotateBy(rotation);
+  pos = pos.sub(t.getCenterPos()).rotateBy(rotation);
 
   const handleSize = HANDLE_SIZE / zoom;
   const edgeSize = Math.sqrt(handleSize);
@@ -221,7 +221,7 @@ export function getTransformableState(
   }
   return {
     t,
-    pos: t.getPos(),
+    pos: t.getCenterPos(),
     rotation: t.getRotation(),
     scale: t.getScale(),
     size: t.getNormalSize(),
@@ -252,7 +252,7 @@ export function transform(state: TransformableState, pwk: PosWithKeys) {
 
 export const createTransformAction = createActionFunction(
   (_, state: TransformableState) => {
-    const pos = state.t.getPos();
+    const pos = state.t.getCenterPos();
     const rotation = state.t.getRotation();
     const scale = state.t.getScale();
     if (
@@ -265,12 +265,12 @@ export const createTransformAction = createActionFunction(
     return {
       label: 'Transform',
       undo() {
-        state.t.setPos(state.pos);
+        state.t.setCenterPos(state.pos);
         state.t.setRotation(state.rotation);
         state.t.setScale(state.scale);
       },
       redo() {
-        state.t.setPos(pos);
+        state.t.setCenterPos(pos);
         state.t.setRotation(rotation);
         state.t.setScale(scale);
       },
@@ -317,7 +317,7 @@ function transformScale(state: TransformableState, pwk: PosWithKeys) {
     new Vector2(posDiff.x, posDiff.y).rotateBy(state.rotation),
   );
   state.t.setScale(new Vector2(scale.x, scale.y));
-  state.t.setPos(newPos);
+  state.t.setCenterPos(newPos);
 }
 
 function transformUniformScale(state: TransformableState, pwk: PosWithKeys) {
@@ -378,7 +378,7 @@ function transformUniformScale(state: TransformableState, pwk: PosWithKeys) {
     new Vector2(posDiff.x, posDiff.y).rotateBy(state.rotation),
   );
   state.t.setScale(new Vector2(scale.x, scale.y));
-  state.t.setPos(newPos);
+  state.t.setCenterPos(newPos);
 }
 
 export function isTransformable(actionable: ActionableItem | null): boolean {
@@ -388,7 +388,7 @@ export function isTransformable(actionable: ActionableItem | null): boolean {
     actionable !== null &&
     'getSize' in actionable &&
     'setScale' in actionable &&
-    'getPos' in actionable &&
+    'getCenterPos' in actionable &&
     'getRotation' in actionable &&
     'setRotation' in actionable
   );

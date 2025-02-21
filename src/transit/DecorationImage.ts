@@ -2,9 +2,9 @@ import { id } from '../utils/id';
 import { Vector2 } from '../utils/vec';
 import { isOverTransformable } from './Transformable';
 import { TransitMap } from './TransitMap';
-import { Actionable, Movable, PosWithKeys, Transformable } from './types';
+import { Actionable, PosWithKeys, Transformable } from './types';
 
-export class DecorationImage implements Transformable, Actionable, Movable {
+export class DecorationImage implements Transformable, Actionable {
   public id: number = id();
   public image: HTMLImageElement;
   public map: TransitMap;
@@ -87,6 +87,14 @@ export class DecorationImage implements Transformable, Actionable, Movable {
   }
 
   setPos(pos: Vector2) {
+    this.pos = pos;
+  }
+
+  getCenterPos(): Vector2 {
+    return this.pos;
+  }
+
+  setCenterPos(pos: Vector2) {
     this.pos = pos;
   }
 

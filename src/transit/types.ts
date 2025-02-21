@@ -28,11 +28,8 @@ export interface Transformable extends Movable {
   setScale(scale: Vector2): void;
   getRotation(): number;
   setRotation(rotation: number): void;
-
-  /**
-   * Center of the object
-   */
-  getPos(): Vector2;
+  getCenterPos(): Vector2;
+  setCenterPos(pos: Vector2): void;
 }
 
 export interface Actionable {
