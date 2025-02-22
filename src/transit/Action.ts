@@ -151,7 +151,7 @@ export const splitConnectionAction = createActionFunction(
     const route = connection.route;
     const stop = new TransitStop(
       map,
-      [new Label(map, 'Unnamed Stop')],
+      [],
       new Vector2((from.pos.x + to.pos.x) / 2, (from.pos.y + to.pos.y) / 2),
     );
 
