@@ -495,17 +495,17 @@ export class TransitStop implements Actionable, Movable {
             stop,
             connection.route,
           );
-          c.style = { ...connection.style };
+          c.inheritStyle(connection);
         });
       this.updateLateralConnections(stop);
     } else {
+      const connectionStyle = this.getConnectionStyle();
       const connection = new TransitConnection(
         this.map,
         this,
         stop,
         this.getRoute(),
       );
-      const connectionStyle = this.getConnectionStyle();
       connection.style = { ...connectionStyle };
     }
 
@@ -551,7 +551,7 @@ export class TransitStop implements Actionable, Movable {
               newStop,
               connection.route,
             );
-            newC.style = { ...connection.style };
+            newC.inheritStyle(connection);
             newC.setWhichConnection(this, connection);
           }
 

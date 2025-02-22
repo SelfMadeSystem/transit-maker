@@ -429,6 +429,10 @@ export class TransitConnection implements Actionable {
     return [...snapLines, ...cardinalSnapLines];
   }
 
+  inheritStyle(connection: TransitConnection) {
+    this.style = { ...connection.style };
+  }
+
   doubleClick(): void {
     splitConnectionAction(this.map, this);
   }
