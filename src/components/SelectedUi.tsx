@@ -601,12 +601,13 @@ function LabelUi({ label }: { label: Label }) {
           value={font}
           onChange={e => setFont((label.style.font = e.target.value))}
           className="bg-gray-900 text-white"
+          style={{ fontFamily: `"${font}"` }}
         >
           {fonts.map(f => (
             <option
               key={f.family}
               value={f.family}
-              style={{ fontFamily: f.family }}
+              style={{ fontFamily: `"${f.family}"` }}
             >
               {f.family}
             </option>

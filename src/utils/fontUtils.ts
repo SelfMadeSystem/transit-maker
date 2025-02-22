@@ -1,5 +1,3 @@
-import './fonts.css';
-
 export type AvailableFont = {
   family: string;
   variants: string[];

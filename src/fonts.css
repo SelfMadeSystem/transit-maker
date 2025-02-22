@@ -1,0 +1,159 @@
+/* Standard fonts */
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@100;300;400;500;700;900&family=Fira+Sans:wght@100;300;400;500;700;900&family=Noto+Sans:wght@100;300;400;500;700;900&family=Source+Sans+Pro:wght@100;300;400;500;700;900&family=PT+Sans:wght@100;300;400;500;700;900&family=Inter:wght@100;300;400;500;700;900&family=Ubuntu:wght@100;300;400;500;700;900&family=Roboto:wght@100;300;400;500;700;900&display=swap');
+
+/* Clear Sans */
+@font-face {
+    font-family: 'Clear Sans';
+    src: url('./assets/fonts/clear-sans/ClearSans-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Clear Sans';
+    src: url('./assets/fonts/clear-sans/ClearSans-Bold.woff2') format('woff2');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Clear Sans';
+    src: url('./assets/fonts/clear-sans/ClearSans-Italic.woff2') format('woff2');
+    font-weight: normal;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Clear Sans';
+    src: url('./assets/fonts/clear-sans/ClearSans-BoldItalic.woff2') format('woff2');
+    font-weight: bold;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Clear Sans';
+    src: url('./assets/fonts/clear-sans/ClearSans-Light.woff2') format('woff2');
+    font-weight: 300;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Clear Sans';
+    src: url('./assets/fonts/clear-sans/ClearSans-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Clear Sans';
+    src: url('./assets/fonts/clear-sans/ClearSans-MediumItalic.woff2') format('woff2');
+    font-weight: 500;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Clear Sans';
+    src: url('./assets/fonts/clear-sans/ClearSans-Thin.woff2') format('woff2');
+    font-weight: 100;
+    font-style: normal;
+}
+
+/* D-DIN */
+@font-face {
+    font-family: 'D-DIN';
+    src: url('./assets/fonts/d-din/D-DIN.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'D-DIN';
+    src: url('./assets/fonts/d-din/D-DIN-Bold.woff2') format('woff2');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'D-DIN';
+    src: url('./assets/fonts/d-din/D-DIN-Italic.woff2') format('woff2');
+    font-weight: normal;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'D-DIN';
+    src: url('./assets/fonts/d-din/D-DINCondensed.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'D-DIN';
+    src: url('./assets/fonts/d-din/D-DINCondensed-Bold.woff2') format('woff2');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'D-DIN';
+    src: url('./assets/fonts/d-din/D-DINExp.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'D-DIN';
+    src: url('./assets/fonts/d-din/D-DINExp-Bold.woff2') format('woff2');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'D-DIN';
+    src: url('./assets/fonts/d-din/D-DINExp-Italic.woff2') format('woff2');
+    font-weight: normal;
+    font-style: italic;
+}
+
+/* Kelson */
+@font-face {
+    font-family: 'Kelson';
+    src: url('./assets/fonts/kelson/Kelson.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Kelson';
+    src: url('./assets/fonts/kelson/Kelson-Bold.woff2') format('woff2');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Kelson';
+    src: url('./assets/fonts/kelson/Kelson-ExtraBold.woff2') format('woff2');
+    font-weight: 800;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Kelson';
+    src: url('./assets/fonts/kelson/Kelson-Light.woff2') format('woff2');
+    font-weight: 300;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Kelson';
+    src: url('./assets/fonts/kelson/Kelson-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Kelson';
+    src: url('./assets/fonts/kelson/Kelson-Thin.woff2') format('woff2');
+    font-weight: 100;
+    font-style: normal;
+}
