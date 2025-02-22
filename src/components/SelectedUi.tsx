@@ -574,6 +574,7 @@ function LabelUi({ label }: { label: Label }) {
   const [text, setText] = useState(label.text);
   const [font, setFont] = useState(label.style.font);
   const [italic, setItalic] = useState(label.style.italic);
+  const [size, setSize] = useState(label.style.size);
   const [weight, setWeight] = useState(label.style.weight);
   const [textAlign, setTextAlign] = useState(label.style.textAlign);
   const [textBaseline, setTextBaseline] = useState(label.style.textBaseline);
@@ -618,6 +619,18 @@ function LabelUi({ label }: { label: Label }) {
           type="checkbox"
           checked={italic}
           onChange={() => setItalic((label.style.italic = !italic))}
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Size:</div>
+        <input
+          type="number"
+          value={size}
+          min="1"
+          onChange={e =>
+            setSize((label.style.size = parseFloat(e.target.value)))
+          }
+          className="bg-gray-900 text-white"
         />
       </label>
       <label className="flex items-center gap-2">

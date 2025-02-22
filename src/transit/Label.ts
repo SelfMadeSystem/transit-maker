@@ -9,6 +9,7 @@ import { Actionable, PosWithKeys, Transformable } from './types';
 export type LabelStyle = {
   font: string;
   italic: boolean;
+  size: number;
   weight: string;
   textAlign: CanvasTextAlign;
   textBaseline: CanvasTextBaseline;
@@ -31,6 +32,7 @@ export class Label implements Transformable, Actionable {
   public style: LabelStyle = {
     font: 'Roboto',
     italic: false,
+    size: 10,
     weight: '400',
     textAlign: 'left',
     textBaseline: 'middle',
@@ -93,7 +95,9 @@ export class Label implements Transformable, Actionable {
     if (font.includes(' ')) {
       font = `'${font}'`;
     }
-    return `${this.style.italic ? 'italic' : ''} ${this.style.weight} 10px ${font}`;
+    return `${this.style.italic ? 'italic' : ''} ${this.style.weight} ${
+      this.style.size
+    }px ${font}`;
   }
 
   draw(ctx: CanvasRenderingContext2D) {
@@ -115,6 +119,7 @@ export class Label implements Transformable, Actionable {
     const key =
       this.text +
       this.style.font +
+      this.style.size +
       this.style.weight +
       this.style.italic +
       this.style.textAlign +
