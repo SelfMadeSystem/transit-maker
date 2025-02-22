@@ -332,13 +332,14 @@ export class TransitConnection implements Actionable {
   }
 
   isParallelTo(other: TransitConnection): boolean {
+    const epsilon = 0.001;
     const angle1 = this.getAngle(this.from);
     const angle2 = other.getAngle(other.from);
     const diff = Math.abs(angle1 - angle2);
     return (
-      diff < 0.1 ||
-      (diff > Math.PI - 0.1 && diff < Math.PI + 0.1) ||
-      diff > Math.PI * 2 - 0.1
+      diff < epsilon ||
+      (diff > Math.PI - epsilon && diff < Math.PI + epsilon) ||
+      diff > Math.PI * 2 - epsilon
     );
   }
 

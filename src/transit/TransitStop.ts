@@ -256,7 +256,7 @@ export class TransitStop implements Actionable, Movable {
     }
     const route = this.getRoute();
 
-    const radius = this.roundRadius ?? route.style.roundRadius;
+    let radius = this.roundRadius ?? route.style.roundRadius;
     if (radius <= 0) {
       return null;
     }
@@ -283,13 +283,11 @@ export class TransitStop implements Actionable, Movable {
     const dirOther = connection1.getDirectionVector(this);
     const avgDir = dirThis.add(dirOther).normalize();
     const angle = dirThis.angleBetween(dirOther) / 2;
+    const minDist = Math.min(vector1.length(), vector2.length());
+    if (radius / Math.tan(angle) > minDist) {
+      radius = minDist * Math.tan(angle);
+    }
     const dist = radius / Math.sin(angle);
-    // FIXME: This is incorrect somehow
-    // const minDist = Math.min(vector1.length(), vector2.length()) / 2;
-    // if (dist > minDist) {
-    //   dist = minDist;
-    //   radius = dist * Math.sin(angle);
-    // }
     const centerOffset = avgDir.mult(dist);
     const center = this.pos.add(centerOffset);
     const stopOffset = avgDir.mult(dist - radius);
