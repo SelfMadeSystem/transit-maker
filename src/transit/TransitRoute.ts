@@ -23,6 +23,7 @@ export type RouteStyle = {
   dashedLineCap: CanvasLineCap;
   // etc.
   roundRadius: number;
+  roundDistInstead: boolean; // distance from original instead of radius of circle
   margin: number;
   stopStyle: StopStyle;
   terminusStyle: StopStyle;
@@ -50,6 +51,7 @@ export class TransitRoute {
       dashedSpacing: 5,
       dashedLineCap: 'butt',
       roundRadius: 10,
+      roundDistInstead: true,
       margin: 0,
       stopStyle: {
         ...DEFAULT_STOP_STYLE,

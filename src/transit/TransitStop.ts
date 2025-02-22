@@ -281,12 +281,18 @@ export class TransitStop implements Actionable, Movable {
 
     const dirThis = connection2.getDirectionVector(this);
     const dirOther = connection1.getDirectionVector(this);
-    const avgDir = dirThis.add(dirOther).normalize();
     const angle = dirThis.angleBetween(dirOther) / 2;
+
+    if (route.style.roundDistInstead) {
+      radius = radius * Math.tan(angle);
+    }
+
     const minDist = Math.min(vector1.length(), vector2.length());
     if (radius / Math.tan(angle) > minDist) {
       radius = minDist * Math.tan(angle);
     }
+
+    const avgDir = dirThis.add(dirOther).normalize();
     const dist = radius / Math.sin(angle);
     const centerOffset = avgDir.mult(dist);
     const center = this.pos.add(centerOffset);

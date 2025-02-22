@@ -389,6 +389,9 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
   const [dashedLineCap, setDashedLineCap] = useState(style.dashedLineCap);
   const [margin, setMargin] = useState(style.margin);
   const [roundRadius, setRoundRadius] = useState(style.roundRadius);
+  const [roundDistInstead, setRoundDistInstead] = useState(
+    style.roundDistInstead,
+  );
 
   return (
     <div className="flex flex-col gap-2">
@@ -540,6 +543,16 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
             setRoundRadius((style.roundRadius = parseFloat(e.target.value)))
           }
           className="bg-gray-900 text-white"
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Round distance instead:</div>
+        <input
+          type="checkbox"
+          checked={roundDistInstead}
+          onChange={() =>
+            setRoundDistInstead((style.roundDistInstead = !roundDistInstead))
+          }
         />
       </label>
       <details>
