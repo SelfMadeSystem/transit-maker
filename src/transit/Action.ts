@@ -157,8 +157,8 @@ export const splitConnectionAction = createActionFunction(
 
     const connection1 = new TransitConnection(map, from, stop, route);
     const connection2 = new TransitConnection(map, stop, to, route);
-    connection1.style = { ...connection.style };
-    connection2.style = { ...connection.style };
+    connection1.inheritStyle(connection);
+    connection2.inheritStyle(connection);
 
     return {
       label: 'Split Connection',
