@@ -582,7 +582,11 @@ function LabelUi({ label }: { label: Label }) {
 
   const foundFont = fonts.find(f => f.family === font);
 
-  const isWeightValid = foundFont?.variants.includes(weight);
+  const weightHasItalic = foundFont?.variants.some(
+    v => v.weight === weight && v.italic,
+  );
+  const isWeightValid = foundFont?.variants.some(v => v.weight === weight);
+  const weights = [...new Set(foundFont?.variants.map(v => v.weight))].sort();
 
   return (
     <div className="flex flex-col gap-2">
@@ -599,7 +603,22 @@ function LabelUi({ label }: { label: Label }) {
         <div className="text-white">Font:</div>
         <select
           value={font}
-          onChange={e => setFont((label.style.font = e.target.value))}
+          onChange={e => {
+            setFont((label.style.font = e.target.value));
+            const foundFont = fonts.find(f => f.family === e.target.value);
+            const isWeightValid = foundFont?.variants.some(
+              v => v.weight === weight,
+            );
+            const weightHasItalic = foundFont?.variants.some(
+              v => v.weight === weight && v.italic,
+            );
+            if (!isWeightValid) {
+              setWeight((label.style.weight = '400')); // they should all have 400
+            }
+            if (!weightHasItalic) {
+              setItalic((label.style.italic = false));
+            }
+          }}
           className="bg-gray-900 text-white"
           style={{ fontFamily: `"${font}"` }}
         >
@@ -614,11 +633,14 @@ function LabelUi({ label }: { label: Label }) {
           ))}
         </select>
       </label>
-      <label className="flex items-center gap-2">
+      <label
+        className={`flex items-center gap-2 ${!weightHasItalic ? 'opacity-50' : ''}`}
+      >
         <div className="text-white">Italic:</div>
         <input
           type="checkbox"
           checked={italic}
+          disabled={!weightHasItalic}
           onChange={() => setItalic((label.style.italic = !italic))}
         />
       </label>
@@ -638,7 +660,12 @@ function LabelUi({ label }: { label: Label }) {
         <div className="text-white">Weight:</div>
         <select
           value={isWeightValid ? weight : ''}
-          onChange={e => setWeight((label.style.weight = e.target.value))}
+          onChange={e => {
+            setWeight((label.style.weight = e.target.value));
+            if (!isWeightValid) {
+              setItalic((label.style.italic = false));
+            }
+          }}
           className="bg-gray-900 text-white"
         >
           {!isWeightValid && (
@@ -646,7 +673,7 @@ function LabelUi({ label }: { label: Label }) {
               Choose
             </option>
           )}
-          {foundFont?.variants.map(v => (
+          {weights.map(v => (
             <option
               key={v}
               value={v}

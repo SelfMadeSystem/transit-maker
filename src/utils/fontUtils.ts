@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 export type AvailableFont = {
   family: string;
-  variants: string[];
+  variants: { weight: string; italic: boolean }[];
 };
 
 const fontList: AvailableFont[] = [];
@@ -21,6 +21,7 @@ export function useFonts() {
       fonts.forEach(fontFace => {
         const font = fontFace.family;
         const weight = fontFace.weight;
+        const italic = fontFace.style === 'italic';
 
         let fontEntry = fontList.find(f => f.family === font);
         if (!fontEntry) {
@@ -28,10 +29,12 @@ export function useFonts() {
           fontList.push(fontEntry);
         }
 
-        console.log(font, fontEntry.variants);
-
-        if (!fontEntry.variants.includes(weight)) {
-          fontEntry.variants.push(weight);
+        if (
+          !fontEntry.variants.some(
+            variant => variant.weight === weight && variant.italic === italic,
+          )
+        ) {
+          fontEntry.variants.push({ weight, italic });
         }
       });
 
@@ -49,7 +52,10 @@ export function useFonts() {
       await font.load();
       document.fonts.add(font);
       // Refresh the font list after uploading a new font
-      setFonts([...fontList, { family: file.name, variants: ['400'] }]);
+      setFonts([
+        ...fontList,
+        { family: file.name, variants: [{ weight: '400', italic: false }] },
+      ]);
     };
 
     reader.readAsArrayBuffer(file);
