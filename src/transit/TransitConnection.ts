@@ -6,7 +6,7 @@ import { SnapLine } from './Snapping';
 import { TransitMap } from './TransitMap';
 import { TransitRoute } from './TransitRoute';
 import { TransitStop } from './TransitStop';
-import { Actionable } from './types';
+import { Actionable, ClickInfo } from './types';
 import { path as d3path } from 'd3-path';
 
 export type ConnectionStrokeType = 'solid' | 'dotted' | 'dashed';
@@ -437,5 +437,11 @@ export class TransitConnection implements Actionable {
     splitConnectionAction(this.map, this);
   }
 
-  rightClick(): void {}
+  rightClick({ pos, setSelected }: ClickInfo) {
+    const stop = splitConnectionAction(this.map, this).data.stop;
+    stop.setPos(pos);
+    stop.hidden = true;
+    setSelected(stop);
+    return true;
+  }
 }

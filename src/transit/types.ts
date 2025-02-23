@@ -13,6 +13,7 @@ export type PosWithKeys = {
 
 export type ClickInfo = PosWithKeys & {
   selected: ActionableItem | null;
+  setSelected: (selected: ActionableItem | null) => void;
 };
 
 export interface Movable extends Actionable {

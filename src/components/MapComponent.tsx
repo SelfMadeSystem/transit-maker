@@ -129,13 +129,18 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           // Right click
           const selectable = map.getSelectable(x, y, ctx);
           if (selectable && 'rightClick' in selectable) {
-            selectable.rightClick({
-              selected,
-              altKey: e.altKey,
-              ctrlKey: e.ctrlKey,
-              shiftKey: e.shiftKey,
-              pos: mousePos,
-            });
+            if (
+              selectable.rightClick({
+                selected,
+                setSelected: setSelection,
+                altKey: e.altKey,
+                ctrlKey: e.ctrlKey,
+                shiftKey: e.shiftKey,
+                pos: mousePos,
+              })
+            ) {
+              panning = true;
+            }
           } else {
             waitForInput(['Create Stop', 'Create Label'], mouseX, mouseY).then(
               result => {
@@ -164,6 +169,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
         if (selectable && 'doubleClick' in selectable) {
           selectable.doubleClick({
             selected,
+            setSelected: setSelection,
             altKey: e.altKey,
             ctrlKey: e.ctrlKey,
             shiftKey: e.shiftKey,
