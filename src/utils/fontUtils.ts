@@ -28,6 +28,8 @@ export function useFonts() {
           fontList.push(fontEntry);
         }
 
+        console.log(font, fontEntry.variants);
+
         if (!fontEntry.variants.includes(weight)) {
           fontEntry.variants.push(weight);
         }
