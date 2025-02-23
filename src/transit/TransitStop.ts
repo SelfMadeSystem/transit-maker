@@ -476,7 +476,12 @@ export class TransitStop implements Actionable, Movable {
 
     const diff = this.getDiffIfOneConnectionElse(new Vector2(20, 20));
     const stop = new TransitStop(this.map, [], this.pos.add(diff));
-    stop.style = this.style;
+    // FIXME: setting stop.style to this.style makes them share the same style
+    // object.
+    // TODO: I like this idea, but not the unintentional implementation. (I
+    // didn't mean to; I wanted to do = { ...this.style }). I think having a
+    // 'global' shared list of styles would be a good idea.
+    stop.style = this.style ? { ...this.style } : this.style;
     if (this.labels.size > 0) {
       const label = Array.from(this.labels)[0];
       const newLabel = new Label(this.map, label.text, label.pos);
