@@ -256,7 +256,7 @@ export default function createCanvasComponent<
                 mouseY: e.clientY - rect.top,
               });
             },
-            { signal },
+            { signal, passive: false },
           );
         }
 

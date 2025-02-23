@@ -267,7 +267,10 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           }
         }
       },
-      wheel(_, { deltaY, mouseX, mouseY }) {
+      wheel(e, { deltaY, mouseX, mouseY }) {
+        if (e.ctrlKey) {
+          e.preventDefault();
+        }
         const delta = deltaY / 1000;
         zoom = Math.max(0.1, zoom * (1 + delta));
         offsetX = mouseX - (mouseX - offsetX) * (1 + delta);
