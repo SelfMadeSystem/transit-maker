@@ -27,6 +27,7 @@ export type RouteStyle = {
   margin: number;
   stopStyle: StopStyle;
   terminusStyle: StopStyle;
+  zIndex: number;
 };
 
 export class TransitRoute {
@@ -52,13 +53,14 @@ export class TransitRoute {
       dashedLineCap: 'butt',
       roundRadius: 10,
       roundDistInstead: true,
-      margin: 0,
+      margin: 1,
       stopStyle: {
         ...DEFAULT_STOP_STYLE,
       },
       terminusStyle: {
         ...DEFAULT_STOP_STYLE,
       },
+      zIndex: 0,
     };
     this.map.routes.add(this);
   }
@@ -67,7 +69,5 @@ export class TransitRoute {
 // TODO: Some way to make this map-specific
 export const createDefaultRoute = (map: TransitMap) => {
   const route = new TransitRoute(map, 'Transfer', new Color(255, 255, 255));
-  route.style.roundRadius = 0;
-  route.style.margin = 0;
   return route;
 };

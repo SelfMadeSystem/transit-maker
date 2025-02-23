@@ -1,3 +1,4 @@
+import { OrderedSet } from '../utils/OrderedSet';
 import { id } from '../utils/id';
 import { DecorationImage } from './DecorationImage';
 import { History } from './History';
@@ -19,7 +20,7 @@ export class TransitMap {
   // - legend of all routes, icons, etc.
   // - compass rose
   // - extra text (e.g. copyright, title, etc.)
-  public routes: Set<TransitRoute>;
+  public routes: OrderedSet<TransitRoute>;
   public labels: Set<Label>;
   public stops: Set<TransitStop>;
   public connections: Set<TransitConnection>;
@@ -29,12 +30,15 @@ export class TransitMap {
 
   constructor() {
     this.history = new History(() => {});
-    this.routes = new Set();
+    this.routes = new OrderedSet();
     this.labels = new Set();
     this.stops = new Set();
     this.connections = new Set();
     this.images = new Set();
     this.defaultRoute = createDefaultRoute(this);
+    this.defaultRoute.style.roundRadius = 0;
+    this.defaultRoute.style.margin = 0;
+    this.defaultRoute.style.zIndex = 1;
   }
 
   getSelectable(
@@ -70,26 +74,34 @@ export class TransitMap {
     return null;
   }
 
-  connectionsByRoute(): Map<TransitRoute, TransitConnection[]> {
-    const connections: Map<TransitRoute, TransitConnection[]> = new Map();
+  connectionsByZIndex(): TransitConnection[][] {
+    const connections: Map<number, TransitConnection[]> = new Map();
+    const routeLen = this.routes.size;
     for (const connection of this.connections) {
-      if (!connections.has(connection.route)) {
-        connections.set(connection.route, []);
+      const routeIndex = connection.route.style.zIndex;
+      const routeZ = connection.route.style.zIndex;
+      const connectionZ = connection.style.zIndex;
+      const zIndex = routeZ + connectionZ + routeIndex / routeLen;
+      if (!connections.has(zIndex)) {
+        connections.set(zIndex, []);
       }
-      connections.get(connection.route)!.push(connection);
+      connections.get(zIndex)!.push(connection);
     }
-    return connections;
+
+    const connectionsArray = Array.from(connections.entries());
+    connectionsArray.sort((a, b) => a[0] - b[0]);
+    return connectionsArray.map(c => c[1]);
   }
 
   draw(ctx: CanvasRenderingContext2D, selected: ActionableItem | null) {
-    const connectionsByRoute = this.connectionsByRoute().values();
+    const connectionsByZ = this.connectionsByZIndex();
     for (const image of this.images) {
       if (selected === image) {
         image.drawSelected(ctx);
       }
       image.draw(ctx);
     }
-    for (const connections of connectionsByRoute) {
+    for (const connections of connectionsByZ) {
       for (const connection of connections) {
         if (selected === connection) {
           connection.drawSelected(ctx);

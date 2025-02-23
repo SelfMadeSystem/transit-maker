@@ -216,6 +216,7 @@ function TransitConnectionUi({
     connection.style.spacingOffset,
   );
   const [route, setRoute] = useState(connection.route);
+  const [zIndex, setZIndex] = useState(connection.style.zIndex);
   const { routes } = map;
 
   return (
@@ -298,6 +299,17 @@ function TransitConnectionUi({
               </option>
             ))}
           </select>
+        </label>
+        <label className="flex items-center gap-2">
+          <div className="text-white">Z index:</div>
+          <input
+            type="number"
+            value={zIndex}
+            onChange={e =>
+              setZIndex((connection.style.zIndex = parseFloat(e.target.value)))
+            }
+            className="bg-gray-900 text-white"
+          />
         </label>
       </div>
     </>
@@ -393,6 +405,7 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
   const [roundDistInstead, setRoundDistInstead] = useState(
     style.roundDistInstead,
   );
+  const [zIndex, setZIndex] = useState(style.zIndex);
 
   return (
     <div className="flex flex-col gap-2">
@@ -554,6 +567,15 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
           onChange={() =>
             setRoundDistInstead((style.roundDistInstead = !roundDistInstead))
           }
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Z index:</div>
+        <input
+          type="number"
+          value={zIndex}
+          onChange={e => setZIndex((style.zIndex = parseFloat(e.target.value)))}
+          className="bg-gray-900 text-white"
         />
       </label>
       <details>

@@ -17,6 +17,7 @@ export type ConnectionStyle = {
   strokeType: ConnectionStrokeType;
   spacingMultiplier: number;
   spacingOffset: number; // [0, 1]
+  zIndex: number;
 };
 
 export function styleEquals(a: ConnectionStyle, b: ConnectionStyle): boolean {
@@ -27,6 +28,7 @@ export const DEFALUT_CONNECTION_STYLE: ConnectionStyle = {
   strokeType: 'solid',
   spacingMultiplier: 1,
   spacingOffset: 0,
+  zIndex: 0,
 };
 
 export class TransitConnection implements Actionable {
@@ -114,7 +116,12 @@ export class TransitConnection implements Actionable {
     }
     const lineWidth = this.route.style.lineWidth;
     ctx.save();
-    ctx.lineCap = 'round';
+
+    if (this.style.strokeType === 'dotted') {
+      ctx.lineCap = 'round';
+    } else {
+      ctx.lineCap = this.route.style.dashedLineCap;
+    }
 
     const [path] = this.getPath();
 
@@ -129,7 +136,7 @@ export class TransitConnection implements Actionable {
     let lineLength = 0;
     let lineDist = 0;
     ctx.save();
-    ctx.lineCap = 'round';
+    ctx.lineCap = this.route.style.dashedLineCap;
     switch (this.style.strokeType) {
       case 'solid':
         ctx.setLineDash([]);
@@ -142,6 +149,7 @@ export class TransitConnection implements Actionable {
         ]);
         lineDist =
           this.route.style.dottedSpacing * this.style.spacingMultiplier;
+        ctx.lineCap = 'round';
         break;
       case 'dashed':
         lineWidth = this.route.style.dashedWidth;
@@ -153,7 +161,6 @@ export class TransitConnection implements Actionable {
         lineDist =
           this.route.style.dashedLength +
           this.route.style.dashedSpacing * this.style.spacingMultiplier;
-        ctx.lineCap = this.route.style.dashedLineCap;
         break;
     }
 
@@ -174,7 +181,7 @@ export class TransitConnection implements Actionable {
     ) {
       const [path] = this.getPath();
       ctx.save();
-      ctx.lineCap = 'round';
+      ctx.lineCap = this.route.style.dashedLineCap;
       ctx.strokeStyle = this.route.style.innerColor.hex();
       ctx.lineWidth = this.route.style.innerWidth;
       ctx.stroke(path);
