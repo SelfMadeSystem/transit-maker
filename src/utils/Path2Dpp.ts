@@ -209,7 +209,7 @@ export class Path2Dpp {
   /**
    * Get the SVGPathCommander instance
    */
-  private getSVGPath(): SVGPathCommander {
+  getSVGPath(): SVGPathCommander {
     if (this.svgPath === null) {
       this.svgPath = new SVGPathCommander(this.toString());
     }

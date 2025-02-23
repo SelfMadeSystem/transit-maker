@@ -119,10 +119,19 @@ export class Vector3 {
 }
 
 export class Vector2 {
-  constructor(
-    public readonly x: number,
-    public readonly y: number,
-  ) {}
+  public readonly x: number;
+  public readonly y: number;
+
+  constructor(...args: [number, number] | [{ x: number; y: number }]) {
+    if (args[0] instanceof Object) {
+      this.x = args[0].x;
+      this.y = args[0].y;
+      return;
+    }
+
+    this.x = args[0];
+    this.y = args[1]!; // ts is dumb
+  }
 
   static fromAngle(angle: number): Vector2 {
     return new Vector2(Math.cos(angle), Math.sin(angle));

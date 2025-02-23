@@ -8,6 +8,7 @@ import { TransitMap } from './TransitMap';
 import { TransitRoute } from './TransitRoute';
 import { TransitStop } from './TransitStop';
 import { Actionable, ClickInfo } from './types';
+import { getClosestPoint } from 'svg-path-commander';
 
 export type ConnectionStrokeType = 'solid' | 'dotted' | 'dashed' | 'hidden';
 
@@ -29,6 +30,13 @@ export const DEFALUT_CONNECTION_STYLE: ConnectionStyle = {
   spacingMultiplier: 1,
   spacingOffset: 0,
   zIndex: 0,
+};
+
+export type PathResult = {
+  path: Path2D;
+  length: number;
+  rounded: boolean;
+  pathpp: Path2Dpp;
 };
 
 export class TransitConnection implements Actionable {
@@ -119,7 +127,7 @@ export class TransitConnection implements Actionable {
 
     ctx.lineCap = 'butt';
 
-    const [path] = this.getPath();
+    const { path } = this.getPath();
 
     ctx.lineWidth = lineWidth + this.route.style.margin * 2;
     ctx.strokeStyle = '#000';
@@ -162,7 +170,7 @@ export class TransitConnection implements Actionable {
         break;
     }
 
-    const [path, length] = this.getPath();
+    const { path, length } = this.getPath(true);
     ctx.lineDashOffset =
       lineLength * 0.5 + lineDist * this.style.spacingOffset - length / 2;
 
@@ -178,7 +186,7 @@ export class TransitConnection implements Actionable {
       this.route.style.strokeType === 'split' &&
       this.style.strokeType === 'solid'
     ) {
-      const [path] = this.getPath();
+      const { path } = this.getPath();
       ctx.save();
       ctx.lineCap = this.route.style.dashedLineCap;
       ctx.strokeStyle = this.route.style.innerColor.hex();
@@ -196,7 +204,7 @@ export class TransitConnection implements Actionable {
     ctx.strokeStyle = 'white';
     ctx.lineWidth =
       this.route.style.lineWidth + this.route.style.margin * 2 + 2;
-    const [path] = this.getPath();
+    const { path } = this.getPath();
     ctx.stroke(path);
     ctx.restore();
   }
@@ -252,9 +260,16 @@ export class TransitConnection implements Actionable {
     return which === this.from ? to : from;
   }
 
-  getPath(): [Path2D, number, boolean, Path2Dpp] {
+  private pathCache: PathResult | null = null;
+
+  getPath(noCache = false): PathResult {
+    if (!noCache && this.pathCache) {
+      return this.pathCache;
+    }
+
     const [from, to, lateralOffset, fromRounding, toRounding] =
       this.getFromToPosInfo();
+
     const path = new Path2Dpp();
 
     if (fromRounding) {
@@ -311,12 +326,21 @@ export class TransitConnection implements Actionable {
 
     const length = path.getTotalLength();
 
-    return [path.toPath2D(), length, !!(fromRounding || toRounding), path];
+    const result: PathResult = {
+      path: path.toPath2D(),
+      length,
+      rounded: !!(fromRounding || toRounding),
+      pathpp: path,
+    };
+
+    this.pathCache = result;
+
+    return result;
   }
 
   isOver(x: number, y: number, ctx: CanvasRenderingContext2D) {
     const width = this.route.style.lineWidth + this.route.style.margin * 2 + 2;
-    const [path] = this.getPath();
+    const { path } = this.getPath();
     ctx.lineWidth = width;
     return ctx.isPointInStroke(path, x, y);
   }
@@ -446,7 +470,11 @@ export class TransitConnection implements Actionable {
 
   rightClick({ pos, setSelected }: ClickInfo) {
     const stop = splitConnectionAction(this.map, this).data.stop;
-    stop.setPos(pos);
+    const { pathpp } = this.getPath();
+    const closest = new Vector2(
+      getClosestPoint(pathpp.getSVGPath().segments, pos),
+    );
+    stop.setPos(closest);
     stop.hidden = true;
     setSelected(stop);
     return true;

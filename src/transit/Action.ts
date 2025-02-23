@@ -144,7 +144,7 @@ export const removeAction = createActionFunction((_, obj: ActionableItem) => {
 
 export const splitConnectionAction = createActionFunction(
   (map: TransitMap, connection: TransitConnection) => {
-    const path = connection.getPath()[3];
+    const { pathpp: path } = connection.getPath();
     const midway = path.getPointAtLength(path.getTotalLength() / 2);
     const midwayPos = new Vector2(midway.x, midway.y);
     connection.remove();
