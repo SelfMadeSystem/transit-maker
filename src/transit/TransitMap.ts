@@ -78,7 +78,7 @@ export class TransitMap {
     const connections: Map<number, TransitConnection[]> = new Map();
     const routeLen = this.routes.size;
     for (const connection of this.connections) {
-      const routeIndex = connection.route.style.zIndex;
+      const routeIndex = this.routes.indexOf(connection.route);
       const routeZ = connection.route.style.zIndex;
       const connectionZ = connection.style.zIndex;
       const zIndex = routeZ + connectionZ + routeIndex / routeLen;

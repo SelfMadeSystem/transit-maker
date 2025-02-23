@@ -250,7 +250,7 @@ export class TransitConnection implements Actionable {
     return which === this.from ? to : from;
   }
 
-  getPath(): [Path2D, number, boolean] {
+  getPath(): [Path2D, number, boolean, SVGPathElement] {
     const [from, to, lateralOffset, fromRounding, toRounding] =
       this.getFromToPosInfo();
     const path = d3path();
@@ -316,7 +316,7 @@ export class TransitConnection implements Actionable {
     const length = svgPath.getTotalLength();
     const path2d = new Path2D(str);
 
-    return [path2d, length, !!(fromRounding || toRounding)];
+    return [path2d, length, !!(fromRounding || toRounding), svgPath];
   }
 
   isOver(x: number, y: number, ctx: CanvasRenderingContext2D) {
@@ -435,6 +435,12 @@ export class TransitConnection implements Actionable {
 
   inheritStyle(connection: TransitConnection) {
     this.style = { ...connection.style };
+    if (this.from === connection.from) {
+      this.fromConnection = connection.fromConnection;
+    }
+    if (this.to === connection.to) {
+      this.toConnection = connection.toConnection;
+    }
   }
 
   doubleClick(): void {

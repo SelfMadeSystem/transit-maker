@@ -144,16 +144,15 @@ export const removeAction = createActionFunction((_, obj: ActionableItem) => {
 
 export const splitConnectionAction = createActionFunction(
   (map: TransitMap, connection: TransitConnection) => {
+    const svgPath = connection.getPath()[3];
+    const midway = svgPath.getPointAtLength(svgPath.getTotalLength() / 2);
+    const midwayPos = new Vector2(midway.x, midway.y);
     connection.remove();
     const from = connection.from;
     const to = connection.to;
 
     const route = connection.route;
-    const stop = new TransitStop(
-      map,
-      [],
-      new Vector2((from.pos.x + to.pos.x) / 2, (from.pos.y + to.pos.y) / 2),
-    );
+    const stop = new TransitStop(map, [], midwayPos);
 
     const connection1 = new TransitConnection(map, from, stop, route);
     const connection2 = new TransitConnection(map, stop, to, route);
