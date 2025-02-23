@@ -2,7 +2,7 @@ import { Path2Dpp } from '../utils/Path2Dpp';
 import { id } from '../utils/id';
 import { angleDelta, wrapAngle2PI } from '../utils/mathUtils';
 import { Vector2, lineLineIntersection, sameHalfPlane } from '../utils/vec';
-import { splitConnectionAction } from './Action';
+import { createStopAction, splitConnectionAction } from './Action';
 import { SnapLine } from './Snapping';
 import { TransitMap } from './TransitMap';
 import { TransitRoute } from './TransitRoute';
@@ -464,8 +464,18 @@ export class TransitConnection implements Actionable {
     }
   }
 
-  doubleClick(): void {
-    splitConnectionAction(this.map, this);
+  doubleClick({ pos, setSelected, shiftKey }: ClickInfo): void {
+    if (shiftKey) {
+      const { pathpp } = this.getPath();
+      const closest = new Vector2(
+        getClosestPoint(pathpp.getSVGPath().segments, pos),
+      );
+      const stop = createStopAction(this.map, [], closest).data;
+      setSelected(stop);
+    } else {
+      const stop = splitConnectionAction(this.map, this).data.stop;
+      setSelected(stop);
+    }
   }
 
   rightClick({ pos, setSelected }: ClickInfo) {

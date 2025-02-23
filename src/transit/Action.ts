@@ -36,10 +36,10 @@ export function createActionFunction<
 }
 
 export const createStopAction = createActionFunction(
-  (map: TransitMap, label: string, pos: Vector2) => {
+  (map: TransitMap, label: string | Label[], pos: Vector2) => {
     const stop = new TransitStop(
       map,
-      label ? [new Label(map, label)] : [],
+      Array.isArray(label) ? label : label ? [new Label(map, label)] : [],
       pos,
     );
 
