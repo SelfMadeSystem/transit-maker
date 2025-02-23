@@ -209,11 +209,11 @@ export class TransitConnection implements Actionable {
     const lateralOffset = this.lateralOffset * this.from.getLateralOffset();
 
     if (this.fromConnection) {
-      const posInfo = this.fromConnection.getFromToPosInfo();
+      const posInfo = this.fromConnection.getFromToPosInfo(rounding);
       from = posInfo[this.fromConnection.from === this.from ? 0 : 1];
     }
     if (this.toConnection) {
-      const posInfo = this.toConnection.getFromToPosInfo();
+      const posInfo = this.toConnection.getFromToPosInfo(rounding);
       to = posInfo[this.toConnection.to === this.to ? 1 : 0];
     }
     if (lateralOffset) {
