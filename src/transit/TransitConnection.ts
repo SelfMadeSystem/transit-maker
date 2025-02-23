@@ -415,6 +415,8 @@ export class TransitConnection implements Actionable {
     const others = which.getConnectingStops();
     const other = this.getOtherStop(which);
     const otherDelta = other.pos.sub(this.getOtherDrawPos(which, false));
+    const whichDelta = which.pos.sub(this.getDrawPos(which, false));
+    const delta = otherDelta.sub(whichDelta);
 
     for (const connection of other.connections) {
       if (connection === this) {
@@ -424,7 +426,7 @@ export class TransitConnection implements Actionable {
       if (others.includes(other2)) {
         continue;
       }
-      snapLines.push(...connection.getDirectSnapLines(other, otherDelta));
+      snapLines.push(...connection.getDirectSnapLines(other, delta));
     }
 
     const length = snapLines.length === 3 ? snapLines[0].length : null;
