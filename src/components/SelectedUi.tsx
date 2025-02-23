@@ -1,4 +1,5 @@
 import { EditorContext } from '../EditorContext';
+import { createLabelAction } from '../transit/Action';
 import { Label } from '../transit/Label';
 import {
   ConnectionStrokeType,
@@ -11,7 +12,6 @@ import {
   createDefaultRoute,
 } from '../transit/TransitRoute';
 import { StopStyle, TransitStop } from '../transit/TransitStop';
-import { Vector2 } from '../utils/vec';
 import { StopColorEditor } from './StopColorEditor';
 import ColorInput from './color/ColorInput';
 import { useContext, useState } from 'react';
@@ -41,7 +41,8 @@ function TransitStopUi({ stop }: { stop: TransitStop }) {
   const hasRoundRadius = roundRadius !== undefined;
 
   function addLabel() {
-    stop.addLabel(new Label(stop.map, 'Unnamed Label', new Vector2(0, -15)));
+    const label = createLabelAction(stop.map, 'New label').data;
+    stop.addLabel(label);
   }
 
   return (

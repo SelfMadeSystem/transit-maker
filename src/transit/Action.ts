@@ -57,7 +57,7 @@ export const createStopAction = createActionFunction(
 );
 
 export const createLabelAction = createActionFunction(
-  (map: TransitMap, label: string, pos: Vector2) => {
+  (map: TransitMap, label: string, pos: Vector2 = new Vector2(0, -15)) => {
     const labelObj = new Label(map, label, pos);
 
     return {
