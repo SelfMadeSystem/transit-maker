@@ -91,13 +91,9 @@ export class Label implements Transformable, Actionable {
   }
 
   getFont() {
-    let font = this.style.font;
-    if (font.includes(' ')) {
-      font = `'${font}'`;
-    }
     return `${this.style.italic ? 'italic' : ''} ${this.style.weight} ${
       this.style.size
-    }px ${font}`;
+    }px '${this.style.font}'`;
   }
 
   draw(ctx: CanvasRenderingContext2D) {

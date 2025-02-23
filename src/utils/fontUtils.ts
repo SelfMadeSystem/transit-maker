@@ -1,26 +1,57 @@
+import { useEffect, useState } from 'react';
+
 export type AvailableFont = {
   family: string;
   variants: string[];
 };
 
-export async function getAvailableFonts(): Promise<AvailableFont[]> {
-  const fonts = await document.fonts.ready;
-  const fontList: AvailableFont[] = [];
+const fontList: AvailableFont[] = [];
 
-  fonts.forEach(fontFace => {
-    const font = fontFace.family;
-    const weight = fontFace.weight;
+export function useFonts() {
+  const [fonts, setFonts] = useState<AvailableFont[]>([]);
 
-    let fontEntry = fontList.find(f => f.family === font);
-    if (!fontEntry) {
-      fontEntry = { family: font, variants: [] };
-      fontList.push(fontEntry);
+  useEffect(() => {
+    async function fetchFonts() {
+      if (fontList.length) {
+        setFonts(fontList);
+        return;
+      }
+      const fonts = await document.fonts.ready;
+
+      fonts.forEach(fontFace => {
+        const font = fontFace.family;
+        const weight = fontFace.weight;
+
+        let fontEntry = fontList.find(f => f.family === font);
+        if (!fontEntry) {
+          fontEntry = { family: font, variants: [] };
+          fontList.push(fontEntry);
+        }
+
+        if (!fontEntry.variants.includes(weight)) {
+          fontEntry.variants.push(weight);
+        }
+      });
+
+      setFonts(fontList);
     }
 
-    if (!fontEntry.variants.includes(weight)) {
-      fontEntry.variants.push(weight);
-    }
-  });
+    fetchFonts();
+  }, []);
 
-  return fontList;
+  const uploadFont = async (file: File) => {
+    const reader = new FileReader();
+
+    reader.onload = async () => {
+      const font = new FontFace(file.name, reader.result as ArrayBuffer);
+      await font.load();
+      document.fonts.add(font);
+      // Refresh the font list after uploading a new font
+      setFonts([...fontList, { family: file.name, variants: ['400'] }]);
+    };
+
+    reader.readAsArrayBuffer(file);
+  };
+
+  return { fonts, uploadFont };
 }

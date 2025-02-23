@@ -570,7 +570,7 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
 
 //#region Label UI
 function LabelUi({ label }: { label: Label }) {
-  const { fonts } = useContext(EditorContext);
+  const { fonts, uploadFont } = useContext(EditorContext);
   const [text, setText] = useState(label.text);
   const [font, setFont] = useState(label.style.font);
   const [italic, setItalic] = useState(label.style.italic);
@@ -696,6 +696,14 @@ function LabelUi({ label }: { label: Label }) {
           setColor={c => setColor((label.style.color = c))}
         />
       </label>
+      <details>
+        <summary className="text-white">Upload font</summary>
+        <input
+          type="file"
+          onChange={e => uploadFont(e.target.files![0])}
+          className="bg-gray-900 text-white"
+        />
+      </details>
     </div>
   );
 }
