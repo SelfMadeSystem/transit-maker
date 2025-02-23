@@ -238,6 +238,7 @@ function TransitConnectionUi({
             <option value="solid">Solid</option>
             <option value="dotted">Dotted</option>
             <option value="dashed">Dashed</option>
+            <option value="hidden">Hidden</option>
           </select>
         </label>
         {strokeType !== 'solid' && (

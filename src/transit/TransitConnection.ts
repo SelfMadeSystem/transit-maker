@@ -9,7 +9,7 @@ import { TransitStop } from './TransitStop';
 import { Actionable, ClickInfo } from './types';
 import { path as d3path } from 'd3-path';
 
-export type ConnectionStrokeType = 'solid' | 'dotted' | 'dashed';
+export type ConnectionStrokeType = 'solid' | 'dotted' | 'dashed' | 'hidden';
 
 // Styles only for this individual connection. Other styles should be specific
 // to the route.
@@ -111,9 +111,9 @@ export class TransitConnection implements Actionable {
   }
 
   preDraw(ctx: CanvasRenderingContext2D): void {
-    if (this.route.style.margin <= 0) {
+    if (this.route.style.margin <= 0 || this.style.strokeType === 'hidden')
       return;
-    }
+
     const lineWidth = this.route.style.lineWidth;
     ctx.save();
 
@@ -128,6 +128,7 @@ export class TransitConnection implements Actionable {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
+    if (this.style.strokeType === 'hidden') return;
     let lineWidth = this.route.style.lineWidth;
     let lineLength = 0;
     let lineDist = 0;
@@ -172,6 +173,7 @@ export class TransitConnection implements Actionable {
   }
 
   postDraw(ctx: CanvasRenderingContext2D): void {
+    if (this.style.strokeType === 'hidden') return;
     if (
       this.route.style.strokeType === 'split' &&
       this.style.strokeType === 'solid'
