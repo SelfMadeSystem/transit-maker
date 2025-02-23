@@ -1,3 +1,4 @@
+import { Path2Dpp } from '../utils/Path2Dpp';
 import { id } from '../utils/id';
 import { angleDelta, wrapAngle2PI } from '../utils/mathUtils';
 import { Vector2, lineLineIntersection, sameHalfPlane } from '../utils/vec';
@@ -7,7 +8,6 @@ import { TransitMap } from './TransitMap';
 import { TransitRoute } from './TransitRoute';
 import { TransitStop } from './TransitStop';
 import { Actionable, ClickInfo } from './types';
-import { path as d3path } from 'd3-path';
 
 export type ConnectionStrokeType = 'solid' | 'dotted' | 'dashed' | 'hidden';
 
@@ -252,10 +252,10 @@ export class TransitConnection implements Actionable {
     return which === this.from ? to : from;
   }
 
-  getPath(): [Path2D, number, boolean, SVGPathElement] {
+  getPath(): [Path2D, number, boolean, Path2Dpp] {
     const [from, to, lateralOffset, fromRounding, toRounding] =
       this.getFromToPosInfo();
-    const path = d3path();
+    const path = new Path2Dpp();
 
     if (fromRounding) {
       const { center, ogPos, radius } = fromRounding;
@@ -309,16 +309,9 @@ export class TransitConnection implements Actionable {
       path.lineTo(to.x, to.y);
     }
 
-    const str = path.toString();
-    const svgPath = document.createElementNS(
-      'http://www.w3.org/2000/svg',
-      'path',
-    );
-    svgPath.setAttribute('d', str);
-    const length = svgPath.getTotalLength();
-    const path2d = new Path2D(str);
+    const length = path.getTotalLength();
 
-    return [path2d, length, !!(fromRounding || toRounding), svgPath];
+    return [path.toPath2D(), length, !!(fromRounding || toRounding), path];
   }
 
   isOver(x: number, y: number, ctx: CanvasRenderingContext2D) {

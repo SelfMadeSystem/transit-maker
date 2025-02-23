@@ -29,6 +29,10 @@ export default tseslint.config(
         'warn',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+      '@typescript-eslint/no-unused-expressions': [
+        'error',
+        { allowTaggedTemplates: true },
+      ],
     },
   },
   eslintConfigPrettier,
