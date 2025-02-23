@@ -283,7 +283,7 @@ export class TransitStop implements Actionable, Movable {
     const dirOther = connection1.getDirectionVector(this);
     const angle = dirThis.angleBetween(dirOther) / 2;
 
-    if (route.style.roundDistInstead) {
+    if (route.style.roundDistInstead && angle < Math.PI / 4) {
       radius = radius * Math.tan(angle);
     }
 
