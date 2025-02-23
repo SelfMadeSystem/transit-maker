@@ -117,11 +117,7 @@ export class TransitConnection implements Actionable {
     const lineWidth = this.route.style.lineWidth;
     ctx.save();
 
-    if (this.style.strokeType === 'dotted') {
-      ctx.lineCap = 'round';
-    } else {
-      ctx.lineCap = this.route.style.dashedLineCap;
-    }
+    ctx.lineCap = 'butt';
 
     const [path] = this.getPath();
 
@@ -136,10 +132,10 @@ export class TransitConnection implements Actionable {
     let lineLength = 0;
     let lineDist = 0;
     ctx.save();
-    ctx.lineCap = this.route.style.dashedLineCap;
     switch (this.style.strokeType) {
       case 'solid':
         ctx.setLineDash([]);
+        ctx.lineCap = this.route.style.lineCap;
         break;
       case 'dotted':
         lineWidth = this.route.style.dottedWidth;
@@ -161,6 +157,7 @@ export class TransitConnection implements Actionable {
         lineDist =
           this.route.style.dashedLength +
           this.route.style.dashedSpacing * this.style.spacingMultiplier;
+        ctx.lineCap = this.route.style.dashedLineCap;
         break;
     }
 

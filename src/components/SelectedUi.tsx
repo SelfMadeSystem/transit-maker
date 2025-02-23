@@ -392,6 +392,7 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
   const [color, setColor] = useState(style.color);
   const [lineWidth, setLineWidth] = useState(style.lineWidth);
   const [strokeType, setStrokeType] = useState(style.strokeType);
+  const [lineCap, setLineCap] = useState(style.lineCap);
   const [innerWidth, setInnerWidth] = useState(style.innerWidth);
   const [innerColor, setInnerColor] = useState(style.innerColor);
   const [dottedWidth, setDottedWidth] = useState(style.dottedWidth);
@@ -436,6 +437,21 @@ function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {
         >
           <option value="solid">Solid</option>
           <option value="split">Split</option>
+        </select>
+      </label>
+
+      <label className="flex items-center gap-2">
+        <div className="text-white">Line cap:</div>
+        <select
+          value={lineCap}
+          onChange={e =>
+            setLineCap((style.lineCap = e.target.value as CanvasLineCap))
+          }
+          className="bg-gray-900 text-white"
+        >
+          <option value="butt">Butt</option>
+          <option value="round">Round</option>
+          <option value="square">Square</option>
         </select>
       </label>
       {strokeType === 'split' ? (

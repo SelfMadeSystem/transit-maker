@@ -10,6 +10,7 @@ export type RouteStyle = {
   color: Color;
   lineWidth: number;
   strokeType: StrokeType;
+  lineCap: CanvasLineCap;
   // only for split lines
   innerWidth: number;
   innerColor: Color;
@@ -43,6 +44,7 @@ export class TransitRoute {
       color,
       lineWidth: 2,
       strokeType: 'solid',
+      lineCap: 'round',
       innerWidth: 1,
       innerColor: new Color(0, 0, 0),
       dottedWidth: 2,
