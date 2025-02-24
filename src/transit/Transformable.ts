@@ -11,6 +11,9 @@ function drawRotateHandle(
   zoom: number,
   size: Vector2,
 ) {
+  if (size.y < 0) {
+    size = size.mult(1, -1);
+  }
   const topMid = new Vector2(0, -size.y / 2);
   ctx.beginPath();
   ctx.moveTo(topMid.x, topMid.y);
@@ -44,8 +47,13 @@ function drawResizeHandles(
   });
 }
 
-function getSize(t: Transformable, zoom: number) {
-  return t.getSize().add(new Vector2(10, 10).div(zoom));
+function getSize(t: Transformable, zoom: number, absolute = false) {
+  const add = new Vector2(10, 10).div(zoom);
+  const size = t.getSize();
+  if (absolute) {
+    return size.abs().add(add);
+  }
+  return size.add(add.mult(...size.sign().a()));
 }
 
 export function drawTransformableRegion(
@@ -69,7 +77,7 @@ export function drawTransformableRegion(
 }
 
 export function isOverTransformable(t: Transformable, pos: Vector2): boolean {
-  const size = t.getSize();
+  const size = t.getSize().abs();
   const halfSize = size.div(2);
   pos = pos.sub(t.getCenterPos()).rotateBy(-t.getRotation());
   return (
@@ -95,6 +103,7 @@ export function getHandle(
   pos: Vector2,
   zoom: number,
   t: Transformable,
+  absolute = false,
 ): Handle | null {
   const rotation = -t.getRotation();
   pos = pos.sub(t.getCenterPos()).rotateBy(rotation);
@@ -102,10 +111,13 @@ export function getHandle(
   const handleSize = HANDLE_SIZE / zoom;
   const edgeSize = Math.sqrt(handleSize);
 
-  const size = getSize(t, zoom);
+  const size = getSize(t, zoom, absolute);
   const halfSize = size.div(2);
   const handles = {
-    rotate: new Vector2(0, -halfSize.y - ROTATE_HANDLE_OFFSET / zoom),
+    rotate: new Vector2(
+      0,
+      -halfSize.y * Math.sign(halfSize.y) - ROTATE_HANDLE_OFFSET / zoom,
+    ),
     tr: new Vector2(halfSize.x, -halfSize.y),
     br: new Vector2(halfSize.x, halfSize.y),
     bl: new Vector2(-halfSize.x, halfSize.y),
@@ -145,7 +157,8 @@ export function getHandle(
   return null;
 }
 
-export function getCursor(handle: Handle, t: Transformable) {
+export function getCursor(pos: Vector2, zoom: number, t: Transformable) {
+  const handle = getHandle(pos, zoom, t, true);
   let rotation = -t.getRotation();
   switch (handle) {
     case 'rotate':

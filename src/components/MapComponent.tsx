@@ -88,7 +88,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           });
           const handle = getHandle(mousePos, zoom, selected);
           if (handle) {
-            const cursor = getHandleCursor(handle, selected);
+            const cursor = getHandleCursor(mousePos, zoom, selected);
             canvas.style.cursor = cursor;
           }
         }

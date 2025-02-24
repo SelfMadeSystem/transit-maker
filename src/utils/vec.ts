@@ -235,6 +235,14 @@ export class Vector2 {
     return this.add(other.sub(this).mult(amount));
   }
 
+  abs(): Vector2 {
+    return new Vector2(Math.abs(this.x), Math.abs(this.y));
+  }
+
+  sign(): Vector2 {
+    return new Vector2(Math.sign(this.x), Math.sign(this.y));
+  }
+
   to3(z: number = 0): Vector3 {
     return new Vector3(this.x, this.y, z);
   }
