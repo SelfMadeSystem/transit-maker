@@ -13,6 +13,7 @@ import {
 import { TransitMap } from './TransitMap';
 import { TransitRoute } from './TransitRoute';
 import { Actionable, ClickInfo, Movable, PosWithKeys } from './types';
+import { getPointAtLength, getPropertiesAtPoint } from 'svg-path-commander';
 
 export type StopColor = Color | 'route';
 
@@ -65,6 +66,9 @@ export class TransitStop implements Actionable, Movable {
   public map: TransitMap;
   public labels: Set<Label>;
   public pos: Vector2;
+  public linked: {
+    connection: TransitConnection;
+  } | null = null;
   public connections: Set<TransitConnection>;
   public hidden: boolean = false;
   public roundRadius: number | undefined;
@@ -439,12 +443,39 @@ export class TransitStop implements Actionable, Movable {
   }
 
   moveTo(l: PosWithKeys) {
-    const { shiftKey, ctrlKey } = l;
+    const { shiftKey, ctrlKey, pos } = l;
+    if (this.linked) {
+      const { connection } = this.linked;
+      const { pathpp, length } = connection.getPath();
+      if (shiftKey) {
+        const snapDists = [1 / 4, 1 / 3, 1 / 2, 2 / 3, 3 / 4];
+        const poses = snapDists.map(d =>
+          getPointAtLength(pathpp.getSVGPath().segments, length * d),
+        );
+
+        let minPos = poses[0];
+        let minDist = Math.hypot(minPos.x - pos.x, minPos.y - pos.y);
+        for (let i = 1; i < poses.length; i++) {
+          const dist = Math.hypot(poses[i].x - pos.x, poses[i].y - pos.y);
+          if (dist < minDist) {
+            minDist = dist;
+            minPos = poses[i];
+          }
+        }
+
+        this.pos = new Vector2(minPos);
+      } else {
+        const props = getPropertiesAtPoint(pathpp.getSVGPath().segments, pos);
+
+        this.pos = new Vector2(props.closest);
+      }
+      return;
+    }
 
     if (shiftKey) {
       const snapLines = this.getSnapLines();
 
-      const snapInfo = new SnapInfo(l.pos, ctrlKey).addSnapLines(snapLines);
+      const snapInfo = new SnapInfo(pos, ctrlKey).addSnapLines(snapLines);
       snapInfo.calculateStuff();
 
       if (snapInfo.snapped) {
@@ -453,7 +484,7 @@ export class TransitStop implements Actionable, Movable {
       }
     }
 
-    this.pos = l.pos;
+    this.pos = pos;
   }
 
   inheritStyle(stop: TransitStop) {

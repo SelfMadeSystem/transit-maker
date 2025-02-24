@@ -476,10 +476,12 @@ export class TransitConnection implements Actionable {
   doubleClick({ pos, setSelected, shiftKey }: ClickInfo): void {
     if (shiftKey) {
       const { pathpp } = this.getPath();
-      const closest = new Vector2(
-        getClosestPoint(pathpp.getSVGPath().segments, pos),
-      );
+      const c = getClosestPoint(pathpp.getSVGPath().segments, pos);
+      const closest = new Vector2(c);
       const stop = createStopAction(this.map, [], closest).data;
+      stop.linked = {
+        connection: this,
+      };
       setSelected(stop);
     } else {
       const stop = splitConnectionAction(this.map, this).data.stop;
