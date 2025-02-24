@@ -174,6 +174,9 @@ export class TransitStop implements Actionable, Movable {
     for (const connection of this.connections) {
       routes.add(connection.route);
     }
+    if (this.linked) {
+      routes.add(this.linked.connection.route);
+    }
     return routes;
   }
 
