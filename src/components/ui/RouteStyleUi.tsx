@@ -1,5 +1,6 @@
 import { StrokeType, TransitRoute } from '../../transit/TransitRoute';
 import ColorInput from '../color/ColorInput';
+import { StopStyleUi } from './StopStyleUi';
 import { useState } from 'react';
 
 export function RouteStyleUi({ style }: { style: TransitRoute['style'] }) {

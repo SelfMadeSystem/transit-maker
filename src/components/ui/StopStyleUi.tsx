@@ -12,6 +12,8 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
   );
   const [radius, setRadius] = useState(style.radius);
   const [strokeWidth, setStrokeWidth] = useState(style.strokeWidth);
+  const [margin, setMargin] = useState(style.margin);
+
   return (
     <>
       <label className="flex items-center gap-2">
@@ -94,6 +96,16 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
           onChange={e =>
             setStrokeWidth((style.strokeWidth = parseFloat(e.target.value)))
           }
+          className="bg-gray-900 text-white"
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Margin:</div>
+        <input
+          type="number"
+          value={margin}
+          min="0"
+          onChange={e => setMargin((style.margin = parseFloat(e.target.value)))}
           className="bg-gray-900 text-white"
         />
       </label>

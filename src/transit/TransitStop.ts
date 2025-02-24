@@ -32,6 +32,7 @@ export type StopStyle = {
   edgeFollowsRoute: boolean;
   radius: number;
   strokeWidth: number;
+  margin: number;
 };
 
 export const DEFAULT_STOP_STYLE: StopStyle = {
@@ -42,6 +43,7 @@ export const DEFAULT_STOP_STYLE: StopStyle = {
   edgeFollowsRoute: false,
   radius: 5,
   strokeWidth: 2,
+  margin: 2,
 };
 
 export type RoundingCalculation = {
@@ -367,6 +369,13 @@ export class TransitStop implements Actionable, Movable {
       ctx.closePath();
       ctx.restore();
     }
+    if (style.margin) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.lineWidth = style.strokeWidth + style.margin;
+      ctx.stroke();
+      ctx.restore();
+    }
     ctx.fill();
     if (style.strokeWidth > 0) {
       ctx.stroke();
@@ -383,7 +392,7 @@ export class TransitStop implements Actionable, Movable {
     ctx.arc(
       pos.x,
       pos.y,
-      style.radius + style.strokeWidth / 2 + 2,
+      style.radius + style.strokeWidth / 2 + style.margin + 2,
       0,
       2 * Math.PI,
     );
