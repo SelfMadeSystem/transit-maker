@@ -131,6 +131,7 @@ export class TransitConnection implements Actionable {
 
     ctx.lineWidth = lineWidth + this.route.style.margin * 2;
     ctx.strokeStyle = '#000';
+    ctx.globalCompositeOperation = 'destination-out';
     ctx.stroke(path);
     ctx.restore();
   }
