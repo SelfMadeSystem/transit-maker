@@ -44,7 +44,7 @@ export class History {
     }
     this.index++;
     const action = this.actions[this.index];
-    (action.redo ?? action.apply)(map);
+    action.redo(map);
     this.changeCb();
   }
 
