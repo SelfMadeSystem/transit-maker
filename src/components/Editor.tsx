@@ -1,7 +1,7 @@
 import { EditorContext } from '../EditorContext';
 import { HistoryUi } from './HistoryUi';
 import { MapComponent } from './MapComponent';
-import { SelectedUi } from './SelectedUi';
+import { SelectedUi } from './ui/SelectedUi';
 import { useContext } from 'react';
 
 export function Editor() {
