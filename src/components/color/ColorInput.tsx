@@ -30,6 +30,9 @@ export default function ColorInput({ color, setColor }: ColorCanvasProps) {
     if (y + p2.height > window.innerHeight) y = p1.top - p2.height;
 
     setTopLeft(new Vector2(x, y));
+
+    portalRef.current.style.top = `${y}px`;
+    portalRef.current.style.left = `${x}px`;
   }, [editing]);
 
   useEffect(() => {
