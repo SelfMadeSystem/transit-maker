@@ -14,6 +14,7 @@ export type LabelStyle = {
   textAlign: CanvasTextAlign;
   textBaseline: CanvasTextBaseline;
   color: Color;
+  margin: number;
 };
 
 export class Label implements Transformable, Actionable {
@@ -37,6 +38,7 @@ export class Label implements Transformable, Actionable {
     textAlign: 'left',
     textBaseline: 'middle',
     color: new Color(255, 255, 255),
+    margin: 0.5,
   };
   private cachedDimensions: [tl: Vector2, br: Vector2] | null = null;
   private cacheKey: string | null = null;
@@ -107,6 +109,15 @@ export class Label implements Transformable, Actionable {
     ctx.fillStyle = this.style.color.hex();
     ctx.textAlign = this.style.textAlign;
     ctx.textBaseline = this.style.textBaseline;
+
+    if (this.style.margin > 0) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.lineWidth = this.style.margin * 2;
+      ctx.strokeText(this.text, 0, 0);
+      ctx.restore();
+    }
+
     ctx.fillText(this.text, 0, 0);
     ctx.restore();
   }

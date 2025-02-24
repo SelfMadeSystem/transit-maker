@@ -15,6 +15,7 @@ export function LabelUi({ label }: { label: Label }) {
   const [textAlign, setTextAlign] = useState(label.style.textAlign);
   const [textBaseline, setTextBaseline] = useState(label.style.textBaseline);
   const [color, setColor] = useState(label.style.color);
+  const [margin, setMargin] = useState(label.style.margin);
 
   const foundFont = fonts.find(f => f.family === font);
 
@@ -157,6 +158,19 @@ export function LabelUi({ label }: { label: Label }) {
         <ColorInput
           color={color}
           setColor={c => setColor((label.style.color = c))}
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Margin:</div>
+        <input
+          type="number"
+          value={margin}
+          min="0"
+          step="0.1"
+          onChange={e =>
+            setMargin((label.style.margin = parseFloat(e.target.value)))
+          }
+          className="bg-gray-900 text-white"
         />
       </label>
       <details>
