@@ -131,6 +131,10 @@ export class TransitConnection implements Actionable {
 
     ctx.lineWidth = lineWidth + this.route.style.margin * 2;
     ctx.strokeStyle = '#000';
+    // This globalCompositeOperation is used to add the margin to the line.
+    // It works by removing all the regions "behind" the line, which, in
+    // hindsight, is like duh super obvious but this took me idk like 2 days to
+    // figure out. I felt like a genius when I finally got it though.
     ctx.globalCompositeOperation = 'destination-out';
     ctx.stroke(path);
     ctx.restore();
