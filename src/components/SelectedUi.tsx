@@ -16,6 +16,8 @@ import { StopColorEditor } from './StopColorEditor';
 import ColorInput from './color/ColorInput';
 import { useContext, useState } from 'react';
 
+// FIXME: if input is empty, it produces NaN
+
 export function SelectedUi() {
   const { selected, map } = useContext(EditorContext);
 

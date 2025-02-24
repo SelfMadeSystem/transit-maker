@@ -211,7 +211,12 @@ export class Path2Dpp {
    */
   getSVGPath(): SVGPathCommander {
     if (this.svgPath === null) {
-      this.svgPath = new SVGPathCommander(this.toString());
+      try {
+        this.svgPath = new SVGPathCommander(this.toString());
+      } catch (e) {
+        console.log(this.toString());
+        throw e;
+      }
     }
     return this.svgPath;
   }

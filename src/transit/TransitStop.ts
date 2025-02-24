@@ -263,6 +263,13 @@ export class TransitStop implements Actionable, Movable {
 
     let [[connection1], [connection2]] = Array.from(connectionsByStop.values());
 
+    const epsilon = 1e-6;
+    if (
+      connection1.getLineLength() < epsilon ||
+      connection2.getLineLength() < epsilon
+    ) {
+      return null;
+    }
     if (connection1.isParallelTo(connection2)) {
       return null;
     }
@@ -465,7 +472,11 @@ export class TransitStop implements Actionable, Movable {
       const [connection] = Array.from(connectionsByStop.values())[0];
       const p1 = connection.getDrawPos(this);
       const p2 = connection.getOtherDrawPos(this);
-      return p1.sub(p2);
+      const diff = p1.sub(p2);
+      if (diff.length() < 1) {
+        return v;
+      }
+      return diff;
     }
     return v;
   }

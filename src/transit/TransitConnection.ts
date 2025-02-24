@@ -354,6 +354,10 @@ export class TransitConnection implements Actionable {
     return Math.atan2(to.y - from.y, to.x - from.x);
   }
 
+  getLineLength(): number {
+    return this.from.pos.dist(this.to.pos);
+  }
+
   isParallelTo(other: TransitConnection): boolean {
     const epsilon = 0.001;
     const angle1 = this.getAngle(this.from);
