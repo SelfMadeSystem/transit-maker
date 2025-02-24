@@ -18,6 +18,21 @@ export default function ColorInput({ color, setColor }: ColorCanvasProps) {
   const [topLeft, setTopLeft] = useState(new Vector2(0, 0));
 
   useEffect(() => {
+    if (!parentRef.current || !portalRef.current) return;
+
+    const p1 = parentRef.current.getBoundingClientRect();
+    const p2 = portalRef.current.getBoundingClientRect();
+
+    let x = p1.left;
+    let y = p1.top + p1.height;
+
+    if (x + p2.width > window.innerWidth) x = p1.right - p2.width;
+    if (y + p2.height > window.innerHeight) y = p1.top - p2.height;
+
+    setTopLeft(new Vector2(x, y));
+  }, [editing]);
+
+  useEffect(() => {
     const close = (e: MouseEvent) => {
       if (
         parentRef.current?.contains(e.target as Node) ||
@@ -28,17 +43,10 @@ export default function ColorInput({ color, setColor }: ColorCanvasProps) {
     };
     window.addEventListener('mousedown', close, { capture: true });
 
-    const box = parentRef.current?.getBoundingClientRect();
-    setTopLeft(
-      new Vector2(
-        box?.left ? box.left + window.scrollX : 0,
-        box?.bottom ? box.bottom + window.scrollY : 0,
-      ),
-    );
     return () => {
       window.removeEventListener('mousedown', close, { capture: true });
     };
-  }, [parentRef]);
+  }, []);
 
   const portalElement = (
     <div
