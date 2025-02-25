@@ -3,14 +3,14 @@ import { Color } from './color/Color';
 import ColorInput from './color/ColorInput';
 import { useState } from 'react';
 
-export function StopColorEditor({
-  stopColor,
+export function RouteColorEditor({
+  color,
   onChange,
 }: {
-  stopColor: RouteColor;
+  color: RouteColor;
   onChange: (color: RouteColor) => void;
 }) {
-  const [isRoute, setIsRoute] = useState(stopColor === 'route');
+  const [isRoute, setIsRoute] = useState(color === 'route');
 
   return (
     <div className="flex items-center space-x-2">
@@ -23,7 +23,7 @@ export function StopColorEditor({
         }}
       />
       {isRoute ? null : (
-        <ColorInput color={stopColor as Color} setColor={e => onChange(e)} />
+        <ColorInput color={color as Color} setColor={e => onChange(e)} />
       )}
     </div>
   );

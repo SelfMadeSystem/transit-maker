@@ -1,5 +1,5 @@
 import { StopStyle } from '../../transit/TransitStop';
-import { StopColorEditor } from '../StopColorEditor';
+import { RouteColorEditor } from '../RouteColorEditor';
 import { useState } from 'react';
 
 export function StopStyleUi({ style }: { style: StopStyle }) {
@@ -20,15 +20,15 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
     <>
       <label className="flex items-center gap-2">
         <div className="text-white">Fill color:</div>
-        <StopColorEditor
-          stopColor={fillColor}
+        <RouteColorEditor
+          color={fillColor}
           onChange={fill => setFillColor((style.fillColor = fill))}
         />
       </label>
       <label className="flex items-center gap-2">
         <div className="text-white">Stroke color:</div>
-        <StopColorEditor
-          stopColor={strokeColor}
+        <RouteColorEditor
+          color={strokeColor}
           onChange={stroke => setStrokeColor((style.strokeColor = stroke))}
         />
       </label>

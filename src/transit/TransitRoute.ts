@@ -46,7 +46,7 @@ export class TransitRoute {
           },
         ],
       },
-      lateralOffset: 10,
+      lateralOffset: 5,
       roundRadius: 10,
       roundDistInstead: true,
       stopStyle: {

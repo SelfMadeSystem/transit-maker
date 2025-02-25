@@ -123,7 +123,9 @@ export default function ColorInput({ color, setColor }: ColorCanvasProps) {
     >
       <div
         className="h-8 w-8 cursor-pointer rounded-full"
-        style={{ backgroundColor: color.hex() }}
+        style={{
+          backgroundImage: `linear-gradient(${color.hex()}, ${color.hex()}), linear-gradient(45deg, black 50%, white 50%)`,
+        }}
         onClick={() => setEditing(!editing)}
       />
       {editing && createPortal(portalElement, document.body)}

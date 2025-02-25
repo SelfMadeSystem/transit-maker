@@ -41,6 +41,14 @@ export type ConnectionOutline =
   | DashedConnectionOutline
   | SolidConnectionOutline;
 
+export const DEFALUT_CONNECTION_OUTLINE: ConnectionOutline = {
+  color: 'route',
+  width: 1,
+  clear: false,
+  strokeType: 'solid',
+  lineCap: 'round',
+};
+
 export type ConnectionStyle = {
   outlines: ConnectionOutline[];
 };

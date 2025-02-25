@@ -1,7 +1,4 @@
-import {
-  ConnectionStrokeType,
-  TransitConnection,
-} from '../../transit/TransitConnection';
+import { TransitConnection } from '../../transit/TransitConnection';
 import { TransitMap } from '../../transit/TransitMap';
 import { useState } from 'react';
 
@@ -12,9 +9,7 @@ export function TransitConnectionUi({
   connection: TransitConnection;
   map: TransitMap;
 }) {
-  const [strokeType, setStrokeType] = useState(
-    connection.specificStyle.strokeType,
-  );
+  const [hidden, setHidden] = useState(connection.specificStyle.hidden);
   const [spacingMultiplier, setSpacingMultiplier] = useState(
     connection.specificStyle.spacingMultiplier,
   );
@@ -30,63 +25,52 @@ export function TransitConnectionUi({
       <div className="text-white">Modify connection style</div>
       <div className="flex flex-col justify-center gap-2">
         <label className="flex items-center gap-2">
-          <div className="text-white">Stroke type:</div>
-          <select
-            value={strokeType}
+          <div className="text-white">Hidden:</div>
+          <input
+            type="checkbox"
+            checked={hidden}
             onChange={e =>
-              setStrokeType(
-                (connection.specificStyle.strokeType = e.target
-                  .value as ConnectionStrokeType),
+              setHidden((connection.specificStyle.hidden = e.target.checked))
+            }
+            className="bg-gray-900 text-white"
+          />
+        </label>
+        <label className="flex items-center gap-2">
+          <div className="text-white">Spacing multiplier:</div>
+          <input
+            type="number"
+            value={spacingMultiplier}
+            min="0.5"
+            max="2"
+            step="0.01"
+            onChange={e =>
+              setSpacingMultiplier(
+                (connection.specificStyle.spacingMultiplier = parseFloat(
+                  e.target.value,
+                )),
               )
             }
             className="bg-gray-900 text-white"
-          >
-            <option value="solid">Solid</option>
-            <option value="dotted">Dotted</option>
-            <option value="dashed">Dashed</option>
-            <option value="hidden">Hidden</option>
-          </select>
+          />
         </label>
-        {strokeType !== 'solid' && (
-          <>
-            <label className="flex items-center gap-2">
-              <div className="text-white">Spacing multiplier:</div>
-              <input
-                type="number"
-                value={spacingMultiplier}
-                min="0.5"
-                max="2"
-                step="0.01"
-                onChange={e =>
-                  setSpacingMultiplier(
-                    (connection.specificStyle.spacingMultiplier = parseFloat(
-                      e.target.value,
-                    )),
-                  )
-                }
-                className="bg-gray-900 text-white"
-              />
-            </label>
-            <label className="flex items-center gap-2">
-              <div className="text-white">Spacing offset:</div>
-              <input
-                type="number"
-                value={spacingOffset}
-                min="0.0"
-                max="1.0"
-                step="0.01"
-                onChange={e =>
-                  setSpacingOffset(
-                    (connection.specificStyle.spacingOffset = parseFloat(
-                      e.target.value,
-                    )),
-                  )
-                }
-                className="bg-gray-900 text-white"
-              />
-            </label>
-          </>
-        )}
+        <label className="flex items-center gap-2">
+          <div className="text-white">Spacing offset:</div>
+          <input
+            type="number"
+            value={spacingOffset}
+            min="0.0"
+            max="1.0"
+            step="0.01"
+            onChange={e =>
+              setSpacingOffset(
+                (connection.specificStyle.spacingOffset = parseFloat(
+                  e.target.value,
+                )),
+              )
+            }
+            className="bg-gray-900 text-white"
+          />
+        </label>
         <label className="flex items-center gap-2">
           <div className="text-white">Route:</div>
           <select
