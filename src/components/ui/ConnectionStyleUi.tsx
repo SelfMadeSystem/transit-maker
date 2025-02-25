@@ -6,23 +6,82 @@ import {
 import { RouteColorEditor } from '../RouteColorEditor';
 import { useState } from 'react';
 
+function ConnectionOutlineDotted({
+  outline,
+}: {
+  outline: ConnectionOutline & { strokeType: 'dotted' };
+}) {
+  const [dottedSpacing, setDottedSpacing] = useState(outline.dottedSpacing);
+
+  return (
+    <label className="flex items-center gap-2">
+      <div className="text-white">Dotted spacing:</div>
+      <input
+        type="number"
+        value={dottedSpacing}
+        min="0"
+        onChange={e =>
+          setDottedSpacing((outline.dottedSpacing = parseFloat(e.target.value)))
+        }
+        className="bg-gray-900 text-white"
+      />
+    </label>
+  );
+}
+
+function ConnectionOutlineDashed({
+  outline,
+}: {
+  outline: ConnectionOutline & { strokeType: 'dashed' };
+}) {
+  const [dashedLength, setDashedLength] = useState(outline.dashedLength);
+  const [dashedSpacing, setDashedSpacing] = useState(outline.dashedSpacing);
+
+  return (
+    <>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Dashed length:</div>
+        <input
+          type="number"
+          value={dashedLength}
+          min="0"
+          onChange={e =>
+            setDashedLength((outline.dashedLength = parseFloat(e.target.value)))
+          }
+          className="bg-gray-900 text-white"
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Dashed spacing:</div>
+        <input
+          type="number"
+          value={dashedSpacing}
+          min="0"
+          onChange={e =>
+            setDashedSpacing(
+              (outline.dashedSpacing = parseFloat(e.target.value)),
+            )
+          }
+          className="bg-gray-900 text-white"
+        />
+      </label>
+    </>
+  );
+}
+
 export function ConnectionOutlineUi({
   outline,
 }: {
   outline: ConnectionOutline;
 }) {
-  const [color, setColor] = useState(outline.color);
   const [width, setWidth] = useState(outline.width);
+  const [color, setColor] = useState(outline.color);
+  const [clear, setClear] = useState(outline.clear);
+  const [lineCap, setLineCap] = useState(outline.lineCap);
+  const [strokeType, setStrokeType] = useState(outline.strokeType);
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="flex items-center gap-2">
-        <div className="text-white">Color:</div>
-        <RouteColorEditor
-          color={color}
-          onChange={c => setColor((outline.color = c))}
-        />
-      </label>
       <label className="flex items-center gap-2">
         <div className="text-white">Width:</div>
         <input
@@ -33,6 +92,80 @@ export function ConnectionOutlineUi({
           className="bg-gray-900 text-white"
         />
       </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Color:</div>
+        <RouteColorEditor
+          color={color}
+          onChange={c => setColor((outline.color = c))}
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Clear:</div>
+        <input
+          type="checkbox"
+          checked={clear}
+          onChange={() => setClear((outline.clear = !clear))}
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Line cap:</div>
+        <select
+          value={lineCap}
+          onChange={e =>
+            setLineCap((outline.lineCap = e.target.value as CanvasLineCap))
+          }
+          className="bg-gray-900 text-white"
+        >
+          <option value="butt">Butt</option>
+          <option value="round">Round</option>
+          <option value="square">Square</option>
+        </select>
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Stroke type:</div>
+        <select
+          value={strokeType}
+          onChange={e => {
+            const newStrokeType = e.target
+              .value as ConnectionOutline['strokeType'];
+            switch (newStrokeType) {
+              case 'dotted':
+                outline.strokeType = 'dotted';
+                (
+                  outline as ConnectionOutline & { strokeType: 'dotted' }
+                ).dottedSpacing = 0;
+                break;
+              case 'dashed':
+                outline.strokeType = 'dashed';
+                (
+                  outline as ConnectionOutline & { strokeType: 'dashed' }
+                ).dashedLength = 0;
+                (
+                  outline as ConnectionOutline & { strokeType: 'dashed' }
+                ).dashedSpacing = 0;
+                break;
+              default:
+                outline.strokeType = 'solid';
+                break;
+            }
+            setStrokeType(newStrokeType);
+          }}
+          className="bg-gray-900 text-white"
+        >
+          <option value="solid">Solid</option>
+          <option value="dotted">Dotted</option>
+          <option value="dashed">Dashed</option>
+        </select>
+      </label>
+      {strokeType === 'dotted' ? (
+        <ConnectionOutlineDotted
+          outline={outline as ConnectionOutline & { strokeType: 'dotted' }}
+        />
+      ) : strokeType === 'dashed' ? (
+        <ConnectionOutlineDashed
+          outline={outline as ConnectionOutline & { strokeType: 'dashed' }}
+        />
+      ) : null}
     </div>
   );
 }
