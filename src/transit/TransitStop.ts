@@ -78,6 +78,9 @@ export class TransitStop implements Actionable, Movable {
   public labels: Set<Label>;
   public pos: Vector2;
   public linked: {
+    // FIXME: It still stays linked if the connection is removed
+    // Either remove this stop with the connection or remove the link when the
+    // connection is removed
     connection: TransitConnection;
   } | null = null;
   public connections: Set<TransitConnection>;
