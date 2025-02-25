@@ -165,6 +165,10 @@ export class Vector2 {
     return Math.acos(this.dot(other) / (this.length() * other.length()));
   }
 
+  isNaN(): boolean {
+    return isNaN(this.x) || isNaN(this.y);
+  }
+
   length(): number {
     return Math.sqrt(this.x * this.x + this.y * this.y);
   }

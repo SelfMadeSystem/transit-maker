@@ -243,12 +243,14 @@ export class TransitConnection implements Actionable {
 
       if (fromRounding) {
         const direction = from.directionTo(to);
-        from = from.add(direction.mult(fromRounding.edgeDist));
+        if (!direction.isNaN())
+          from = from.add(direction.mult(fromRounding.edgeDist));
       }
 
       if (toRounding) {
         const direction = to.directionTo(from);
-        to = to.add(direction.mult(toRounding.edgeDist));
+        if (!direction.isNaN())
+          to = to.add(direction.mult(toRounding.edgeDist));
       }
       return [from, to, lateralOffset, fromRounding, toRounding] as const;
     }
@@ -293,7 +295,6 @@ export class TransitConnection implements Actionable {
       } else {
         const newPos = lineLineIntersection(from, to, center, ogPos);
         if (!newPos) {
-          console.error('no intersection');
           path.lineTo(from.x, from.y);
         } else {
           path.moveTo(newPos.x, newPos.y);
@@ -319,7 +320,6 @@ export class TransitConnection implements Actionable {
       } else {
         const newPos = lineLineIntersection(from, to, center, ogPos);
         if (!newPos) {
-          console.error('no intersection');
           path.lineTo(to.x, to.y);
         } else {
           path.lineTo(newPos.x, newPos.y);
