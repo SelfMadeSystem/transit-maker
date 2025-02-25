@@ -109,7 +109,7 @@ export function getHandle(
   pos = pos.sub(t.getCenterPos()).rotateBy(rotation);
 
   const handleSize = HANDLE_SIZE / zoom;
-  const edgeSize = Math.sqrt(handleSize);
+  const edgeSize = Math.sqrt(HANDLE_SIZE) / zoom;
 
   const size = getSize(t, zoom, absolute);
   const halfSize = size.div(2);
