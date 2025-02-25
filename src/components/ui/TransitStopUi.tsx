@@ -105,7 +105,34 @@ export function TransitStopUi({ stop }: { stop: TransitStop }) {
         <button onClick={addLabel} className="bg-gray-900 text-white">
           Add label
         </button>
-        {style ? <StopStyleUi style={style} unsetStyle={unsetStyle} /> : null}
+        {style ? (
+          <>
+            {style.removable && (
+              <label className="flex items-center gap-2">
+                <div className="text-white">Name:</div>
+                <input
+                  type="text"
+                  defaultValue={style.name}
+                  onChange={e => (style.name = e.target.value)}
+                  className="bg-gray-900 text-white"
+                />
+              </label>
+            )}
+            <StopStyleUi style={style.style} />
+            {style.removable && (
+              <button
+                onClick={() => {
+                  if (!confirm('u sure buddy?')) return;
+                  map.removeSavedStopStyle(id);
+                  unsetStyle();
+                }}
+                className="cursor-pointer rounded-md bg-red-900 text-white"
+              >
+                Remove
+              </button>
+            )}
+          </>
+        ) : null}
       </div>
     </>
   );

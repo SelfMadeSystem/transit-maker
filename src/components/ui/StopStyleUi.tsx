@@ -1,18 +1,8 @@
-import { EditorContext } from '../../EditorContext';
-import { SavedStopStyle } from '../../transit/TransitStop';
+import { StopStyle } from '../../transit/TransitStop';
 import { StopColorEditor } from '../StopColorEditor';
-import { useContext, useState } from 'react';
+import { useState } from 'react';
 
-export function StopStyleUi({
-  unsetStyle,
-  style: savedStyle,
-}: {
-  unsetStyle: () => void;
-  style: SavedStopStyle;
-}) {
-  const { style, id, name: ogName, removable } = savedStyle;
-  const { map } = useContext(EditorContext);
-  const [name, setName] = useState(ogName);
+export function StopStyleUi({ style }: { style: StopStyle }) {
   const [fillColor, setFillColor] = useState(style.fillColor);
   const [strokeColor, setStrokeColor] = useState(style.strokeColor);
   const [edges, setEdges] = useState(style.edges);
@@ -26,17 +16,6 @@ export function StopStyleUi({
 
   return (
     <>
-      {removable && (
-        <label className="flex items-center gap-2">
-          <div className="text-white">Name:</div>
-          <input
-            type="text"
-            value={name}
-            onChange={e => setName((savedStyle.name = e.target.value))}
-            className="bg-gray-900 text-white"
-          />
-        </label>
-      )}
       <label className="flex items-center gap-2">
         <div className="text-white">Fill color:</div>
         <StopColorEditor
@@ -130,18 +109,6 @@ export function StopStyleUi({
           className="bg-gray-900 text-white"
         />
       </label>
-      {removable && (
-        <button
-          onClick={() => {
-            if (!confirm('u sure buddy?')) return;
-            map.removeSavedStopStyle(id);
-            unsetStyle();
-          }}
-          className="cursor-pointer rounded-md bg-red-900 text-white"
-        >
-          Remove
-        </button>
-      )}
     </>
   );
 }

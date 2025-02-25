@@ -112,9 +112,12 @@ export class Label implements Transformable, Actionable {
 
     if (this.style.margin > 0) {
       ctx.save();
+      ctx.strokeStyle = 'black';
+      ctx.fillStyle = 'black';
       ctx.globalCompositeOperation = 'destination-out';
       ctx.lineWidth = this.style.margin * 2;
       ctx.strokeText(this.text, 0, 0);
+      ctx.fillText(this.text, 0, 0);
       ctx.restore();
     }
 
