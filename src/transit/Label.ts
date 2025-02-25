@@ -37,7 +37,7 @@ export class Label implements Transformable, Actionable {
     weight: '400',
     textAlign: 'left',
     textBaseline: 'middle',
-    color: new Color(255, 255, 255),
+    color: Color.WHITE,
     margin: 0.5,
   };
   private cachedDimensions: [tl: Vector2, br: Vector2] | null = null;

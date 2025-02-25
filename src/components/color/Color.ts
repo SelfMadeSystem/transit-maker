@@ -139,4 +139,8 @@ export class Color {
 
     return str;
   }
+
+  static TRANSPARENT = new Color(0, 0, 0, 0);
+  static WHITE = new Color(255, 255, 255);
+  static BLACK = new Color(0, 0, 0);
 }

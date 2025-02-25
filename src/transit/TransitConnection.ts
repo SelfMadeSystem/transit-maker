@@ -1,3 +1,4 @@
+import { Color } from '../components/color/Color';
 import { Path2Dpp } from '../utils/Path2Dpp';
 import { id } from '../utils/id';
 import { angleDelta, wrapAngle2PI } from '../utils/mathUtils';
@@ -5,30 +6,68 @@ import { Vector2, lineLineIntersection, sameHalfPlane } from '../utils/vec';
 import { createStopAction, splitConnectionAction } from './Action';
 import { SnapLine } from './Snapping';
 import { TransitMap } from './TransitMap';
-import { TransitRoute } from './TransitRoute';
+import { RouteColor, TransitRoute } from './TransitRoute';
 import { TransitStop } from './TransitStop';
 import { Actionable, ClickInfo } from './types';
 import { getClosestPoint } from 'svg-path-commander';
 
-export type ConnectionStrokeType = 'solid' | 'dotted' | 'dashed' | 'hidden';
+export type ConnectionStrokeType = 'solid' | 'dotted' | 'dashed';
 
-// Styles only for this individual connection. Other styles should be specific
-// to the route.
-export type ConnectionStyle = {
+type BaseConnectionOutline = {
+  color: RouteColor;
+  width: number;
+  clear: boolean;
   strokeType: ConnectionStrokeType;
+  lineCap: CanvasLineCap;
+};
+
+type DottedConnectionOutline = BaseConnectionOutline & {
+  strokeType: 'dotted';
+  dottedSpacing: number;
+};
+
+type DashedConnectionOutline = BaseConnectionOutline & {
+  strokeType: 'dashed';
+  dashedLength: number;
+  dashedSpacing: number;
+};
+
+type SolidConnectionOutline = BaseConnectionOutline & {
+  strokeType: 'solid';
+};
+
+export type ConnectionOutline =
+  | DottedConnectionOutline
+  | DashedConnectionOutline
+  | SolidConnectionOutline;
+
+export type ConnectionStyle = {
+  outlines: ConnectionOutline[];
+};
+
+export type SharedConnectionStyle = ConnectionStyle & {
+  id: string;
+  name: string;
+};
+
+export type SpecificConnectionStyle = {
   spacingMultiplier: number;
   spacingOffset: number; // [0, 1]
+  hidden: boolean;
   zIndex: number;
 };
 
-export function styleEquals(a: ConnectionStyle, b: ConnectionStyle): boolean {
-  return a.strokeType === b.strokeType;
+export function styleEquals(
+  a: SharedConnectionStyle,
+  b: SharedConnectionStyle,
+): boolean {
+  return a.id === b.id;
 }
 
-export const DEFALUT_CONNECTION_STYLE: ConnectionStyle = {
-  strokeType: 'solid',
+export const DEFALUT_CONNECTION_STYLE: SpecificConnectionStyle = {
   spacingMultiplier: 1,
   spacingOffset: 0,
+  hidden: false,
   zIndex: 0,
 };
 
@@ -55,9 +94,10 @@ export class TransitConnection implements Actionable {
   public lateralOffset: number = 0;
   public fromConnection: TransitConnection | null = null;
   public toConnection: TransitConnection | null = null;
-  public style: ConnectionStyle = {
+  public specificStyle: SpecificConnectionStyle = {
     ...DEFALUT_CONNECTION_STYLE,
   };
+  public sharedStyle: SharedConnectionStyle | null = null;
 
   constructor(
     map: TransitMap,
@@ -70,6 +110,10 @@ export class TransitConnection implements Actionable {
     this.to = to;
     this.route = route;
     this.reAdd();
+  }
+
+  getStyle(): ConnectionStyle {
+    return this.sharedStyle ?? this.route.style.connectionStyle;
   }
 
   reAdd(): void {
@@ -118,97 +162,100 @@ export class TransitConnection implements Actionable {
     ];
   }
 
-  preDraw(ctx: CanvasRenderingContext2D): void {
-    if (this.route.style.margin <= 0 || this.style.strokeType === 'hidden')
-      return;
+  // preDraw(ctx: CanvasRenderingContext2D): void {
+  //   if (this.route.style.margin <= 0 || this.specificStyle.strokeType === 'hidden')
+  //     return;
 
-    const lineWidth = this.route.style.lineWidth;
-    ctx.save();
+  //   const lineWidth = this.route.style.lineWidth;
+  //   ctx.save();
 
-    ctx.lineCap = 'butt';
+  //   ctx.lineCap = 'butt';
 
-    const { path } = this.getPath();
+  //   ctx.lineWidth = lineWidth + this.route.style.margin * 2;
+  //   ctx.strokeStyle = '#000';
+  //   // This globalCompositeOperation is used to add the margin to the line.
+  //   // It works by removing all the regions "behind" the line, which, in
+  //   // hindsight, is like duh super obvious but this took me idk like 2 days to
+  //   // figure out. I felt like a genius when I finally got it though.
+  //   ctx.globalCompositeOperation = 'destination-out';
+  //   ctx.stroke(path);
+  //   ctx.restore();
+  // }
 
-    ctx.lineWidth = lineWidth + this.route.style.margin * 2;
-    ctx.strokeStyle = '#000';
-    // This globalCompositeOperation is used to add the margin to the line.
-    // It works by removing all the regions "behind" the line, which, in
-    // hindsight, is like duh super obvious but this took me idk like 2 days to
-    // figure out. I felt like a genius when I finally got it though.
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.stroke(path);
-    ctx.restore();
+  getColor(color: RouteColor): Color {
+    if (color === 'route') {
+      return this.route.style.color;
+    }
+    return color;
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
-    if (this.style.strokeType === 'hidden') return;
-    let lineWidth = this.route.style.lineWidth;
-    let lineLength = 0;
-    let lineDist = 0;
-    ctx.save();
-    switch (this.style.strokeType) {
-      case 'solid':
-        ctx.setLineDash([]);
-        ctx.lineCap = this.route.style.lineCap;
-        break;
-      case 'dotted':
-        lineWidth = this.route.style.dottedWidth;
-        ctx.setLineDash([
-          0,
-          this.route.style.dottedSpacing * this.style.spacingMultiplier,
-        ]);
-        lineDist =
-          this.route.style.dottedSpacing * this.style.spacingMultiplier;
-        ctx.lineCap = 'round';
-        break;
-      case 'dashed':
-        lineWidth = this.route.style.dashedWidth;
-        ctx.setLineDash([
-          this.route.style.dashedLength,
-          this.route.style.dashedSpacing * this.style.spacingMultiplier,
-        ]);
-        lineLength = this.route.style.dashedLength;
-        lineDist =
-          this.route.style.dashedLength +
-          this.route.style.dashedSpacing * this.style.spacingMultiplier;
-        ctx.lineCap = this.route.style.dashedLineCap;
-        break;
-    }
+  *draw(ctx: CanvasRenderingContext2D) {
+    if (this.specificStyle.hidden) return;
 
     const { path, length } = this.getPath(true);
-    ctx.lineDashOffset =
-      lineLength * 0.5 + lineDist * this.style.spacingOffset - length / 2;
-
-    ctx.lineWidth = lineWidth;
-    ctx.strokeStyle = this.route.style.color.hex();
-    ctx.stroke(path);
-    ctx.restore();
-  }
-
-  postDraw(ctx: CanvasRenderingContext2D): void {
-    if (this.style.strokeType === 'hidden') return;
-    if (
-      this.route.style.strokeType === 'split' &&
-      this.style.strokeType === 'solid'
-    ) {
-      const { path } = this.getPath();
+    const style = this.getStyle();
+    for (const outline of style.outlines) {
+      const { width, clear, color: oultineColor, lineCap } = outline;
+      const color = this.getColor(oultineColor);
+      let lineLength = 0;
+      let lineDist = 0;
+      ctx.lineCap = lineCap;
       ctx.save();
-      ctx.lineCap = this.route.style.dashedLineCap;
-      ctx.strokeStyle = this.route.style.innerColor.hex();
-      ctx.lineWidth = this.route.style.innerWidth;
+      switch (outline.strokeType) {
+        case 'solid':
+          ctx.setLineDash([]);
+          break;
+        case 'dotted':
+          ctx.setLineDash([
+            0,
+            outline.dottedSpacing * this.specificStyle.spacingMultiplier,
+          ]);
+          lineDist =
+            outline.dottedSpacing * this.specificStyle.spacingMultiplier;
+          ctx.lineCap = 'round';
+          break;
+        case 'dashed':
+          ctx.setLineDash([
+            outline.dashedLength,
+            outline.dashedSpacing * this.specificStyle.spacingMultiplier,
+          ]);
+          lineLength = outline.dashedLength;
+          lineDist =
+            outline.dashedLength +
+            outline.dashedSpacing * this.specificStyle.spacingMultiplier;
+          break;
+      }
+
+      ctx.lineDashOffset =
+        lineLength * 0.5 +
+        lineDist * this.specificStyle.spacingOffset -
+        length / 2;
+
+      ctx.lineWidth = width;
+      if (clear && color.a < 1) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.strokeStyle = 'black';
+        ctx.stroke(path);
+        ctx.restore();
+      }
+
+      ctx.strokeStyle = color.hex();
       ctx.stroke(path);
       ctx.restore();
+      yield;
     }
   }
 
   drawSelected(ctx: CanvasRenderingContext2D): void {
     ctx.save();
-    const lineWidth = this.route.style.dottedWidth;
+    const style = this.getStyle();
+    const outline = style.outlines[0];
+    const lineWidth = outline.width;
     ctx.setLineDash([lineWidth, lineWidth]);
     ctx.lineDashOffset = (Date.now() / 200) % (lineWidth * 2);
     ctx.strokeStyle = 'white';
-    ctx.lineWidth =
-      this.route.style.lineWidth + this.route.style.margin * 2 + 2;
+    ctx.lineWidth = outline.width + 2;
     const { path } = this.getPath();
     ctx.stroke(path);
     ctx.restore();
@@ -344,7 +391,8 @@ export class TransitConnection implements Actionable {
   }
 
   isOver(x: number, y: number, ctx: CanvasRenderingContext2D) {
-    const width = this.route.style.lineWidth + this.route.style.margin * 2 + 2;
+    const style = this.getStyle();
+    const width = style.outlines[0].width + 2;
     const { path } = this.getPath();
     ctx.lineWidth = width;
     return ctx.isPointInStroke(path, x, y);
@@ -464,7 +512,14 @@ export class TransitConnection implements Actionable {
   }
 
   inheritStyle(connection: TransitConnection) {
-    this.style = { ...connection.style };
+    if (connection.sharedStyle) {
+      this.sharedStyle = connection.sharedStyle;
+    }
+    if (connection.specificStyle.hidden) {
+      this.specificStyle.hidden = true;
+    }
+    this.specificStyle.zIndex = connection.specificStyle.zIndex;
+
     if (this.from === connection.from) {
       this.fromConnection = connection.fromConnection;
     }

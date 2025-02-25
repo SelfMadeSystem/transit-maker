@@ -1,33 +1,19 @@
 import { Color } from '../components/color/Color';
 import { id } from '../utils/id';
+import { ConnectionStyle } from './TransitConnection';
 import { TransitMap } from './TransitMap';
 import { DEFAULT_STOP_STYLE, StopStyle } from './TransitStop';
 
-// The REM has the `split` style. It's very weird, I've never seen it on any other transit map.
-export type StrokeType = 'solid' | 'split';
+export type RouteColor = Color | 'route';
 
 export type RouteStyle = {
   color: Color;
-  lineWidth: number;
-  strokeType: StrokeType;
-  lineCap: CanvasLineCap;
-  // only for split lines
-  innerWidth: number;
-  innerColor: Color;
-  // only for dotted lines
-  dottedWidth: number;
-  dottedSpacing: number;
-  // only for dashed lines
-  dashedWidth: number;
-  dashedLength: number;
-  dashedSpacing: number;
-  dashedLineCap: CanvasLineCap;
-  // etc.
-  roundRadius: number;
-  roundDistInstead: boolean; // distance from original instead of radius of circle
-  margin: number;
+  connectionStyle: ConnectionStyle;
   stopStyle: StopStyle;
   terminusStyle: StopStyle;
+  lateralOffset: number;
+  roundRadius: number;
+  roundDistInstead: boolean; // distance from original instead of radius of circle
   zIndex: number;
 };
 
@@ -42,20 +28,27 @@ export class TransitRoute {
     this.name = name;
     this.style = {
       color,
-      lineWidth: 2,
-      strokeType: 'solid',
-      lineCap: 'round',
-      innerWidth: 1,
-      innerColor: new Color(0, 0, 0),
-      dottedWidth: 2,
-      dottedSpacing: 5,
-      dashedWidth: 2,
-      dashedLength: 10,
-      dashedSpacing: 5,
-      dashedLineCap: 'butt',
+      connectionStyle: {
+        outlines: [
+          {
+            color: Color.TRANSPARENT,
+            width: 4,
+            clear: true,
+            strokeType: 'solid',
+            lineCap: 'butt',
+          },
+          {
+            color: 'route',
+            width: 2,
+            clear: false,
+            strokeType: 'solid',
+            lineCap: 'round',
+          },
+        ],
+      },
+      lateralOffset: 10,
       roundRadius: 10,
       roundDistInstead: true,
-      margin: 1,
       stopStyle: {
         ...DEFAULT_STOP_STYLE,
       },
@@ -70,6 +63,6 @@ export class TransitRoute {
 
 // TODO: Some way to make this map-specific
 export const createDefaultRoute = (map: TransitMap) => {
-  const route = new TransitRoute(map, 'Transfer', new Color(255, 255, 255));
+  const route = new TransitRoute(map, 'Transfer', Color.WHITE);
   return route;
 };

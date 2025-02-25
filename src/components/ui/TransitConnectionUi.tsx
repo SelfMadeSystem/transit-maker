@@ -12,15 +12,17 @@ export function TransitConnectionUi({
   connection: TransitConnection;
   map: TransitMap;
 }) {
-  const [strokeType, setStrokeType] = useState(connection.style.strokeType);
+  const [strokeType, setStrokeType] = useState(
+    connection.specificStyle.strokeType,
+  );
   const [spacingMultiplier, setSpacingMultiplier] = useState(
-    connection.style.spacingMultiplier,
+    connection.specificStyle.spacingMultiplier,
   );
   const [spacingOffset, setSpacingOffset] = useState(
-    connection.style.spacingOffset,
+    connection.specificStyle.spacingOffset,
   );
   const [route, setRoute] = useState(connection.route);
-  const [zIndex, setZIndex] = useState(connection.style.zIndex);
+  const [zIndex, setZIndex] = useState(connection.specificStyle.zIndex);
   const { routes } = map;
 
   return (
@@ -33,7 +35,7 @@ export function TransitConnectionUi({
             value={strokeType}
             onChange={e =>
               setStrokeType(
-                (connection.style.strokeType = e.target
+                (connection.specificStyle.strokeType = e.target
                   .value as ConnectionStrokeType),
               )
             }
@@ -57,7 +59,7 @@ export function TransitConnectionUi({
                 step="0.01"
                 onChange={e =>
                   setSpacingMultiplier(
-                    (connection.style.spacingMultiplier = parseFloat(
+                    (connection.specificStyle.spacingMultiplier = parseFloat(
                       e.target.value,
                     )),
                   )
@@ -75,7 +77,7 @@ export function TransitConnectionUi({
                 step="0.01"
                 onChange={e =>
                   setSpacingOffset(
-                    (connection.style.spacingOffset = parseFloat(
+                    (connection.specificStyle.spacingOffset = parseFloat(
                       e.target.value,
                     )),
                   )
@@ -111,7 +113,9 @@ export function TransitConnectionUi({
             type="number"
             value={zIndex}
             onChange={e =>
-              setZIndex((connection.style.zIndex = parseFloat(e.target.value)))
+              setZIndex(
+                (connection.specificStyle.zIndex = parseFloat(e.target.value)),
+              )
             }
             className="bg-gray-900 text-white"
           />

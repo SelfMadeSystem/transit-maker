@@ -4,22 +4,15 @@ import { Vector2 } from '../utils/vec';
 import { Action, connectStopsAction } from './Action';
 import { Label } from './Label';
 import { SnapInfo, SnapLine } from './Snapping';
-import {
-  ConnectionStyle,
-  DEFALUT_CONNECTION_STYLE,
-  TransitConnection,
-  styleEquals,
-} from './TransitConnection';
+import { TransitConnection } from './TransitConnection';
 import { TransitMap } from './TransitMap';
-import { TransitRoute } from './TransitRoute';
+import { RouteColor, TransitRoute } from './TransitRoute';
 import { Actionable, ClickInfo, Movable, PosWithKeys } from './types';
 import { getPointAtLength, getPropertiesAtPoint } from 'svg-path-commander';
 
-export type StopColor = Color | 'route';
-
 export type StopStyle = {
-  fillColor: StopColor;
-  strokeColor: StopColor;
+  fillColor: RouteColor;
+  strokeColor: RouteColor;
   /**
    * 0: circle :)
    * 1-2: not supported
@@ -46,7 +39,7 @@ export type SavedStopStyle = {
 };
 
 export const DEFAULT_STOP_STYLE: StopStyle = {
-  fillColor: new Color(0, 0, 0),
+  fillColor: Color.BLACK,
   strokeColor: 'route',
   edges: 0,
   edgeOrientation: 0,
@@ -148,11 +141,7 @@ export class TransitStop implements Actionable, Movable {
     if (!firstConnection) {
       return 0;
     }
-    return (
-      firstConnection.route.style.lineWidth +
-      firstConnection.route.style.margin +
-      2
-    );
+    return firstConnection.route.style.lateralOffset;
   }
 
   updateLateralConnections(otherStop: TransitStop) {
@@ -197,8 +186,8 @@ export class TransitStop implements Actionable, Movable {
   getStyle(): StopStyle {
     if (this.hidden) {
       return {
-        fillColor: new Color(0, 0, 0),
-        strokeColor: new Color(0, 0, 0),
+        fillColor: Color.BLACK,
+        strokeColor: Color.BLACK,
         edges: 0,
         edgeOrientation: 0,
         edgeFollowsRoute: false,
@@ -228,17 +217,6 @@ export class TransitStop implements Actionable, Movable {
     return this.map.defaultRoute;
   }
 
-  getConnectionStyle(): ConnectionStyle {
-    const connections = [...this.connections];
-    const style = connections[0]?.style;
-    if (connections.every(connection => styleEquals(style, connection.style))) {
-      return style;
-    }
-    return {
-      ...DEFALUT_CONNECTION_STYLE,
-    };
-  }
-
   connectionsByStop(): Map<TransitStop, TransitConnection[]> {
     const connections: Map<TransitStop, TransitConnection[]> = new Map();
     for (const connection of this.connections) {
@@ -263,7 +241,7 @@ export class TransitStop implements Actionable, Movable {
     label.stop = this;
   }
 
-  getStopColor(c: StopColor): Color {
+  getStopColor(c: RouteColor): Color {
     if (c === 'route') {
       const routes = this.getRoutes();
       if (routes.size === 1) {
@@ -272,10 +250,7 @@ export class TransitStop implements Actionable, Movable {
         return this.map.defaultRoute.style.color;
       }
     }
-    if (c) {
-      return c;
-    }
-    return new Color(0, 0, 0);
+    return c;
   }
 
   getDrawPos() {
@@ -595,15 +570,17 @@ export class TransitStop implements Actionable, Movable {
           c.inheritStyle(connection);
         });
       this.updateLateralConnections(stop);
-    } else {
-      const connectionStyle = this.getConnectionStyle();
+    } else if (vals.length === 1) {
+      const onlyConnection = vals[0][0];
       const connection = new TransitConnection(
         this.map,
         this,
         stop,
         this.getRoute(),
       );
-      connection.style = { ...connectionStyle };
+      connection.inheritStyle(onlyConnection);
+    } else {
+      new TransitConnection(this.map, this, stop, this.getRoute());
     }
 
     const action = {

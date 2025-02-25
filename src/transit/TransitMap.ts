@@ -33,9 +33,8 @@ export class TransitMap {
   constructor() {
     this.defaultRoute = createDefaultRoute(this);
     this.defaultRoute.style.roundRadius = 0;
-    this.defaultRoute.style.margin = 0;
     this.defaultRoute.style.zIndex = 1;
-    this.defaultRoute.style.stopStyle.strokeColor = new Color(255, 255, 255);
+    this.defaultRoute.style.stopStyle.strokeColor = Color.WHITE;
     this.defaultRoute.style.terminusStyle.strokeColor = new Color(
       255,
       255,
@@ -116,7 +115,7 @@ export class TransitMap {
     for (const connection of this.connections) {
       const routeIndex = this.routes.indexOf(connection.route);
       const routeZ = connection.route.style.zIndex;
-      const connectionZ = connection.style.zIndex;
+      const connectionZ = connection.specificStyle.zIndex;
       const zIndex = routeZ + connectionZ + routeIndex / routeLen;
       if (!connections.has(zIndex)) {
         connections.set(zIndex, []);
@@ -138,14 +137,20 @@ export class TransitMap {
       image.draw(ctx);
     }
     for (const connections of connectionsByZ) {
+      const iters = new Set<Generator>();
       for (const connection of connections) {
         if (selected === connection) {
           connection.drawSelected(ctx);
         }
-        connection.preDraw(ctx);
+        iters.add(connection.draw(ctx));
       }
-      connections.forEach(c => c.draw(ctx));
-      connections.forEach(c => c.postDraw(ctx));
+      while (iters.size) {
+        for (const iter of iters) {
+          if (iter.next().done) {
+            iters.delete(iter);
+          }
+        }
+      }
     }
     for (const stop of this.stops) {
       if (selected === stop) {
