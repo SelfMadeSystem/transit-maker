@@ -36,6 +36,13 @@ export type StopStyle = {
   margin: number;
 };
 
+export type SavedStopStyle = {
+  style: StopStyle;
+  name: string;
+  id: string;
+  removable: boolean;
+};
+
 export const DEFAULT_STOP_STYLE: StopStyle = {
   fillColor: new Color(0, 0, 0),
   strokeColor: 'route',
@@ -72,7 +79,7 @@ export class TransitStop implements Actionable, Movable {
   public connections: Set<TransitConnection>;
   public hidden: boolean = false;
   public roundRadius: number | undefined;
-  public style?: StopStyle;
+  public style?: SavedStopStyle;
 
   constructor(map: TransitMap, labels: Label[], pos: Vector2) {
     this.map = map;
@@ -182,7 +189,7 @@ export class TransitStop implements Actionable, Movable {
 
   getStyle(): StopStyle {
     if (this.style) {
-      return this.style;
+      return this.style.style;
     }
     const key = this.connections.size === 1 ? 'terminusStyle' : 'stopStyle';
     const routes = this.getRoutes();

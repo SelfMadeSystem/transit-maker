@@ -1,3 +1,4 @@
+import { Color } from '../components/color/Color';
 import { OrderedSet } from '../utils/OrderedSet';
 import { id } from '../utils/id';
 import { DecorationImage } from './DecorationImage';
@@ -5,7 +6,7 @@ import { History } from './History';
 import { Label } from './Label';
 import { TransitConnection } from './TransitConnection';
 import { TransitRoute, createDefaultRoute } from './TransitRoute';
-import { TransitStop } from './TransitStop';
+import { SavedStopStyle, TransitStop } from './TransitStop';
 import { ActionableItem } from './types';
 
 export class TransitMap {
@@ -20,25 +21,60 @@ export class TransitMap {
   // - legend of all routes, icons, etc.
   // - compass rose
   // - extra text (e.g. copyright, title, etc.)
-  public routes: OrderedSet<TransitRoute>;
-  public labels: Set<Label>;
-  public stops: Set<TransitStop>;
-  public connections: Set<TransitConnection>;
-  public images: Set<DecorationImage>;
+  public routes: OrderedSet<TransitRoute> = new OrderedSet();
+  public labels: Set<Label> = new Set();
+  public stops: Set<TransitStop> = new Set();
+  public connections: Set<TransitConnection> = new Set();
+  public images: Set<DecorationImage> = new Set();
   public defaultRoute: TransitRoute;
-  public history: History;
+  public history: History = new History(() => {});
+  public savedStopStyles: Map<string, SavedStopStyle> = new Map();
 
   constructor() {
-    this.history = new History(() => {});
-    this.routes = new OrderedSet();
-    this.labels = new Set();
-    this.stops = new Set();
-    this.connections = new Set();
-    this.images = new Set();
     this.defaultRoute = createDefaultRoute(this);
     this.defaultRoute.style.roundRadius = 0;
     this.defaultRoute.style.margin = 0;
     this.defaultRoute.style.zIndex = 1;
+    this.defaultRoute.style.stopStyle.strokeColor = new Color(255, 255, 255);
+    this.defaultRoute.style.terminusStyle.strokeColor = new Color(
+      255,
+      255,
+      255,
+    );
+  }
+
+  getRoutesStopStyles(): Map<string, SavedStopStyle> {
+    const styles = new Map<string, SavedStopStyle>();
+    for (const route of this.routes) {
+      styles.set(route.name, {
+        name: route.name,
+        id: '__route__' + route.name,
+        style: route.style.stopStyle,
+        removable: false,
+      });
+      styles.set(route.name + ' terminus', {
+        name: route.name + ' terminus',
+        id: '__route__' + route.name + ' terminus',
+        style: route.style.terminusStyle,
+        removable: false,
+      });
+    }
+    return styles;
+  }
+
+  getAllStopStyles(): SavedStopStyle[] {
+    return [
+      ...this.savedStopStyles.values(),
+      ...this.getRoutesStopStyles().values(),
+    ];
+  }
+
+  addSavedStopStyle(style: SavedStopStyle) {
+    this.savedStopStyles.set(style.id, style);
+  }
+
+  removeSavedStopStyle(id: string) {
+    this.savedStopStyles.delete(id);
   }
 
   getSelectable(
