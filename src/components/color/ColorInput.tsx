@@ -1,6 +1,10 @@
 import { Vector2 } from '../../utils/vec';
 import { Color } from './Color';
-import { HueSelectionCanvas, SaturationValueCanvas } from './ColorCanvas';
+import {
+  AlphaCanvas,
+  HueSelectionCanvas,
+  SaturationValueCanvas,
+} from './ColorCanvas';
 import ColorJS from 'colorjs.io';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -74,6 +78,17 @@ export default function ColorInput({ color, setColor }: ColorCanvasProps) {
           hue={color.hue}
           setHue={hue => {
             const c = color.withHue(hue);
+            setColor(c);
+            setHex(c.hex());
+          }}
+        />
+      </div>
+      <div className="relative h-4 w-full">
+        <AlphaCanvas
+          color={color}
+          alpha={color.a}
+          setAlpha={a => {
+            const c = color.withAlpha(a);
             setColor(c);
             setHex(c.hex());
           }}

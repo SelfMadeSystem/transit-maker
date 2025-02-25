@@ -120,12 +120,23 @@ export class Color {
     return new Color(r, g, b, this.a, this.hue);
   }
 
+  withAlpha(a: number) {
+    return new Color(this.r, this.g, this.b, a, this.hue);
+  }
+
   hex() {
     const r = Math.round(this.r);
     const g = Math.round(this.g);
     const b = Math.round(this.b);
-    return `#${r.toString(16).padStart(2, '0')}${g
+    const a = Math.round(this.a * 255);
+    let str = `#${r.toString(16).padStart(2, '0')}${g
       .toString(16)
       .padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+
+    if (a !== 255) {
+      str += a.toString(16).padStart(2, '0');
+    }
+
+    return str;
   }
 }

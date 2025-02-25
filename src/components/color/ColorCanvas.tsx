@@ -1,5 +1,5 @@
 import { clamp } from '../../utils/mathUtils';
-import { hsvToRgb } from './Color';
+import { Color, hsvToRgb } from './Color';
 import { useEffect, useRef } from 'react';
 
 export function HueSelectionCanvas({
@@ -163,6 +163,86 @@ export function SaturationValueCanvas({
           borderColor: value > 0.5 ? 'black' : 'white',
           left: `calc(${saturation * 100}% - 4px)`,
           top: `calc(${(1 - value) * 100}% - 4px)`,
+        }}
+      />
+    </div>
+  );
+}
+
+export function AlphaCanvas({
+  color,
+  alpha,
+  setAlpha,
+}: {
+  color: Color;
+  alpha: number;
+  setAlpha: (v: number) => void;
+}) {
+  const gradientRef = useRef<HTMLCanvasElement>(null);
+  const selectorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const canvas = gradientRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Failed to get 2d context');
+
+    const width = canvas.width;
+    const height = canvas.height;
+    const imageData = ctx.createImageData(width, height);
+
+    for (let x = 0; x < width; x++) {
+      const alpha = x / width;
+      const i = x * 4;
+      imageData.data[i] = color.r;
+      imageData.data[i + 1] = color.g;
+      imageData.data[i + 2] = color.b;
+      imageData.data[i + 3] = alpha * 255;
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+
+    const changeColor = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width;
+      const alpha = clamp(x, 0, 1);
+      setAlpha(alpha);
+    };
+    const contoller = new AbortController();
+
+    canvas.addEventListener(
+      'mousedown',
+      e => {
+        changeColor(e);
+        e.preventDefault();
+        window.addEventListener('mousemove', changeColor);
+        window.addEventListener('mouseup', () => {
+          window.removeEventListener('mousemove', changeColor);
+        });
+      },
+      { signal: contoller.signal },
+    );
+
+    return () => {
+      contoller.abort();
+    };
+  }, [alpha, color, setAlpha]);
+
+  return (
+    <div className="absloute inset-0 h-full w-full">
+      <canvas
+        className="absolute inset-0 h-full w-full"
+        ref={gradientRef}
+        width={360}
+        height={1}
+      />
+      <div
+        ref={selectorRef}
+        className="absolute top-0 left-0 box-content h-full w-[2px] border-x-2"
+        style={{
+          borderColor: alpha * color.value > 0.5 ? 'black' : 'white',
+          left: `calc(${alpha} * (100% - 4px))`,
         }}
       />
     </div>
