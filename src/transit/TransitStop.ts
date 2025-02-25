@@ -34,6 +34,8 @@ export type StopStyle = {
   radius: number;
   strokeWidth: number;
   margin: number;
+  clearFill: boolean;
+  clearStroke: boolean;
 };
 
 export type SavedStopStyle = {
@@ -52,6 +54,8 @@ export const DEFAULT_STOP_STYLE: StopStyle = {
   radius: 5,
   strokeWidth: 2,
   margin: 2,
+  clearFill: false,
+  clearStroke: false,
 };
 
 export type RoundingCalculation = {
@@ -198,6 +202,8 @@ export class TransitStop implements Actionable, Movable {
         radius: 5,
         strokeWidth: 0,
         margin: 0,
+        clearFill: false,
+        clearStroke: false,
       };
     }
     if (this.style) {
@@ -254,19 +260,19 @@ export class TransitStop implements Actionable, Movable {
     label.stop = this;
   }
 
-  getStopColor(c: StopColor): string {
+  getStopColor(c: StopColor): Color {
     if (c === 'route') {
       const routes = this.getRoutes();
       if (routes.size === 1) {
-        return routes.values().next().value!.style.color.hex();
+        return routes.values().next().value!.style.color;
       } else {
-        return this.map.defaultRoute.style.color.hex();
+        return this.map.defaultRoute.style.color;
       }
     }
     if (c) {
-      return c.hex();
+      return c;
     }
-    return '#000';
+    return new Color(0, 0, 0);
   }
 
   getDrawPos() {
@@ -357,8 +363,10 @@ export class TransitStop implements Actionable, Movable {
       ctx.translate(roundingStuff.stopOffset.x, roundingStuff.stopOffset.y);
     }
     const style = this.getStyle();
-    ctx.strokeStyle = this.getStopColor(style.strokeColor);
-    ctx.fillStyle = this.getStopColor(style.fillColor);
+    const strokeColor = this.getStopColor(style.strokeColor);
+    const fillColor = this.getStopColor(style.fillColor);
+    ctx.strokeStyle = strokeColor.hex();
+    ctx.fillStyle = fillColor.hex();
     ctx.lineWidth = style.strokeWidth;
     ctx.beginPath();
     if (style.edges === 0) {
@@ -395,11 +403,14 @@ export class TransitStop implements Actionable, Movable {
       ctx.closePath();
       ctx.restore();
     }
-    if (style.margin) {
+    if (style.margin > 0 || style.clearFill || style.clearStroke) {
       ctx.save();
+      ctx.strokeStyle = 'black';
+      ctx.fillStyle = 'black';
       ctx.globalCompositeOperation = 'destination-out';
       ctx.lineWidth = style.strokeWidth + style.margin;
-      ctx.stroke();
+      if (style.margin > 0 || style.clearStroke) ctx.stroke();
+      if (style.clearFill) ctx.fill();
       ctx.restore();
     }
     ctx.fill();

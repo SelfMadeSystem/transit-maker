@@ -110,7 +110,7 @@ export class Label implements Transformable, Actionable {
     ctx.textAlign = this.style.textAlign;
     ctx.textBaseline = this.style.textBaseline;
 
-    if (this.style.margin > 0) {
+    if (this.style.margin > 0 || this.style.color.a < 1) {
       ctx.save();
       ctx.strokeStyle = 'black';
       ctx.fillStyle = 'black';

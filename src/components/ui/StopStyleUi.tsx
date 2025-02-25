@@ -13,6 +13,8 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
   const [radius, setRadius] = useState(style.radius);
   const [strokeWidth, setStrokeWidth] = useState(style.strokeWidth);
   const [margin, setMargin] = useState(style.margin);
+  const [clearFill, setClearFill] = useState(style.clearFill);
+  const [clearStroke, setClearStroke] = useState(style.clearStroke);
 
   return (
     <>
@@ -107,6 +109,22 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
           min="0"
           onChange={e => setMargin((style.margin = parseFloat(e.target.value)))}
           className="bg-gray-900 text-white"
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Clear fill:</div>
+        <input
+          type="checkbox"
+          checked={clearFill}
+          onChange={() => setClearFill((style.clearFill = !clearFill))}
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Clear stroke:</div>
+        <input
+          type="checkbox"
+          checked={clearStroke}
+          onChange={() => setClearStroke((style.clearStroke = !clearStroke))}
         />
       </label>
     </>
