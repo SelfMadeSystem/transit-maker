@@ -54,7 +54,7 @@ export function TransitStopUi({ stop }: { stop: TransitStop }) {
                   const style: SavedStopStyle = {
                     name: `New style ${id}`,
                     id: `new-${id}`,
-                    style: stop.getStyle(),
+                    style: { ...stop.getStyle() },
                     removable: true,
                   };
                   map.addSavedStopStyle(style);

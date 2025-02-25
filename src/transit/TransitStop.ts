@@ -188,6 +188,18 @@ export class TransitStop implements Actionable, Movable {
   }
 
   getStyle(): StopStyle {
+    if (this.hidden) {
+      return {
+        fillColor: new Color(0, 0, 0),
+        strokeColor: new Color(0, 0, 0),
+        edges: 0,
+        edgeOrientation: 0,
+        edgeFollowsRoute: false,
+        radius: 5,
+        strokeWidth: 0,
+        margin: 0,
+      };
+    }
     if (this.style) {
       return this.style.style;
     }
@@ -425,7 +437,12 @@ export class TransitStop implements Actionable, Movable {
 
   isOver(x: number, y: number) {
     const pos = this.getDrawPos();
-    return Math.sqrt((pos.x - x) ** 2 + (pos.y - y) ** 2) < 5;
+    const style = this.getStyle();
+
+    return (
+      pos.distSq(new Vector2(x, y)) <=
+      (style.radius + style.strokeWidth / 2 + style.margin) ** 2
+    );
   }
 
   getPos(): Vector2 {
