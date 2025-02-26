@@ -59,10 +59,13 @@ type ReturnType<T extends Record<string, unknown>> = {
 };
 
 type CreateProps<T extends Record<string, unknown>> = {
-  props: React.HTMLProps<HTMLCanvasElement>;
   autoResize?: boolean;
   setup: (
-    canvas: HTMLCanvasElement,
+    a: {
+      bgCanvas: HTMLCanvasElement;
+      canvas: HTMLCanvasElement;
+      fgCanvas: HTMLCanvasElement;
+    },
     props: T,
     draw: () => void,
   ) => ReturnType<T>;
@@ -71,7 +74,6 @@ type CreateProps<T extends Record<string, unknown>> = {
 export default function createCanvasComponent<
   T extends Record<string, unknown>,
 >({
-  props,
   autoResize,
   setup,
 }: CreateProps<T>): React.FC<
@@ -85,248 +87,265 @@ export default function createCanvasComponent<
   }: React.HTMLProps<HTMLCanvasElement> & {
     props: T;
   }) {
+    const [bgCanvas, setBgCanvas] = useState<HTMLCanvasElement | null>(null);
     const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
+    const [fgCanvas, setFgCanvas] = useState<HTMLCanvasElement | null>(null);
     const didMount = useRef(false);
     const resultRef = useRef<ReturnType<T>>();
     const prevProps = usePrevious(props1);
 
     useEffect(() => {
-      if (!didMount.current && canvas) {
-        const { signal, abort } = new AbortController();
-        if (autoResize) {
-          canvas.width = canvas.clientWidth;
-          canvas.height = canvas.clientHeight;
-        }
-        let lastTime = performance.now();
-        function draw(t: number) {
-          const now = performance.now();
-          const dt = now - lastTime;
-          lastTime = now;
-          if (result?.update) result.update!(dt, t);
-        }
+      if (didMount.current || !bgCanvas || !canvas || !fgCanvas) return;
 
-        function drawNow() {
-          draw(document.timeline.currentTime as number);
-        }
-
-        const result = setup(canvas, props1, drawNow);
-        resultRef.current = result;
-        didMount.current = true;
-
-        if (!result?.manualUpdate) loopAnimationFrame(draw, { signal });
-        else requestAnimationFrame(draw);
-
-        if (result?.mouseMove) {
-          window.addEventListener(
-            'mousemove',
-            (e: MouseEvent) => {
-              const rect = canvas.getBoundingClientRect();
-              result.mouseMove!(e, {
-                mouseX: e.clientX - rect.left,
-                mouseY: e.clientY - rect.top,
-              });
-            },
-            { signal },
-          );
-        }
-
-        if (result?.mouseDown) {
-          canvas.addEventListener(
-            'mousedown',
-            (e: MouseEvent) => {
-              const rect = canvas.getBoundingClientRect();
-              result.mouseDown!(e, {
-                mouseX: e.clientX - rect.left,
-                mouseY: e.clientY - rect.top,
-              });
-            },
-            { signal, passive: false },
-          );
-          canvas.addEventListener(
-            'contextmenu',
-            (e: MouseEvent) => {
-              e.preventDefault();
-            },
-            { signal },
-          );
-        }
-
-        if (result?.mouseDbClick) {
-          canvas.addEventListener(
-            'dblclick',
-            (e: MouseEvent) => {
-              const rect = canvas.getBoundingClientRect();
-              result.mouseDbClick!(e, {
-                mouseX: e.clientX - rect.left,
-                mouseY: e.clientY - rect.top,
-              });
-            },
-            { signal },
-          );
-        }
-
-        if (result?.mouseUp) {
-          window.addEventListener(
-            'mouseup',
-            (e: MouseEvent) => {
-              const rect = canvas.getBoundingClientRect();
-              result.mouseUp!(e, {
-                mouseX: e.clientX - rect.left,
-                mouseY: e.clientY - rect.top,
-              });
-            },
-            { signal },
-          );
-        }
-
-        if (result?.touchStart) {
-          window.addEventListener(
-            'touchstart',
-            (e: TouchEvent) => {
-              const rect = canvas.getBoundingClientRect();
-              const touch = e.touches[0];
-              result.touchStart!(e, {
-                mouseX: touch.clientX - rect.left,
-                mouseY: touch.clientY - rect.top,
-              });
-            },
-            { signal },
-          );
-        }
-
-        if (result?.touchMove) {
-          window.addEventListener(
-            'touchmove',
-            (e: TouchEvent) => {
-              const rect = canvas.getBoundingClientRect();
-              const touch = e.touches[0];
-              result.touchMove!(e, {
-                mouseX: touch.clientX - rect.left,
-                mouseY: touch.clientY - rect.top,
-              });
-            },
-            { signal },
-          );
-        }
-
-        if (result?.touchEnd) {
-          window.addEventListener(
-            'touchend',
-            (e: TouchEvent) => {
-              const rect = canvas.getBoundingClientRect();
-              const touch = e.changedTouches[0];
-              result.touchEnd!(e, {
-                mouseX: touch.clientX - rect.left,
-                mouseY: touch.clientY - rect.top,
-              });
-            },
-            { signal },
-          );
-        }
-
-        if (result?.keyDown) {
-          window.addEventListener(
-            'keydown',
-            (e: KeyboardEvent) => {
-              result.keyDown!(e);
-            },
-            { signal },
-          );
-        }
-
-        if (result?.keyUp) {
-          window.addEventListener(
-            'keyup',
-            (e: KeyboardEvent) => {
-              result.keyUp!(e);
-            },
-            { signal },
-          );
-        }
-
-        if (result?.wheel) {
-          window.addEventListener(
-            'wheel',
-            (e: WheelEvent) => {
-              const rect = canvas.getBoundingClientRect();
-              result.wheel!(e, {
-                deltaX: e.deltaX,
-                deltaY: e.deltaY,
-                mouseX: e.clientX - rect.left,
-                mouseY: e.clientY - rect.top,
-              });
-            },
-            { signal, passive: false },
-          );
-        }
-
-        if (result?.scroll) {
-          window.addEventListener(
-            'scroll',
-            e => {
-              const rect = canvas.getBoundingClientRect();
-              let deltaX = 0;
-              let deltaY = 0;
-
-              if (e instanceof WheelEvent) {
-                deltaX = e.deltaX;
-                deltaY = e.deltaY;
-              } else if (e instanceof TouchEvent && e.touches.length === 1) {
-                const touch = e.touches[0];
-                deltaX = touch.clientX - rect.left;
-                deltaY = touch.clientY - rect.top;
-              }
-
-              const scrollX = window.scrollX;
-              const scrollY = window.scrollY;
-              const percentX = (scrollX - rect.left) / rect.width;
-              const percentY = (scrollY - rect.top) / rect.height;
-              result.scroll!(e, {
-                deltaX,
-                deltaY,
-                scrollX,
-                scrollY,
-                percentX,
-                percentY,
-              });
-            },
-            { signal },
-          );
-        }
-
-        if (result?.cut) {
-          window.addEventListener('cut', result.cut, { signal });
-        }
-
-        if (result?.copy) {
-          window.addEventListener('copy', result.copy, { signal });
-        }
-
-        if (result?.paste) {
-          window.addEventListener('paste', result.paste, { signal });
-        }
-
-        if (autoResize) {
-          const observer = new ResizeObserver(entries => {
-            const entry = entries[0];
-            canvas.width = entry.contentRect.width;
-            canvas.height = entry.contentRect.height;
-            if (result?.resize) {
-              result.resize(entry.contentRect.width, entry.contentRect.height);
-            }
-          });
-
-          observer.observe(canvas);
-
-          signal.addEventListener('abort', () => {
-            observer.disconnect();
-          });
-        }
-
-        return abort;
+      const { signal, abort } = new AbortController();
+      if (autoResize) {
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
       }
+      let lastTime = performance.now();
+      function draw(t: number) {
+        const now = performance.now();
+        const dt = now - lastTime;
+        lastTime = now;
+        if (result?.update) result.update!(dt, t);
+      }
+
+      function drawNow() {
+        draw(document.timeline.currentTime as number);
+      }
+
+      const result = setup(
+        {
+          bgCanvas,
+          canvas,
+          fgCanvas,
+        },
+        props1,
+        drawNow,
+      );
+      resultRef.current = result;
+      didMount.current = true;
+
+      if (!result?.manualUpdate) loopAnimationFrame(draw, { signal });
+      else requestAnimationFrame(draw);
+
+      if (result?.mouseMove) {
+        window.addEventListener(
+          'mousemove',
+          (e: MouseEvent) => {
+            const rect = canvas.getBoundingClientRect();
+            result.mouseMove!(e, {
+              mouseX: e.clientX - rect.left,
+              mouseY: e.clientY - rect.top,
+            });
+          },
+          { signal },
+        );
+      }
+
+      if (result?.mouseDown) {
+        canvas.addEventListener(
+          'mousedown',
+          (e: MouseEvent) => {
+            const rect = canvas.getBoundingClientRect();
+            result.mouseDown!(e, {
+              mouseX: e.clientX - rect.left,
+              mouseY: e.clientY - rect.top,
+            });
+          },
+          { signal, passive: false },
+        );
+        canvas.addEventListener(
+          'contextmenu',
+          (e: MouseEvent) => {
+            e.preventDefault();
+          },
+          { signal },
+        );
+      }
+
+      if (result?.mouseDbClick) {
+        canvas.addEventListener(
+          'dblclick',
+          (e: MouseEvent) => {
+            const rect = canvas.getBoundingClientRect();
+            result.mouseDbClick!(e, {
+              mouseX: e.clientX - rect.left,
+              mouseY: e.clientY - rect.top,
+            });
+          },
+          { signal },
+        );
+      }
+
+      if (result?.mouseUp) {
+        window.addEventListener(
+          'mouseup',
+          (e: MouseEvent) => {
+            const rect = canvas.getBoundingClientRect();
+            result.mouseUp!(e, {
+              mouseX: e.clientX - rect.left,
+              mouseY: e.clientY - rect.top,
+            });
+          },
+          { signal },
+        );
+      }
+
+      if (result?.touchStart) {
+        window.addEventListener(
+          'touchstart',
+          (e: TouchEvent) => {
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            result.touchStart!(e, {
+              mouseX: touch.clientX - rect.left,
+              mouseY: touch.clientY - rect.top,
+            });
+          },
+          { signal },
+        );
+      }
+
+      if (result?.touchMove) {
+        window.addEventListener(
+          'touchmove',
+          (e: TouchEvent) => {
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            result.touchMove!(e, {
+              mouseX: touch.clientX - rect.left,
+              mouseY: touch.clientY - rect.top,
+            });
+          },
+          { signal },
+        );
+      }
+
+      if (result?.touchEnd) {
+        window.addEventListener(
+          'touchend',
+          (e: TouchEvent) => {
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.changedTouches[0];
+            result.touchEnd!(e, {
+              mouseX: touch.clientX - rect.left,
+              mouseY: touch.clientY - rect.top,
+            });
+          },
+          { signal },
+        );
+      }
+
+      if (result?.keyDown) {
+        window.addEventListener(
+          'keydown',
+          (e: KeyboardEvent) => {
+            result.keyDown!(e);
+          },
+          { signal },
+        );
+      }
+
+      if (result?.keyUp) {
+        window.addEventListener(
+          'keyup',
+          (e: KeyboardEvent) => {
+            result.keyUp!(e);
+          },
+          { signal },
+        );
+      }
+
+      if (result?.wheel) {
+        window.addEventListener(
+          'wheel',
+          (e: WheelEvent) => {
+            const rect = canvas.getBoundingClientRect();
+            result.wheel!(e, {
+              deltaX: e.deltaX,
+              deltaY: e.deltaY,
+              mouseX: e.clientX - rect.left,
+              mouseY: e.clientY - rect.top,
+            });
+          },
+          { signal, passive: false },
+        );
+      }
+
+      if (result?.scroll) {
+        window.addEventListener(
+          'scroll',
+          e => {
+            const rect = canvas.getBoundingClientRect();
+            let deltaX = 0;
+            let deltaY = 0;
+
+            if (e instanceof WheelEvent) {
+              deltaX = e.deltaX;
+              deltaY = e.deltaY;
+            } else if (e instanceof TouchEvent && e.touches.length === 1) {
+              const touch = e.touches[0];
+              deltaX = touch.clientX - rect.left;
+              deltaY = touch.clientY - rect.top;
+            }
+
+            const scrollX = window.scrollX;
+            const scrollY = window.scrollY;
+            const percentX = (scrollX - rect.left) / rect.width;
+            const percentY = (scrollY - rect.top) / rect.height;
+            result.scroll!(e, {
+              deltaX,
+              deltaY,
+              scrollX,
+              scrollY,
+              percentX,
+              percentY,
+            });
+          },
+          { signal },
+        );
+      }
+
+      if (result?.cut) {
+        window.addEventListener('cut', result.cut, { signal });
+      }
+
+      if (result?.copy) {
+        window.addEventListener('copy', result.copy, { signal });
+      }
+
+      if (result?.paste) {
+        window.addEventListener('paste', result.paste, { signal });
+      }
+
+      if (autoResize) {
+        const observer = new ResizeObserver(entries => {
+          const entry = entries[0];
+          bgCanvas.width =
+            fgCanvas.width =
+            canvas.width =
+              entry.contentRect.width;
+          bgCanvas.height =
+            fgCanvas.height =
+            canvas.height =
+              entry.contentRect.height;
+          if (result?.resize) {
+            result.resize(entry.contentRect.width, entry.contentRect.height);
+          }
+        });
+
+        observer.observe(canvas);
+
+        signal.addEventListener('abort', () => {
+          observer.disconnect();
+        });
+      }
+
+      return abort;
+
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [canvas]);
+    }, [bgCanvas, canvas, fgCanvas]);
 
     useEffect(() => {
       if (resultRef.current?.propsUpdate) {
@@ -342,6 +361,40 @@ export default function createCanvasComponent<
       }
     }, [prevProps, props1]);
 
-    return <canvas {...props} {...props2} ref={setCanvas} />;
+    return (
+      <>
+        <canvas
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+          }}
+          {...props2}
+          ref={setBgCanvas}
+        />
+        <canvas
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+          }}
+          {...props2}
+          ref={setCanvas}
+        />
+        <canvas
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+          }}
+          {...props2}
+          ref={setFgCanvas}
+        />
+      </>
+    );
   };
 }

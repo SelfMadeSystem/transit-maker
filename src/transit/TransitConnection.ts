@@ -266,6 +266,12 @@ export class TransitConnection implements Actionable {
     ctx.lineWidth = outline.width + 2;
     const { path } = this.getPath();
     ctx.stroke(path);
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.strokeStyle = 'black';
+    ctx.setLineDash([]);
+    ctx.lineCap = 'square';
+    ctx.lineWidth = outline.width;
+    ctx.stroke(path);
     ctx.restore();
   }
 

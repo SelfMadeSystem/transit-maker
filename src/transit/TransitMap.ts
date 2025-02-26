@@ -128,19 +128,30 @@ export class TransitMap {
     return connectionsArray.map(c => c[1]);
   }
 
-  draw(ctx: CanvasRenderingContext2D, selected: ActionableItem | null) {
+  draw(
+    {
+      bgCtx,
+      ctx,
+      fgCtx,
+    }: {
+      bgCtx: CanvasRenderingContext2D;
+      ctx: CanvasRenderingContext2D;
+      fgCtx: CanvasRenderingContext2D;
+    },
+    selected: ActionableItem | null,
+  ) {
     const connectionsByZ = this.connectionsByZIndex();
     for (const image of this.images) {
       if (selected === image) {
-        image.drawSelected(ctx);
+        image.drawSelected(fgCtx);
       }
-      image.draw(ctx);
+      image.draw(bgCtx);
     }
     for (const connections of connectionsByZ) {
       const iters = new Set<Generator>();
       for (const connection of connections) {
         if (selected === connection) {
-          connection.drawSelected(ctx);
+          connection.drawSelected(fgCtx);
         }
         iters.add(connection.draw(ctx));
       }
@@ -154,13 +165,13 @@ export class TransitMap {
     }
     for (const stop of this.stops) {
       if (selected === stop) {
-        stop.drawSelected(ctx);
+        stop.drawSelected(fgCtx);
       }
       stop.draw(ctx);
     }
     for (const label of this.labels) {
       if (selected === label) {
-        label.drawSelected(ctx);
+        label.drawSelected(fgCtx);
       }
       label.draw(ctx);
     }

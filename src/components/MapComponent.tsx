@@ -25,17 +25,14 @@ import { waitForInput } from './context-menu';
 
 export const MapComponent = createCanvasComponent<EditorContextType>({
   autoResize: true,
-  props: {
-    style: {
-      position: 'absolute',
-      inset: 0,
-      width: '100%',
-      height: '100%',
-    },
-  },
-  setup(canvas, { map, selected, setSelected }) {
+  setup({ bgCanvas, canvas, fgCanvas }, { map, selected, setSelected }) {
+    const bgCtx = bgCanvas.getContext('2d');
+    if (!bgCtx) throw new Error('Failed to get 2d context');
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Failed to get 2d context');
+    const fgCtx = fgCanvas.getContext('2d');
+    if (!fgCtx) throw new Error('Failed to get 2d context');
+
     let zoom = 3;
     let offsetX = 200;
     let offsetY = 0;
@@ -75,11 +72,15 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
     return {
       update() {
         canvas.style.cursor = '';
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.save();
-        ctx.translate(offsetX, offsetY);
-        ctx.scale(zoom, zoom);
-        map.draw(ctx, selected);
+
+        for (const c of [bgCtx, ctx, fgCtx]) {
+          c.clearRect(0, 0, canvas.width, canvas.height);
+          c.save();
+          c.translate(offsetX, offsetY);
+          c.scale(zoom, zoom);
+        }
+
+        map.draw({ bgCtx, ctx, fgCtx }, selected);
         if (selected && 'getSize' in selected) {
           drawTransformableRegion(ctx, zoom, selected);
           const mousePos = mouseToPos({
@@ -92,7 +93,10 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
             canvas.style.cursor = cursor;
           }
         }
-        ctx.restore();
+
+        for (const c of [bgCtx, ctx, fgCtx]) {
+          c.restore();
+        }
       },
       propsUpdate: {
         map() {
