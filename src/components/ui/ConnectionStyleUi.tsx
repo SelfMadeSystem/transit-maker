@@ -12,20 +12,39 @@ function ConnectionOutlineDotted({
   outline: ConnectionOutline & { strokeType: 'dotted' };
 }) {
   const [dottedSpacing, setDottedSpacing] = useState(outline.dottedSpacing);
+  const [dottedOffset, setDottedOffset] = useState(outline.dottedOffset);
 
   return (
-    <label className="flex items-center gap-2">
-      <div className="text-white">Dotted spacing:</div>
-      <input
-        type="number"
-        value={dottedSpacing}
-        min="0"
-        onChange={e =>
-          setDottedSpacing((outline.dottedSpacing = parseFloat(e.target.value)))
-        }
-        className="bg-gray-900 text-white"
-      />
-    </label>
+    <>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Dotted spacing:</div>
+        <input
+          type="number"
+          value={dottedSpacing}
+          min="0"
+          onChange={e =>
+            setDottedSpacing(
+              (outline.dottedSpacing = parseFloat(e.target.value)),
+            )
+          }
+          className="bg-gray-900 text-white"
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Dotted offset:</div>
+        <input
+          type="number"
+          value={dottedOffset}
+          min="0"
+          max="1"
+          step="0.01"
+          onChange={e =>
+            setDottedOffset((outline.dottedOffset = parseFloat(e.target.value)))
+          }
+          className="bg-gray-900 text-white"
+        />
+      </label>
+    </>
   );
 }
 
@@ -36,6 +55,7 @@ function ConnectionOutlineDashed({
 }) {
   const [dashedLength, setDashedLength] = useState(outline.dashedLength);
   const [dashedSpacing, setDashedSpacing] = useState(outline.dashedSpacing);
+  const [dashedOffset, setDashedOffset] = useState(outline.dashedOffset);
 
   return (
     <>
@@ -61,6 +81,20 @@ function ConnectionOutlineDashed({
             setDashedSpacing(
               (outline.dashedSpacing = parseFloat(e.target.value)),
             )
+          }
+          className="bg-gray-900 text-white"
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Dashed offset:</div>
+        <input
+          type="number"
+          value={dashedOffset}
+          min="0"
+          max="1"
+          step="0.01"
+          onChange={e =>
+            setDashedOffset((outline.dashedOffset = parseFloat(e.target.value)))
           }
           className="bg-gray-900 text-white"
         />
@@ -133,16 +167,22 @@ export function ConnectionOutlineUi({
                 outline.strokeType = 'dotted';
                 (
                   outline as ConnectionOutline & { strokeType: 'dotted' }
-                ).dottedSpacing = 0;
+                ).dottedSpacing = 2;
+                (
+                  outline as ConnectionOutline & { strokeType: 'dotted' }
+                ).dottedOffset = 0;
                 break;
               case 'dashed':
                 outline.strokeType = 'dashed';
                 (
                   outline as ConnectionOutline & { strokeType: 'dashed' }
-                ).dashedLength = 0;
+                ).dashedLength = 2;
                 (
                   outline as ConnectionOutline & { strokeType: 'dashed' }
-                ).dashedSpacing = 0;
+                ).dashedSpacing = 2;
+                (
+                  outline as ConnectionOutline & { strokeType: 'dashed' }
+                ).dashedOffset = 0;
                 break;
               default:
                 outline.strokeType = 'solid';

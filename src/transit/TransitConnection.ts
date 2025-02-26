@@ -24,12 +24,14 @@ type BaseConnectionOutline = {
 type DottedConnectionOutline = BaseConnectionOutline & {
   strokeType: 'dotted';
   dottedSpacing: number;
+  dottedOffset: number;
 };
 
 type DashedConnectionOutline = BaseConnectionOutline & {
   strokeType: 'dashed';
   dashedLength: number;
   dashedSpacing: number;
+  dashedOffset: number;
 };
 
 type SolidConnectionOutline = BaseConnectionOutline & {
@@ -209,6 +211,7 @@ export class TransitConnection implements Actionable {
       let lineDist = 0;
       ctx.lineCap = lineCap;
       ctx.save();
+      let offset = this.specificStyle.spacingOffset;
       switch (outline.strokeType) {
         case 'solid':
           ctx.setLineDash([]);
@@ -221,6 +224,7 @@ export class TransitConnection implements Actionable {
           lineDist =
             outline.dottedSpacing * this.specificStyle.spacingMultiplier;
           ctx.lineCap = 'round';
+          offset += outline.dottedOffset;
           break;
         case 'dashed':
           ctx.setLineDash([
@@ -231,13 +235,11 @@ export class TransitConnection implements Actionable {
           lineDist =
             outline.dashedLength +
             outline.dashedSpacing * this.specificStyle.spacingMultiplier;
+          offset += outline.dashedOffset;
           break;
       }
 
-      ctx.lineDashOffset =
-        lineLength * 0.5 +
-        lineDist * this.specificStyle.spacingOffset -
-        length / 2;
+      ctx.lineDashOffset += lineLength * 0.5 + lineDist * offset - length / 2;
 
       ctx.lineWidth = width;
       if (clear && color.a < 1) {
