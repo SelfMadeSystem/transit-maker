@@ -43,7 +43,7 @@ export type SavedStopStyle = {
 export const DEFAULT_STOP_STYLE: StopStyle = {
   fillColor: Color.BLACK,
   strokeColor: 'route',
-  edges: 3,
+  edges: 0,
   edgeOrientation: 0,
   edgeFollowsRoute: true,
   radius: 5,
@@ -353,18 +353,17 @@ export class TransitStop implements Actionable, Movable {
 
       if (edgeOrientation === 1 || edgeOrientation === 3) {
         polyAngle += (Math.PI / edges) * (edges % 2 === 0 ? 1 : 0.5);
-        if (edgeOrientation === 3) {
-          polyAngle += Math.PI;
-        }
-      } else if (edgeOrientation === 2) {
+      }
+      if (edgeOrientation === 2 || edgeOrientation === 3) {
         polyAngle += Math.PI;
       }
       const points = [];
+      const r = radius + rounding / 2;
       for (let i = 0; i < edges; i++) {
         points.push(
           new Vector2(
-            this.pos.x + radius * Math.cos(angleStep * i + polyAngle),
-            this.pos.y + radius * Math.sin(angleStep * i + polyAngle),
+            this.pos.x + r * Math.cos(angleStep * i + polyAngle),
+            this.pos.y + r * Math.sin(angleStep * i + polyAngle),
           ),
         );
       }
