@@ -356,8 +356,9 @@ export class TransitStop implements Actionable, Movable {
     } = this.getStyle();
 
     const connections = Array.from(this.connections);
-    const connectionsAngle =
-      connections.length === 1
+    const connectionsAngle = this.linked?.connection
+      ? this.linked.connection.getAngle(this.linked.connection.to) + Math.PI / 2
+      : connections.length === 1
         ? connections[0].getAngle(this) + Math.PI / 2
         : averageAngle(
             connections.map(connection => connection.getAngle(this)),
@@ -376,7 +377,7 @@ export class TransitStop implements Actionable, Movable {
 
       let polyAngle = 0;
 
-      if (this.connections.size > 0 && edgeFollowsRoute) {
+      if (edgeFollowsRoute) {
         polyAngle = connectionsAngle;
       }
 
