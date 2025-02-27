@@ -53,7 +53,7 @@ export const DEFAULT_STOP_STYLE: StopStyle = {
   stretch: 2,
   strokeWidth: 2,
   margin: 2,
-  lateralOffset: 3,
+  lateralOffset: 0,
   clearFill: false,
   clearStroke: false,
 };
