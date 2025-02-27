@@ -355,9 +355,13 @@ export class TransitStop implements Actionable, Movable {
       stretch,
     } = this.getStyle();
 
-    const connectionsAngle = averageAngle(
-      Array.from(this.connections).map(connection => connection.getAngle(this)),
-    );
+    const connections = Array.from(this.connections);
+    const connectionsAngle =
+      connections.length === 1
+        ? connections[0].getAngle(this) + Math.PI / 2
+        : averageAngle(
+            connections.map(connection => connection.getAngle(this)),
+          );
 
     const offset = Vector2.fromAngle(
       connectionsAngle + (this.lateralOtherSide ? Math.PI : 0),
@@ -376,10 +380,16 @@ export class TransitStop implements Actionable, Movable {
         polyAngle = connectionsAngle;
       }
 
-      if (edgeOrientation === 1 || edgeOrientation === 3) {
+      let orientation = edgeOrientation;
+
+      if (this.lateralOtherSide) {
+        orientation = (orientation + 2) % 4;
+      }
+
+      if (orientation === 1 || orientation === 3) {
         polyAngle += (Math.PI / edges) * (edges % 2 === 0 ? 1 : 0.5);
       }
-      if (edgeOrientation === 2 || edgeOrientation === 3) {
+      if (orientation === 2 || orientation === 3) {
         polyAngle += Math.PI;
       }
       const points = [];
