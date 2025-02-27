@@ -1,5 +1,6 @@
 import { Color } from '../components/color/Color';
 import { Path2Dpp } from '../utils/Path2Dpp';
+import getPropertiesAtPoint from '../utils/getPropertiesAtPoint';
 import { id } from '../utils/id';
 import { averageAngle } from '../utils/mathUtils';
 import { Vector2 } from '../utils/vec';
@@ -10,7 +11,7 @@ import { TransitConnection } from './TransitConnection';
 import { TransitMap } from './TransitMap';
 import { RouteColor, TransitRoute } from './TransitRoute';
 import { Actionable, ClickInfo, Movable, PosWithKeys } from './types';
-import { getPointAtLength, getPropertiesAtPoint } from 'svg-path-commander';
+import { getPointAtLength } from 'svg-path-commander';
 
 export type StopStyle = {
   fillColor: RouteColor;
@@ -83,6 +84,7 @@ export class TransitStop implements Actionable, Movable {
     // Either remove this stop with the connection or remove the link when the
     // connection is removed
     connection: TransitConnection;
+    length: number;
   } | null = null;
   public connections: Set<TransitConnection>;
   public hidden: boolean = false;
@@ -426,6 +428,7 @@ export class TransitStop implements Actionable, Movable {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
+    this.resetLinkedPos();
     if (this.hidden) {
       return;
     }
@@ -518,6 +521,16 @@ export class TransitStop implements Actionable, Movable {
     );
   }
 
+  private resetLinkedPos() {
+    if (this.linked) {
+      const { connection, length: ll } = this.linked;
+      const { pathpp, length } = connection.getPath();
+      this.pos = new Vector2(
+        getPointAtLength(pathpp.getSVGPath().segments, length * ll),
+      );
+    }
+  }
+
   moveTo(l: PosWithKeys) {
     const { shiftKey, ctrlKey, pos } = l;
     if (this.linked) {
@@ -531,19 +544,26 @@ export class TransitStop implements Actionable, Movable {
 
         let minPos = poses[0];
         let minDist = Math.hypot(minPos.x - pos.x, minPos.y - pos.y);
+        let bestLength = snapDists[0];
         for (let i = 1; i < poses.length; i++) {
           const dist = Math.hypot(poses[i].x - pos.x, poses[i].y - pos.y);
           if (dist < minDist) {
             minDist = dist;
             minPos = poses[i];
+            bestLength = snapDists[i];
           }
         }
 
+        this.linked.length = bestLength;
         this.pos = new Vector2(minPos);
       } else {
-        const props = getPropertiesAtPoint(pathpp.getSVGPath().segments, pos);
+        const { closest, length: bestLength } = getPropertiesAtPoint(
+          pathpp.getSVGPath().segments,
+          pos,
+        );
 
-        this.pos = new Vector2(props.closest);
+        this.pos = new Vector2(closest);
+        this.linked.length = bestLength / length;
       }
       return;
     }

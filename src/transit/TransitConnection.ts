@@ -556,6 +556,7 @@ export class TransitConnection implements Actionable {
       const stop = createStopAction(this.map, [], closest).data;
       stop.linked = {
         connection: this,
+        length: 0.5,
       };
       setSelected(stop);
     } else {
