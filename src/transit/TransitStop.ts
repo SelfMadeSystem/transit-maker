@@ -27,6 +27,7 @@ export type StopStyle = {
   edgeFollowsRoute: boolean;
   radius: number;
   rounding: number;
+  stretch: number;
   strokeWidth: number;
   margin: number;
   lateralOffset: number;
@@ -49,6 +50,7 @@ export const DEFAULT_STOP_STYLE: StopStyle = {
   edgeFollowsRoute: true,
   radius: 5,
   rounding: 5,
+  stretch: 2,
   strokeWidth: 2,
   margin: 2,
   lateralOffset: 3,
@@ -199,6 +201,7 @@ export class TransitStop implements Actionable, Movable {
         edgeFollowsRoute: false,
         radius: 5,
         rounding: 0,
+        stretch: 1,
         strokeWidth: 0,
         margin: 0,
         lateralOffset: 0,
@@ -348,6 +351,7 @@ export class TransitStop implements Actionable, Movable {
       edgeFollowsRoute,
       rounding,
       lateralOffset,
+      stretch,
     } = this.getStyle();
 
     const connectionsAngle =
@@ -358,11 +362,12 @@ export class TransitStop implements Actionable, Movable {
     const offset = Vector2.fromAngle(
       connectionsAngle + (this.lateralOtherSide ? Math.PI : 0),
       lateralOffset,
-    );
+    ).add(this.pos);
 
     if (edges === 0) {
-      path.arc(...this.pos.add(offset).a(), radius, 0, 2 * Math.PI);
+      path.arc(...offset.a(), radius, 0, 2 * Math.PI);
     } else {
+      const stretchFactor = new Vector2(stretch, 1);
       const angleStep = (2 * Math.PI) / edges;
 
       let polyAngle = 0;
@@ -382,9 +387,13 @@ export class TransitStop implements Actionable, Movable {
       for (let i = 0; i < edges; i++) {
         points.push(
           new Vector2(
-            this.pos.x + r * Math.cos(angleStep * i + polyAngle),
-            this.pos.y + r * Math.sin(angleStep * i + polyAngle),
-          ).add(offset),
+            r * Math.cos(angleStep * i + polyAngle),
+            r * Math.sin(angleStep * i + polyAngle),
+          )
+            .rotateBy(-connectionsAngle)
+            .mult(...stretchFactor.a())
+            .rotateBy(connectionsAngle)
+            .add(offset),
         );
       }
 

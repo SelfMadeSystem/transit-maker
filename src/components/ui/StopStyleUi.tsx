@@ -12,6 +12,7 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
   );
   const [radius, setRadius] = useState(style.radius);
   const [rounding, setRounding] = useState(style.rounding);
+  const [stretch, setStretch] = useState(style.stretch);
   const [strokeWidth, setStrokeWidth] = useState(style.strokeWidth);
   const [margin, setMargin] = useState(style.margin);
   const [lateralOffset, setLateralOffset] = useState(style.lateralOffset);
@@ -118,6 +119,19 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
           />
         </label>
       ) : null}
+      <label className="flex items-center gap-2">
+        <div className="text-white">Stretch:</div>
+        <input
+          type="number"
+          value={stretch}
+          min="0"
+          step="0.1"
+          onChange={e =>
+            setStretch((style.stretch = parseFloat(e.target.value)))
+          }
+          className="bg-gray-900 text-white"
+        />
+      </label>
       <label className="flex items-center gap-2">
         <div className="text-white">Margin:</div>
         <input
