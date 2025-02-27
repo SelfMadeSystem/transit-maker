@@ -49,17 +49,16 @@ export class DecorationImage implements Transformable, Actionable {
 
   getSize() {
     return new Vector2(this.image.width, this.image.height).mult(
-      this.scale.x,
-      this.scale.y,
+      ...this.scale.a,
     );
   }
 
   draw(ctx: CanvasRenderingContext2D) {
     ctx.save();
     const size = this.getSize();
-    ctx.translate(this.pos.x, this.pos.y);
+    ctx.translate(...this.pos.a);
     ctx.rotate(this.rotation);
-    ctx.drawImage(this.image, -size.x / 2, -size.y / 2, size.x, size.y);
+    ctx.drawImage(this.image, ...size.mult(-0.5).a, ...size.a);
     ctx.restore();
   }
 

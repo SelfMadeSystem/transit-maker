@@ -106,7 +106,7 @@ export class SnapInfo {
     ctx.fillStyle = '#9ff9';
     for (const snapPoint of this.snapPoints) {
       ctx.beginPath();
-      ctx.arc(snapPoint.x, snapPoint.y, 5, 0, 2 * Math.PI);
+      ctx.arc(...snapPoint.a, 5, 0, 2 * Math.PI);
       ctx.fill();
     }
     ctx.restore();
@@ -115,9 +115,9 @@ export class SnapInfo {
     ctx.strokeStyle = '#ff99';
     ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.arc(this.original.x, this.original.y, 5, 0, 2 * Math.PI);
-    ctx.moveTo(this.original.x, this.original.y);
-    ctx.lineTo(this.getPos().x, this.getPos().y);
+    ctx.arc(...this.original.a, 5, 0, 2 * Math.PI);
+    ctx.moveTo(...this.original.a);
+    ctx.lineTo(...this.getPos().a);
     ctx.stroke();
     ctx.restore();
   }
@@ -229,9 +229,9 @@ export class SnapLine {
       this.origin.x - this.direction.x * (this.length ?? 100),
       this.origin.y - this.direction.y * (this.length ?? 100),
     );
-    ctx.lineTo(this.origin.x, this.origin.y);
-    ctx.arc(this.origin.x, this.origin.y, 5, 0, 2 * Math.PI);
-    ctx.moveTo(this.origin.x, this.origin.y);
+    ctx.lineTo(...this.origin.a);
+    ctx.arc(...this.origin.a, 5, 0, 2 * Math.PI);
+    ctx.moveTo(...this.origin.a);
     ctx.lineTo(
       this.origin.x + this.direction.x * 100,
       this.origin.y + this.direction.y * 100,

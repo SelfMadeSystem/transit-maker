@@ -102,9 +102,9 @@ export class Label implements Transformable, Actionable {
     this.getDimensions(ctx);
     ctx.save();
     const drawPos = this.getDrawPos();
-    ctx.translate(drawPos.x, drawPos.y);
+    ctx.translate(...drawPos.a);
     ctx.rotate(this.rotation);
-    ctx.scale(this.scale.x, this.scale.y);
+    ctx.scale(...this.scale.a);
     ctx.font = this.getFont();
     ctx.fillStyle = this.style.color.hex();
     ctx.textAlign = this.style.textAlign;
@@ -174,21 +174,18 @@ export class Label implements Transformable, Actionable {
   }
 
   private getCenterOffset(): Vector2 {
-    const offset = { x: 0, y: 0 };
+    let offset = new Vector2(0, 0);
 
     const dimensions = this.cachedDimensions;
     if (!dimensions) {
-      return new Vector2(offset.x, offset.y);
+      return offset;
     }
 
     const [tl, br] = dimensions;
 
-    offset.x += (br.x - tl.x) / 2;
-    offset.y += (br.y - tl.y) / 2;
+    offset = offset.add(br.sub(tl).div(2));
 
-    return new Vector2(offset.x, offset.y)
-      .mult(this.scale.x, this.scale.y)
-      .rotateBy(this.rotation);
+    return offset.mult(...this.scale.a).rotateBy(this.rotation);
   }
 
   getCenterPos(): Vector2 {
@@ -227,7 +224,7 @@ export class Label implements Transformable, Actionable {
   }
 
   getSize() {
-    return this.getNormalSize().mult(this.scale.x, this.scale.y);
+    return this.getNormalSize().mult(...this.scale.a);
   }
 
   getPos(): Vector2 {

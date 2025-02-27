@@ -270,7 +270,7 @@ export class Vector2 {
     return this.x === other.x && this.y === other.y;
   }
 
-  a(): [number, number] {
+  get a(): [number, number] {
     return [this.x, this.y];
   }
 }

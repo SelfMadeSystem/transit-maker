@@ -212,7 +212,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
                 moveAction = moveMovableAction(selected);
               }
               const l: PosWithKeys = {
-                pos: new Vector2(ogPos!.x + deltaPos.x, ogPos!.y + deltaPos.y),
+                pos: ogPos!.add(deltaPos),
                 shiftKey: e.shiftKey,
                 ctrlKey: e.ctrlKey,
                 altKey: e.altKey,

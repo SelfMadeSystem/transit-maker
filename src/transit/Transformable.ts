@@ -16,7 +16,7 @@ function drawRotateHandle(
   }
   const topMid = new Vector2(0, -size.y / 2);
   ctx.beginPath();
-  ctx.moveTo(topMid.x, topMid.y);
+  ctx.moveTo(...topMid.a);
   ctx.lineTo(topMid.x, topMid.y - ROTATE_HANDLE_OFFSET / 2 / zoom);
   ctx.arc(
     topMid.x,
@@ -42,7 +42,7 @@ function drawResizeHandles(
   ];
   handles.forEach(handle => {
     ctx.beginPath();
-    ctx.arc(handle.x, handle.y, HANDLE_SIZE / 2 / zoom, 0, 2 * Math.PI);
+    ctx.arc(...handle.a, HANDLE_SIZE / 2 / zoom, 0, 2 * Math.PI);
     ctx.stroke();
   });
 }
@@ -53,7 +53,7 @@ function getSize(t: Transformable, zoom: number, absolute = false) {
   if (absolute) {
     return size.abs().add(add);
   }
-  return size.add(add.mult(...size.sign().a()));
+  return size.add(add.mult(...size.sign().a));
 }
 
 export function drawTransformableRegion(
@@ -63,12 +63,12 @@ export function drawTransformableRegion(
 ) {
   ctx.save();
   const pos = t.getCenterPos();
-  ctx.translate(pos.x, pos.y);
+  ctx.translate(...pos.a);
   ctx.rotate(t.getRotation());
   const size = getSize(t, zoom);
   ctx.strokeStyle = 'white';
   ctx.lineWidth = 2 / zoom;
-  ctx.strokeRect(-size.x / 2, -size.y / 2, size.x, size.y);
+  ctx.strokeRect(...size.mult(-0.5).a, ...size.a);
 
   drawRotateHandle(ctx, zoom, size);
   drawResizeHandles(ctx, zoom, size);

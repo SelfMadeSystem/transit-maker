@@ -358,17 +358,17 @@ export class TransitConnection implements Actionable {
       const r = radius - lateralOffset * sign;
 
       if (r > 0 && sameHalfPlane(from, this.to.pos, center, ogPos)) {
-        path.arc(center.x, center.y, r, endAngle, startAngle, clockwise);
+        path.arc(...center.a, r, endAngle, startAngle, clockwise);
       } else {
         const newPos = lineLineIntersection(from, to, center, ogPos);
         if (!newPos) {
-          path.lineTo(from.x, from.y);
+          path.lineTo(...from.a);
         } else {
-          path.moveTo(newPos.x, newPos.y);
+          path.moveTo(...newPos.a);
         }
       }
     } else {
-      path.moveTo(from.x, from.y);
+      path.moveTo(...from.a);
     }
 
     if (toRounding) {
@@ -383,17 +383,17 @@ export class TransitConnection implements Actionable {
       const r = radius + lateralOffset * sign;
 
       if (r > 0 && sameHalfPlane(to, this.from.pos, center, ogPos)) {
-        path.arc(center.x, center.y, r, startAngle, endAngle, !clockwise);
+        path.arc(...center.a, r, startAngle, endAngle, !clockwise);
       } else {
         const newPos = lineLineIntersection(from, to, center, ogPos);
         if (!newPos) {
-          path.lineTo(to.x, to.y);
+          path.lineTo(...to.a);
         } else {
-          path.lineTo(newPos.x, newPos.y);
+          path.lineTo(...newPos.a);
         }
       }
     } else {
-      path.lineTo(to.x, to.y);
+      path.lineTo(...to.a);
     }
 
     const length = path.getTotalLength();

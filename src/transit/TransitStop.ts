@@ -365,7 +365,7 @@ export class TransitStop implements Actionable, Movable {
     ).add(this.pos);
 
     if (edges === 0) {
-      path.arc(...offset.a(), radius, 0, 2 * Math.PI);
+      path.arc(...offset.a, radius, 0, 2 * Math.PI);
     } else {
       const stretchFactor = new Vector2(stretch, 1);
       const angleStep = (2 * Math.PI) / edges;
@@ -391,7 +391,7 @@ export class TransitStop implements Actionable, Movable {
             r * Math.sin(angleStep * i + polyAngle),
           )
             .rotateBy(-connectionsAngle)
-            .mult(...stretchFactor.a())
+            .mult(...stretchFactor.a)
             .rotateBy(connectionsAngle)
             .add(offset),
         );
@@ -401,13 +401,13 @@ export class TransitStop implements Actionable, Movable {
       const roundRadius = Math.tan(vertexAngle / 2) * rounding;
       const startPoint = points[0].avg(points[1]);
 
-      path.moveTo(startPoint.x, startPoint.y);
+      path.moveTo(...startPoint.a);
       for (let i = 1; i <= edges; i++) {
         const nextIndex = (i + 1) % edges;
         const current = points[i % edges];
         const next = points[nextIndex];
 
-        path.arcTo(current.x, current.y, next.x, next.y, roundRadius);
+        path.arcTo(...current.a, ...next.a, roundRadius);
       }
       path.closePath();
     }
@@ -421,7 +421,7 @@ export class TransitStop implements Actionable, Movable {
     ctx.save();
     const roundingStuff = this.calculateRoundingStuff();
     if (roundingStuff) {
-      ctx.translate(roundingStuff.stopOffset.x, roundingStuff.stopOffset.y);
+      ctx.translate(...roundingStuff.stopOffset.a);
     }
     const style = this.getStyle();
     const strokeColor = this.getStopColor(style.strokeColor);

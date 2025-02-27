@@ -146,13 +146,12 @@ export const splitConnectionAction = createActionFunction(
   (map: TransitMap, connection: TransitConnection) => {
     const { pathpp: path } = connection.getPath();
     const midway = path.getPointAtLength(path.getTotalLength() / 2);
-    const midwayPos = new Vector2(midway.x, midway.y);
     connection.remove();
     const from = connection.from;
     const to = connection.to;
 
     const route = connection.route;
-    const stop = new TransitStop(map, [], midwayPos);
+    const stop = new TransitStop(map, [], midway);
 
     const connection1 = new TransitConnection(map, from, stop, route);
     const connection2 = new TransitConnection(map, stop, to, route);
