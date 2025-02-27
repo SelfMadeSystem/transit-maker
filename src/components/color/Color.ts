@@ -1,3 +1,4 @@
+import { Clonable } from '../../utils/clone';
 import ColorJS from 'colorjs.io';
 
 export function hsvToRgb(h: number, s: number, v: number) {
@@ -33,7 +34,7 @@ export function hsvToRgb(h: number, s: number, v: number) {
   };
 }
 
-export class Color {
+export class Color implements Clonable {
   public readonly r: number; // 0-255
   public readonly g: number; // 0-255
   public readonly b: number; // 0-255
@@ -138,6 +139,10 @@ export class Color {
     }
 
     return str;
+  }
+
+  clone(): Color {
+    return this; // Color is immutable
   }
 
   static TRANSPARENT = new Color(0, 0, 0, 0);

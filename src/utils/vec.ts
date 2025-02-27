@@ -1,6 +1,7 @@
+import { Clonable } from './clone';
 import { mod } from './mathUtils';
 
-export class Vector2 {
+export class Vector2 implements Clonable {
   public readonly x: number;
   public readonly y: number;
 

@@ -2,6 +2,7 @@ import { EditorContext } from '../../EditorContext';
 import { createLabelAction } from '../../transit/Action';
 import { SavedStyle } from '../../transit/TransitMap';
 import { StopStyle, TransitStop } from '../../transit/TransitStop';
+import { clone } from '../../utils/clone';
 import { NumberInput } from '../NumberInput';
 import { StopStyleUi } from './StopStyleUi';
 import { useContext, useId, useState } from 'react';
@@ -59,7 +60,7 @@ export function TransitStopUi({ stop }: { stop: TransitStop }) {
                   const style: SavedStyle<StopStyle> = {
                     name: `New style ${id}`,
                     id: `new-${id}`,
-                    style: { ...stop.getStyle() },
+                    style: clone(stop.getStyle()),
                     removable: true,
                   };
                   map.addSavedStopStyle(style);

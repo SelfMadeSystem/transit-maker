@@ -4,6 +4,7 @@ import {
   TransitConnection,
 } from '../../transit/TransitConnection';
 import { SavedStyle } from '../../transit/TransitMap';
+import { clone } from '../../utils/clone';
 import { NumberInput } from '../NumberInput';
 import { ConnectionStyleUi } from './ConnectionStyleUi';
 import { useContext, useId, useState } from 'react';
@@ -102,7 +103,7 @@ export function TransitConnectionUi({
         </label>
 
         <label className="flex items-center gap-2">
-          <div className="text-white">Stop style:</div>
+          <div className="text-white">Connection style:</div>
           <select
             value={styleName}
             onChange={e => {
@@ -116,7 +117,7 @@ export function TransitConnectionUi({
                   const style: SavedStyle<ConnectionStyle> = {
                     name: `New style ${id}`,
                     id: `new-${id}`,
-                    style: { ...connection.getStyle() },
+                    style: clone(connection.getStyle()),
                     removable: true,
                   };
                   map.addSavedConnectionStyle(style);
@@ -169,7 +170,7 @@ export function TransitConnectionUi({
               <button
                 onClick={() => {
                   if (!confirm('u sure buddy?')) return;
-                  map.removeSavedStopStyle(id);
+                  map.removeSavedConnectionStyle(style.id);
                   unsetStyle();
                 }}
                 className="cursor-pointer rounded-md bg-red-900 text-white"
