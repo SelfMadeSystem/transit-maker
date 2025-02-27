@@ -2,7 +2,7 @@ import { Color } from '../components/color/Color';
 import { Path2Dpp } from '../utils/Path2Dpp';
 import getPropertiesAtPoint from '../utils/getPropertiesAtPoint';
 import { id } from '../utils/id';
-import { averageAngle } from '../utils/mathUtils';
+import { averageAngle, wrapAngle2PI } from '../utils/mathUtils';
 import { Vector2 } from '../utils/vec';
 import { Action, connectStopsAction } from './Action';
 import { Label } from './Label';
@@ -358,13 +358,20 @@ export class TransitStop implements Actionable, Movable {
     } = this.getStyle();
 
     const connections = Array.from(this.connections);
-    const connectionsAngle = this.linked?.connection
-      ? this.linked.connection.getAngle(this.linked.connection.to) + Math.PI / 2
-      : connections.length === 1
-        ? connections[0].getAngle(this) + Math.PI / 2
-        : averageAngle(
-            connections.map(connection => connection.getAngle(this)),
-          );
+    const connectionsAngle = (() => {
+      if (this.linked?.connection) {
+        const { pathpp, length } = this.linked.connection.getPath();
+        return wrapAngle2PI(
+          pathpp.getTangentAtLength(this.linked.length * length).angle() +
+            Math.PI / 2,
+        );
+      }
+      if (connections.length === 1)
+        return connections[0].getAngle(this) + Math.PI / 2;
+      return averageAngle(
+        connections.map(connection => connection.getAngle(this)),
+      );
+    })();
 
     const offset = Vector2.fromAngle(
       connectionsAngle + (this.lateralOtherSide ? Math.PI : 0),
