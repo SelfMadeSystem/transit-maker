@@ -11,6 +11,7 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
     style.edgeFollowsRoute,
   );
   const [radius, setRadius] = useState(style.radius);
+  const [rounding, setRounding] = useState(style.rounding);
   const [strokeWidth, setStrokeWidth] = useState(style.strokeWidth);
   const [margin, setMargin] = useState(style.margin);
   const [clearFill, setClearFill] = useState(style.clearFill);
@@ -101,6 +102,21 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
           className="bg-gray-900 text-white"
         />
       </label>
+
+      {edges > 0 ? (
+        <label className="flex items-center gap-2">
+          <div className="text-white">Rounding:</div>
+          <input
+            type="number"
+            value={rounding}
+            min="0"
+            onChange={e =>
+              setRounding((style.rounding = parseFloat(e.target.value)))
+            }
+            className="bg-gray-900 text-white"
+          />
+        </label>
+      ) : null}
       <label className="flex items-center gap-2">
         <div className="text-white">Margin:</div>
         <input

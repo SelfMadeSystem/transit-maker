@@ -239,6 +239,10 @@ export class Vector2 {
     return this.add(other.sub(this).mult(amount));
   }
 
+  avg(other: Vector2) {
+    return this.add(other).mult(0.5);
+  }
+
   abs(): Vector2 {
     return new Vector2(Math.abs(this.x), Math.abs(this.y));
   }

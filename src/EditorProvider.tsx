@@ -15,7 +15,6 @@ function createTransitMap(cb: () => void): TransitMap {
 
   const stop1 = createStopAction(map, 'A', new Vector2(50, 50)).data;
   const stop2 = createStopAction(map, '', new Vector2(100, 100)).data;
-  stop2.hidden = true;
   connectStopsAction(map, stop1, stop2).data.route = route;
   const stop3 = createStopAction(map, 'B', new Vector2(100, 100)).data;
   connectStopsAction(map, stop3, stop2).data.route = route;

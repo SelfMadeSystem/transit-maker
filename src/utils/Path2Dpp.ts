@@ -7,10 +7,10 @@ const pi = Math.PI,
   tauEpsilon = tau - epsilon;
 
 export class Path2Dpp {
-  private x0: number | null = null;
-  private y0: number | null = null;
-  private x1: number | null = null;
-  private y1: number | null = null;
+  public x0: number | null = null;
+  public y0: number | null = null;
+  public x1: number | null = null;
+  public y1: number | null = null;
   private path: string = '';
   private svgPath: SVGPathCommander | null = null;
 
@@ -100,7 +100,8 @@ export class Path2Dpp {
     if (radius < 0) throw new Error(`negative radius: ${radius}`);
 
     if (this.x1 === null || this.y1 === null) {
-      throw new Error('no current point');
+      this.append`M${(this.x1 = x1)},${(this.y1 = y1)}`;
+      return;
     }
 
     const x0 = this.x1,
@@ -111,9 +112,7 @@ export class Path2Dpp {
       y01 = y0 - y1,
       l01_2 = x01 * x01 + y01 * y01;
 
-    if (this.x1 === null) {
-      this.append`M${(this.x1 = x1)},${(this.y1 = y1)}`;
-    } else if (!(l01_2 > epsilon)) {
+    if (!(l01_2 > epsilon)) {
       // Do nothing
     } else if (!(Math.abs(y01 * x21 - y21 * x01) > epsilon) || !radius) {
       this.append`L${(this.x1 = x1)},${(this.y1 = y1)}`;

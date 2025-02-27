@@ -26,6 +26,7 @@ export type StopStyle = {
   edgeOrientation: number;
   edgeFollowsRoute: boolean;
   radius: number;
+  rounding: number;
   strokeWidth: number;
   margin: number;
   clearFill: boolean;
@@ -42,10 +43,11 @@ export type SavedStopStyle = {
 export const DEFAULT_STOP_STYLE: StopStyle = {
   fillColor: Color.BLACK,
   strokeColor: 'route',
-  edges: 0,
+  edges: 3,
   edgeOrientation: 0,
-  edgeFollowsRoute: false,
+  edgeFollowsRoute: true,
   radius: 5,
+  rounding: 5,
   strokeWidth: 2,
   margin: 2,
   clearFill: false,
@@ -193,6 +195,7 @@ export class TransitStop implements Actionable, Movable {
         edgeOrientation: 0,
         edgeFollowsRoute: false,
         radius: 5,
+        rounding: 0,
         strokeWidth: 0,
         margin: 0,
         clearFill: false,
@@ -334,11 +337,11 @@ export class TransitStop implements Actionable, Movable {
 
   getPath(): Path2Dpp {
     const path = new Path2Dpp();
-    const style = this.getStyle();
-    if (style.edges === 0) {
-      path.arc(this.pos.x, this.pos.y, style.radius, 0, 2 * Math.PI);
+    const { edges, radius, edgeOrientation, edgeFollowsRoute, rounding } =
+      this.getStyle();
+    if (edges === 0) {
+      path.arc(this.pos.x, this.pos.y, radius, 0, 2 * Math.PI);
     } else {
-      const { edgeOrientation, edges, edgeFollowsRoute } = style;
       const angleStep = (2 * Math.PI) / edges;
       let polyAngle = 0;
       if (this.connections.size > 0 && edgeFollowsRoute) {
@@ -356,15 +359,27 @@ export class TransitStop implements Actionable, Movable {
       } else if (edgeOrientation === 2) {
         polyAngle += Math.PI;
       }
-      path.moveTo(
-        this.pos.x + style.radius * Math.cos(polyAngle),
-        this.pos.y + style.radius * Math.sin(polyAngle),
-      );
-      for (let i = 1; i <= style.edges; i++) {
-        path.lineTo(
-          this.pos.x + style.radius * Math.cos(angleStep * i + polyAngle),
-          this.pos.y + style.radius * Math.sin(angleStep * i + polyAngle),
+      const points = [];
+      for (let i = 0; i < edges; i++) {
+        points.push(
+          new Vector2(
+            this.pos.x + radius * Math.cos(angleStep * i + polyAngle),
+            this.pos.y + radius * Math.sin(angleStep * i + polyAngle),
+          ),
         );
+      }
+
+      const vertexAngle = Math.PI * 0.5 - Math.PI / edges;
+      const roundRadius = Math.tan(vertexAngle / 2) * rounding;
+      const startPoint = points[0].avg(points[1]);
+
+      path.moveTo(startPoint.x, startPoint.y);
+      for (let i = 1; i <= edges; i++) {
+        const nextIndex = (i + 1) % edges;
+        const current = points[i % edges];
+        const next = points[nextIndex];
+
+        path.arcTo(current.x, current.y, next.x, next.y, roundRadius);
       }
       path.closePath();
     }
