@@ -11,6 +11,9 @@ export function TransitStopUi({ stop }: { stop: TransitStop }) {
   const [styles, setStyles] = useState(() => map.getAllStopStyles());
   const [hidden, setHidden] = useState(stop.hidden);
   const [roundRadius, setRoundRadius] = useState(stop.roundRadius);
+  const [lateralOtherSide, setLateralOtherSide] = useState(
+    stop.lateralOtherSide,
+  );
   const hasRoundRadius = roundRadius !== undefined;
 
   const autoStyle = `auto-${id}`;
@@ -101,6 +104,16 @@ export function TransitStopUi({ stop }: { stop: TransitStop }) {
               className="bg-gray-900 text-white"
             />
           )}
+        </label>
+        <label className="flex items-center gap-2">
+          <div className="text-white">Lateral other side:</div>
+          <input
+            type="checkbox"
+            checked={lateralOtherSide}
+            onChange={() =>
+              setLateralOtherSide((stop.lateralOtherSide = !lateralOtherSide))
+            }
+          />
         </label>
         <button onClick={addLabel} className="bg-gray-900 text-white">
           Add label

@@ -83,6 +83,7 @@ export class TransitStop implements Actionable, Movable {
   } | null = null;
   public connections: Set<TransitConnection>;
   public hidden: boolean = false;
+  public lateralOtherSide: boolean = false;
   public roundRadius: number | undefined;
   public style?: SavedStopStyle;
 
@@ -354,7 +355,10 @@ export class TransitStop implements Actionable, Movable {
         .map(connection => connection.getAngle(this))
         .reduce((sum, angle) => sum + angle, 0) / this.connections.size;
 
-    const offset = Vector2.fromAngle(connectionsAngle, lateralOffset);
+    const offset = Vector2.fromAngle(
+      connectionsAngle + (this.lateralOtherSide ? Math.PI : 0),
+      lateralOffset,
+    );
 
     if (edges === 0) {
       path.arc(...this.pos.add(offset).a(), radius, 0, 2 * Math.PI);
