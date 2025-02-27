@@ -1,5 +1,6 @@
 import { TransitConnection } from '../../transit/TransitConnection';
 import { TransitMap } from '../../transit/TransitMap';
+import { NumberInput } from '../NumberInput';
 import { useState } from 'react';
 
 export function TransitConnectionUi({
@@ -37,17 +38,14 @@ export function TransitConnectionUi({
         </label>
         <label className="flex items-center gap-2">
           <div className="text-white">Spacing multiplier:</div>
-          <input
-            type="number"
+          <NumberInput
             value={spacingMultiplier}
-            min="0.5"
-            max="2"
-            step="0.01"
+            min={0.5}
+            max={2}
+            step={0.01}
             onChange={e =>
               setSpacingMultiplier(
-                (connection.specificStyle.spacingMultiplier = parseFloat(
-                  e.target.value,
-                )),
+                (connection.specificStyle.spacingMultiplier = e),
               )
             }
             className="bg-gray-900 text-white"
@@ -55,18 +53,13 @@ export function TransitConnectionUi({
         </label>
         <label className="flex items-center gap-2">
           <div className="text-white">Spacing offset:</div>
-          <input
-            type="number"
+          <NumberInput
             value={spacingOffset}
-            min="0.0"
-            max="1.0"
-            step="0.01"
+            min={0.0}
+            max={1.0}
+            step={0.01}
             onChange={e =>
-              setSpacingOffset(
-                (connection.specificStyle.spacingOffset = parseFloat(
-                  e.target.value,
-                )),
-              )
+              setSpacingOffset((connection.specificStyle.spacingOffset = e))
             }
             className="bg-gray-900 text-white"
           />
@@ -93,14 +86,9 @@ export function TransitConnectionUi({
         </label>
         <label className="flex items-center gap-2">
           <div className="text-white">Z index:</div>
-          <input
-            type="number"
+          <NumberInput
             value={zIndex}
-            onChange={e =>
-              setZIndex(
-                (connection.specificStyle.zIndex = parseFloat(e.target.value)),
-              )
-            }
+            onChange={e => setZIndex((connection.specificStyle.zIndex = e))}
             className="bg-gray-900 text-white"
           />
         </label>

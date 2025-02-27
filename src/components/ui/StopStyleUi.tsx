@@ -1,4 +1,5 @@
 import { StopStyle } from '../../transit/TransitStop';
+import { NumberInput } from '../NumberInput';
 import { RouteColorEditor } from '../RouteColorEditor';
 import { useState } from 'react';
 
@@ -84,23 +85,19 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
       ) : null}
       <label className="flex items-center gap-2">
         <div className="text-white">Radius:</div>
-        <input
-          type="number"
+        <NumberInput
           value={radius}
-          min="0"
-          onChange={e => setRadius((style.radius = parseFloat(e.target.value)))}
+          min={0}
+          onChange={e => setRadius((style.radius = e))}
           className="bg-gray-900 text-white"
         />
       </label>
       <label className="flex items-center gap-2">
         <div className="text-white">Stroke width:</div>
-        <input
-          type="number"
+        <NumberInput
           value={strokeWidth}
-          min="0"
-          onChange={e =>
-            setStrokeWidth((style.strokeWidth = parseFloat(e.target.value)))
-          }
+          min={0}
+          onChange={e => setStrokeWidth((style.strokeWidth = e))}
           className="bg-gray-900 text-white"
         />
       </label>
@@ -108,48 +105,38 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
       {edges > 0 ? (
         <label className="flex items-center gap-2">
           <div className="text-white">Rounding:</div>
-          <input
-            type="number"
+          <NumberInput
             value={rounding}
-            min="0"
-            onChange={e =>
-              setRounding((style.rounding = parseFloat(e.target.value)))
-            }
+            min={0}
+            onChange={e => setRounding((style.rounding = e))}
             className="bg-gray-900 text-white"
           />
         </label>
       ) : null}
       <label className="flex items-center gap-2">
         <div className="text-white">Stretch:</div>
-        <input
-          type="number"
+        <NumberInput
           value={stretch}
-          min="0"
-          step="0.1"
-          onChange={e =>
-            setStretch((style.stretch = parseFloat(e.target.value)))
-          }
+          min={0}
+          step={0.1}
+          onChange={e => setStretch((style.stretch = e))}
           className="bg-gray-900 text-white"
         />
       </label>
       <label className="flex items-center gap-2">
         <div className="text-white">Margin:</div>
-        <input
-          type="number"
+        <NumberInput
           value={margin}
-          min="0"
-          onChange={e => setMargin((style.margin = parseFloat(e.target.value)))}
+          min={0}
+          onChange={e => setMargin((style.margin = e))}
           className="bg-gray-900 text-white"
         />
       </label>
       <label className="flex items-center gap-2">
         <div className="text-white">Lateral offset:</div>
-        <input
-          type="number"
+        <NumberInput
           value={lateralOffset}
-          onChange={e =>
-            setLateralOffset((style.lateralOffset = parseFloat(e.target.value)))
-          }
+          onChange={e => setLateralOffset((style.lateralOffset = e))}
           className="bg-gray-900 text-white"
         />
       </label>

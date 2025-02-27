@@ -1,6 +1,7 @@
 import { EditorContext } from '../../EditorContext';
 import { createLabelAction } from '../../transit/Action';
 import { SavedStopStyle, TransitStop } from '../../transit/TransitStop';
+import { NumberInput } from '../NumberInput';
 import { StopStyleUi } from './StopStyleUi';
 import { useContext, useId, useState } from 'react';
 
@@ -94,13 +95,10 @@ export function TransitStopUi({ stop }: { stop: TransitStop }) {
             }}
           />
           {hasRoundRadius && (
-            <input
-              type="number"
+            <NumberInput
               value={roundRadius}
-              min="0"
-              onChange={e =>
-                setRoundRadius((stop.roundRadius = parseFloat(e.target.value)))
-              }
+              min={0}
+              onChange={e => setRoundRadius((stop.roundRadius = e))}
               className="bg-gray-900 text-white"
             />
           )}

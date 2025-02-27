@@ -1,4 +1,5 @@
 import { RouteStyle } from '../../transit/TransitRoute';
+import { NumberInput } from '../NumberInput';
 import ColorInput from '../color/ColorInput';
 import { ConnectionStyleUi } from './ConnectionStyleUi';
 import { StopStyleUi } from './StopStyleUi';
@@ -21,13 +22,10 @@ export function RouteStyleUi({ style }: { style: RouteStyle }) {
       </label>
       <label className="flex items-center gap-2">
         <div className="text-white">Round radius:</div>
-        <input
-          type="number"
+        <NumberInput
           value={roundRadius}
-          min="0"
-          onChange={e =>
-            setRoundRadius((style.roundRadius = parseFloat(e.target.value)))
-          }
+          min={0}
+          onChange={e => setRoundRadius((style.roundRadius = e))}
           className="bg-gray-900 text-white"
         />
       </label>
@@ -43,21 +41,17 @@ export function RouteStyleUi({ style }: { style: RouteStyle }) {
       </label>
       <label className="flex items-center gap-2">
         <div className="text-white">Lateral offset:</div>
-        <input
-          type="number"
+        <NumberInput
           value={lateralOffset}
-          onChange={e =>
-            setLateralOffset((style.lateralOffset = parseFloat(e.target.value)))
-          }
+          onChange={e => setLateralOffset((style.lateralOffset = e))}
           className="bg-gray-900 text-white"
         />
       </label>
       <label className="flex items-center gap-2">
         <div className="text-white">Z index:</div>
-        <input
-          type="number"
+        <NumberInput
           value={zIndex}
-          onChange={e => setZIndex((style.zIndex = parseFloat(e.target.value)))}
+          onChange={e => setZIndex((style.zIndex = e))}
           className="bg-gray-900 text-white"
         />
       </label>

@@ -1,5 +1,6 @@
 import { EditorContext } from '../../EditorContext';
 import { Label } from '../../transit/Label';
+import { NumberInput } from '../NumberInput';
 import ColorInput from '../color/ColorInput';
 import { useContext, useState } from 'react';
 
@@ -83,13 +84,10 @@ export function LabelUi({ label }: { label: Label }) {
       </label>
       <label className="flex items-center gap-2">
         <div className="text-white">Size:</div>
-        <input
-          type="number"
+        <NumberInput
           value={size}
-          min="1"
-          onChange={e =>
-            setSize((label.style.size = parseFloat(e.target.value)))
-          }
+          min={1}
+          onChange={e => setSize((label.style.size = e))}
           className="bg-gray-900 text-white"
         />
       </label>
@@ -162,14 +160,11 @@ export function LabelUi({ label }: { label: Label }) {
       </label>
       <label className="flex items-center gap-2">
         <div className="text-white">Margin:</div>
-        <input
-          type="number"
+        <NumberInput
           value={margin}
-          min="0"
-          step="0.1"
-          onChange={e =>
-            setMargin((label.style.margin = parseFloat(e.target.value)))
-          }
+          min={0}
+          step={0.1}
+          onChange={e => setMargin((label.style.margin = e))}
           className="bg-gray-900 text-white"
         />
       </label>
