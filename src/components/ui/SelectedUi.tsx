@@ -17,9 +17,7 @@ export function SelectedUi() {
     return <TransitStopUi key={selected.id} stop={selected} />;
   }
   if (selected instanceof TransitConnection) {
-    return (
-      <TransitConnectionUi key={selected.id} connection={selected} map={map} />
-    );
+    return <TransitConnectionUi key={selected.id} connection={selected} />;
   }
   if (selected instanceof Label) {
     return <LabelUi key={selected.id} label={selected} />;

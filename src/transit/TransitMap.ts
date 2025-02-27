@@ -4,10 +4,17 @@ import { id } from '../utils/id';
 import { DecorationImage } from './DecorationImage';
 import { History } from './History';
 import { Label } from './Label';
-import { TransitConnection } from './TransitConnection';
+import { ConnectionStyle, TransitConnection } from './TransitConnection';
 import { TransitRoute, createDefaultRoute } from './TransitRoute';
-import { SavedStopStyle, TransitStop } from './TransitStop';
+import { StopStyle, TransitStop } from './TransitStop';
 import { ActionableItem } from './types';
+
+export type SavedStyle<Style> = {
+  style: Style;
+  name: string;
+  id: string;
+  removable: boolean;
+};
 
 export class TransitMap {
   public id: number = id();
@@ -28,7 +35,9 @@ export class TransitMap {
   public images: Set<DecorationImage> = new Set();
   public defaultRoute: TransitRoute;
   public history: History = new History(() => {});
-  public savedStopStyles: Map<string, SavedStopStyle> = new Map();
+  public savedStopStyles: Map<string, SavedStyle<StopStyle>> = new Map();
+  public savedConnectionStyles: Map<string, SavedStyle<ConnectionStyle>> =
+    new Map();
 
   constructor() {
     this.defaultRoute = createDefaultRoute(this);
@@ -42,8 +51,8 @@ export class TransitMap {
     );
   }
 
-  getRoutesStopStyles(): Map<string, SavedStopStyle> {
-    const styles = new Map<string, SavedStopStyle>();
+  getRoutesStopStyles(): Map<string, SavedStyle<StopStyle>> {
+    const styles = new Map<string, SavedStyle<StopStyle>>();
     for (const route of this.routes) {
       styles.set(route.name, {
         name: route.name,
@@ -61,19 +70,47 @@ export class TransitMap {
     return styles;
   }
 
-  getAllStopStyles(): SavedStopStyle[] {
+  getAllStopStyles(): SavedStyle<StopStyle>[] {
     return [
       ...this.savedStopStyles.values(),
       ...this.getRoutesStopStyles().values(),
     ];
   }
 
-  addSavedStopStyle(style: SavedStopStyle) {
+  addSavedStopStyle(style: SavedStyle<StopStyle>) {
     this.savedStopStyles.set(style.id, style);
   }
 
   removeSavedStopStyle(id: string) {
     this.savedStopStyles.delete(id);
+  }
+
+  getRoutesConnectionStyles(): Map<string, SavedStyle<ConnectionStyle>> {
+    const styles = new Map<string, SavedStyle<ConnectionStyle>>();
+    for (const route of this.routes) {
+      styles.set(route.name, {
+        name: route.name,
+        id: '__route__' + route.name,
+        style: route.style.connectionStyle,
+        removable: false,
+      });
+    }
+    return styles;
+  }
+
+  getAllConnectionStyles(): SavedStyle<ConnectionStyle>[] {
+    return [
+      ...this.savedConnectionStyles.values(),
+      ...this.getRoutesConnectionStyles().values(),
+    ];
+  }
+
+  addSavedConnectionStyle(style: SavedStyle<ConnectionStyle>) {
+    this.savedConnectionStyles.set(style.id, style);
+  }
+
+  removeSavedConnectionStyle(id: string) {
+    this.savedConnectionStyles.delete(id);
   }
 
   getSelectable(

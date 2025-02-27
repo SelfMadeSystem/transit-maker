@@ -8,7 +8,7 @@ import { Action, connectStopsAction } from './Action';
 import { Label } from './Label';
 import { SnapInfo, SnapLine } from './Snapping';
 import { TransitConnection } from './TransitConnection';
-import { TransitMap } from './TransitMap';
+import { SavedStyle, TransitMap } from './TransitMap';
 import { RouteColor, TransitRoute } from './TransitRoute';
 import { Actionable, ClickInfo, Movable, PosWithKeys } from './types';
 import { getPointAtLength } from 'svg-path-commander';
@@ -35,13 +35,6 @@ export type StopStyle = {
   lateralOffset: number;
   clearFill: boolean;
   clearStroke: boolean;
-};
-
-export type SavedStopStyle = {
-  style: StopStyle;
-  name: string;
-  id: string;
-  removable: boolean;
 };
 
 export const DEFAULT_STOP_STYLE: StopStyle = {
@@ -90,7 +83,7 @@ export class TransitStop implements Actionable, Movable {
   public hidden: boolean = false;
   public lateralOtherSide: boolean = false;
   public roundRadius: number | undefined;
-  public style?: SavedStopStyle;
+  public style?: SavedStyle<StopStyle>;
 
   constructor(map: TransitMap, labels: Label[], pos: Vector2) {
     this.map = map;

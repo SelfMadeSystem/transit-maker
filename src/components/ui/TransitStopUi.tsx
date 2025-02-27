@@ -1,6 +1,7 @@
 import { EditorContext } from '../../EditorContext';
 import { createLabelAction } from '../../transit/Action';
-import { SavedStopStyle, TransitStop } from '../../transit/TransitStop';
+import { SavedStyle } from '../../transit/TransitMap';
+import { StopStyle, TransitStop } from '../../transit/TransitStop';
 import { NumberInput } from '../NumberInput';
 import { StopStyleUi } from './StopStyleUi';
 import { useContext, useId, useState } from 'react';
@@ -55,7 +56,7 @@ export function TransitStopUi({ stop }: { stop: TransitStop }) {
                   setStyle(undefined);
                   break;
                 case newStyle: {
-                  const style: SavedStopStyle = {
+                  const style: SavedStyle<StopStyle> = {
                     name: `New style ${id}`,
                     id: `new-${id}`,
                     style: { ...stop.getStyle() },
@@ -117,7 +118,8 @@ export function TransitStopUi({ stop }: { stop: TransitStop }) {
           Add label
         </button>
         {style ? (
-          <>
+          <details>
+            <summary className="text-white">Style details</summary>
             {style.removable && (
               <label className="flex items-center gap-2">
                 <div className="text-white">Name:</div>
@@ -142,7 +144,7 @@ export function TransitStopUi({ stop }: { stop: TransitStop }) {
                 Remove
               </button>
             )}
-          </>
+          </details>
         ) : null}
       </div>
     </>

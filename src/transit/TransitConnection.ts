@@ -5,7 +5,7 @@ import { angleDelta, wrapAngle2PI } from '../utils/mathUtils';
 import { Vector2, lineLineIntersection, sameHalfPlane } from '../utils/vec';
 import { createStopAction, splitConnectionAction } from './Action';
 import { SnapLine } from './Snapping';
-import { TransitMap } from './TransitMap';
+import { SavedStyle, TransitMap } from './TransitMap';
 import { RouteColor, TransitRoute } from './TransitRoute';
 import { TransitStop } from './TransitStop';
 import { Actionable, ClickInfo } from './types';
@@ -55,24 +55,12 @@ export type ConnectionStyle = {
   outlines: ConnectionOutline[];
 };
 
-export type SharedConnectionStyle = ConnectionStyle & {
-  id: string;
-  name: string;
-};
-
 export type SpecificConnectionStyle = {
   spacingMultiplier: number;
   spacingOffset: number; // [0, 1]
   hidden: boolean;
   zIndex: number;
 };
-
-export function styleEquals(
-  a: SharedConnectionStyle,
-  b: SharedConnectionStyle,
-): boolean {
-  return a.id === b.id;
-}
 
 export const DEFALUT_CONNECTION_STYLE: SpecificConnectionStyle = {
   spacingMultiplier: 1,
@@ -107,7 +95,7 @@ export class TransitConnection implements Actionable {
   public specificStyle: SpecificConnectionStyle = {
     ...DEFALUT_CONNECTION_STYLE,
   };
-  public sharedStyle: SharedConnectionStyle | null = null;
+  public style?: SavedStyle<ConnectionStyle>;
 
   constructor(
     map: TransitMap,
@@ -123,7 +111,7 @@ export class TransitConnection implements Actionable {
   }
 
   getStyle(): ConnectionStyle {
-    return this.sharedStyle ?? this.route.style.connectionStyle;
+    return this.style?.style ?? this.route.style.connectionStyle;
   }
 
   reAdd(): void {
@@ -532,8 +520,8 @@ export class TransitConnection implements Actionable {
   }
 
   inheritStyle(connection: TransitConnection) {
-    if (connection.sharedStyle) {
-      this.sharedStyle = connection.sharedStyle;
+    if (connection.style) {
+      this.style = connection.style;
     }
     if (connection.specificStyle.hidden) {
       this.specificStyle.hidden = true;
