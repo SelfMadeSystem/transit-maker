@@ -118,7 +118,7 @@ export class Path2Dpp {
     } else if (!(Math.abs(y01 * x21 - y21 * x01) > epsilon) || !radius) {
       this.append`L${(this.x1 = x1)},${(this.y1 = y1)}`;
     } else {
-      let x20 = x2 - x0,
+      const x20 = x2 - x0,
         y20 = y2 - y0,
         l21_2 = x21 * x21 + y21 * y21,
         l20_2 = x20 * x20 + y20 * y20,
@@ -154,16 +154,16 @@ export class Path2Dpp {
     anticlockwise?: boolean,
   ): void {
     this.svgPath = null;
-    (x = +x), (y = +y), (radius = +radius), (anticlockwise = !!anticlockwise);
+    anticlockwise = !!anticlockwise;
 
     if (radius < 0) throw new Error(`negative radius: ${radius}`);
 
-    let dx = radius * Math.cos(startAngle),
+    const dx = radius * Math.cos(startAngle),
       dy = radius * Math.sin(startAngle),
       x0 = x + dx,
       y0 = y + dy,
-      cw = 1 ^ +anticlockwise,
-      da = anticlockwise ? startAngle - endAngle : endAngle - startAngle;
+      cw = 1 ^ +anticlockwise;
+    let da = anticlockwise ? startAngle - endAngle : endAngle - startAngle;
 
     if (this.x1 === null || this.y1 === null) {
       this.append`M${x0},${y0}`;

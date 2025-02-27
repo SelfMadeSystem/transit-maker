@@ -1,4 +1,5 @@
 import { Color } from '../components/color/Color';
+import { Path2Dpp } from '../utils/Path2Dpp';
 import { id } from '../utils/id';
 import { Vector2 } from '../utils/vec';
 import { Action, connectStopsAction } from './Action';
@@ -331,24 +332,11 @@ export class TransitStop implements Actionable, Movable {
     };
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
-    if (this.hidden) {
-      return;
-    }
-    ctx.save();
-    const roundingStuff = this.calculateRoundingStuff();
-    if (roundingStuff) {
-      ctx.translate(roundingStuff.stopOffset.x, roundingStuff.stopOffset.y);
-    }
+  getPath(): Path2Dpp {
+    const path = new Path2Dpp();
     const style = this.getStyle();
-    const strokeColor = this.getStopColor(style.strokeColor);
-    const fillColor = this.getStopColor(style.fillColor);
-    ctx.strokeStyle = strokeColor.hex();
-    ctx.fillStyle = fillColor.hex();
-    ctx.lineWidth = style.strokeWidth;
-    ctx.beginPath();
     if (style.edges === 0) {
-      ctx.arc(this.pos.x, this.pos.y, style.radius, 0, 2 * Math.PI);
+      path.arc(this.pos.x, this.pos.y, style.radius, 0, 2 * Math.PI);
     } else {
       const { edgeOrientation, edges, edgeFollowsRoute } = style;
       const angleStep = (2 * Math.PI) / edges;
@@ -368,32 +356,50 @@ export class TransitStop implements Actionable, Movable {
       } else if (edgeOrientation === 2) {
         polyAngle += Math.PI;
       }
-      ctx.save();
-      ctx.translate(this.pos.x, this.pos.y);
-      ctx.rotate(polyAngle);
-      ctx.moveTo(style.radius * Math.cos(0), style.radius * Math.sin(0));
+      path.moveTo(
+        this.pos.x + style.radius * Math.cos(polyAngle),
+        this.pos.y + style.radius * Math.sin(polyAngle),
+      );
       for (let i = 1; i <= style.edges; i++) {
-        ctx.lineTo(
-          style.radius * Math.cos(angleStep * i),
-          style.radius * Math.sin(angleStep * i),
+        path.lineTo(
+          this.pos.x + style.radius * Math.cos(angleStep * i + polyAngle),
+          this.pos.y + style.radius * Math.sin(angleStep * i + polyAngle),
         );
       }
-      ctx.closePath();
-      ctx.restore();
+      path.closePath();
     }
+    return path;
+  }
+
+  draw(ctx: CanvasRenderingContext2D) {
+    if (this.hidden) {
+      return;
+    }
+    ctx.save();
+    const roundingStuff = this.calculateRoundingStuff();
+    if (roundingStuff) {
+      ctx.translate(roundingStuff.stopOffset.x, roundingStuff.stopOffset.y);
+    }
+    const style = this.getStyle();
+    const strokeColor = this.getStopColor(style.strokeColor);
+    const fillColor = this.getStopColor(style.fillColor);
+    ctx.strokeStyle = strokeColor.hex();
+    ctx.fillStyle = fillColor.hex();
+    ctx.lineWidth = style.strokeWidth;
+    const path = this.getPath().toPath2D();
     if (style.margin > 0 || style.clearFill || style.clearStroke) {
       ctx.save();
       ctx.strokeStyle = 'black';
       ctx.fillStyle = 'black';
       ctx.globalCompositeOperation = 'destination-out';
       ctx.lineWidth = style.strokeWidth + style.margin;
-      if (style.margin > 0 || style.clearStroke) ctx.stroke();
-      if (style.clearFill) ctx.fill();
+      if (style.margin > 0 || style.clearStroke) ctx.stroke(path);
+      if (style.clearFill) ctx.fill(path);
       ctx.restore();
     }
-    ctx.fill();
+    ctx.fill(path);
     if (style.strokeWidth > 0) {
-      ctx.stroke();
+      ctx.stroke(path);
     }
     ctx.restore();
   }
