@@ -50,7 +50,7 @@ export const DEFAULT_STOP_STYLE: StopStyle = {
   edgeFollowsRoute: true,
   radius: 5,
   rounding: 5,
-  stretch: 2,
+  stretch: 1,
   strokeWidth: 2,
   margin: 2,
   lateralOffset: 0,
