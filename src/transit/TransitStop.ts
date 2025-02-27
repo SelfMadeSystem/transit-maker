@@ -29,6 +29,7 @@ export type StopStyle = {
   rounding: number;
   strokeWidth: number;
   margin: number;
+  lateralOffset: number;
   clearFill: boolean;
   clearStroke: boolean;
 };
@@ -50,6 +51,7 @@ export const DEFAULT_STOP_STYLE: StopStyle = {
   rounding: 5,
   strokeWidth: 2,
   margin: 2,
+  lateralOffset: 3,
   clearFill: false,
   clearStroke: false,
 };
@@ -139,7 +141,7 @@ export class TransitStop implements Actionable, Movable {
     this.updateLateralConnections(connection.getOtherStop(this));
   }
 
-  getLateralOffset() {
+  getConnectionLateralOffset() {
     const firstConnection = Array.from(this.connections)[0];
     if (!firstConnection) {
       return 0;
@@ -198,6 +200,7 @@ export class TransitStop implements Actionable, Movable {
         rounding: 0,
         strokeWidth: 0,
         margin: 0,
+        lateralOffset: 0,
         clearFill: false,
         clearStroke: false,
       };
@@ -337,18 +340,31 @@ export class TransitStop implements Actionable, Movable {
 
   getPath(): Path2Dpp {
     const path = new Path2Dpp();
-    const { edges, radius, edgeOrientation, edgeFollowsRoute, rounding } =
-      this.getStyle();
+    const {
+      edges,
+      radius,
+      edgeOrientation,
+      edgeFollowsRoute,
+      rounding,
+      lateralOffset,
+    } = this.getStyle();
+
+    const connectionsAngle =
+      Array.from(this.connections)
+        .map(connection => connection.getAngle(this))
+        .reduce((sum, angle) => sum + angle, 0) / this.connections.size;
+
+    const offset = Vector2.fromAngle(connectionsAngle, lateralOffset);
+
     if (edges === 0) {
-      path.arc(this.pos.x, this.pos.y, radius, 0, 2 * Math.PI);
+      path.arc(...this.pos.add(offset).a(), radius, 0, 2 * Math.PI);
     } else {
       const angleStep = (2 * Math.PI) / edges;
+
       let polyAngle = 0;
+
       if (this.connections.size > 0 && edgeFollowsRoute) {
-        polyAngle =
-          Array.from(this.connections)
-            .map(connection => connection.getAngle(this))
-            .reduce((sum, angle) => sum + angle, 0) / this.connections.size;
+        polyAngle = connectionsAngle;
       }
 
       if (edgeOrientation === 1 || edgeOrientation === 3) {
@@ -364,7 +380,7 @@ export class TransitStop implements Actionable, Movable {
           new Vector2(
             this.pos.x + r * Math.cos(angleStep * i + polyAngle),
             this.pos.y + r * Math.sin(angleStep * i + polyAngle),
-          ),
+          ).add(offset),
         );
       }
 
@@ -627,7 +643,7 @@ export class TransitStop implements Actionable, Movable {
         if (connections.length > 1) {
           const diff = this.pos.sub(connections[0].getOtherStop(this).pos);
           const orth = diff.normalize().cw90();
-          const offset = this.getLateralOffset();
+          const offset = this.getConnectionLateralOffset();
 
           const newStops: TransitStop[] = [];
           for (let i = 0; i < connections.length; i++) {

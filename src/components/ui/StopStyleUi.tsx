@@ -14,6 +14,7 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
   const [rounding, setRounding] = useState(style.rounding);
   const [strokeWidth, setStrokeWidth] = useState(style.strokeWidth);
   const [margin, setMargin] = useState(style.margin);
+  const [lateralOffset, setLateralOffset] = useState(style.lateralOffset);
   const [clearFill, setClearFill] = useState(style.clearFill);
   const [clearStroke, setClearStroke] = useState(style.clearStroke);
 
@@ -124,6 +125,17 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
           value={margin}
           min="0"
           onChange={e => setMargin((style.margin = parseFloat(e.target.value)))}
+          className="bg-gray-900 text-white"
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Lateral offset:</div>
+        <input
+          type="number"
+          value={lateralOffset}
+          onChange={e =>
+            setLateralOffset((style.lateralOffset = parseFloat(e.target.value)))
+          }
           className="bg-gray-900 text-white"
         />
       </label>

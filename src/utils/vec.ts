@@ -133,8 +133,11 @@ export class Vector2 {
     this.y = args[1]!; // ts is dumb
   }
 
-  static fromAngle(angle: number): Vector2 {
-    return new Vector2(Math.cos(angle), Math.sin(angle));
+  static fromAngle(angle: number, magnitude: number = 1): Vector2 {
+    return new Vector2(
+      Math.cos(angle) * magnitude,
+      Math.sin(angle) * magnitude,
+    );
   }
 
   add(other: Vector2): Vector2 {

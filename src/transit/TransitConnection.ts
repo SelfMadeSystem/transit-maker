@@ -278,13 +278,17 @@ export class TransitConnection implements Actionable {
   }
 
   getLateralOffset() {
-    return Math.max(this.to.getLateralOffset(), this.from.getLateralOffset());
+    return Math.max(
+      this.to.getConnectionLateralOffset(),
+      this.from.getConnectionLateralOffset(),
+    );
   }
 
   getFromToPosInfo(rounding = true) {
     let from = this.from.pos;
     let to = this.to.pos;
-    const lateralOffset = this.lateralOffset * this.from.getLateralOffset();
+    const lateralOffset =
+      this.lateralOffset * this.from.getConnectionLateralOffset();
 
     if (this.fromConnection) {
       const posInfo = this.fromConnection.getFromToPosInfo(rounding);
