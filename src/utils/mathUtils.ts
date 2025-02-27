@@ -75,6 +75,16 @@ export function randomId(length = 8): string {
 }
 
 /**
+ * Rounds a number to a given amount.
+ * @param num The number to round
+ * @param amount The amount to round to
+ * @returns The rounded number to the given amount
+ */
+export function round(num: number, amount = 1): number {
+  return Math.round(num / amount) * amount;
+}
+
+/**
  * Loops a number between a min and max
  * @param at The number to loop
  * @param min The minimum number to return
@@ -107,6 +117,54 @@ export function angleDelta(angle1: number, angle2: number): number {
   let delta = angle2 - angle1;
   delta = ((delta + Math.PI) % (2 * Math.PI)) - Math.PI;
   return delta;
+}
+
+/**
+ * Calculates the average of a list of angles in the range [0, 2 * PI]
+ * @param angles The list of angles to average
+ * @returns The average angle in the range [0, 2 * PI]
+ * @author SelfMadeSystem (Shoghi Simon) 2025-02-27
+ */
+export function averageAngle(angles: number[]): number {
+  if (angles.length === 0) {
+    return 0;
+  }
+  if (angles.length === 1) {
+    return angles[0];
+  }
+  if (angles.length === 2) {
+    const a1 = angles[0];
+    const a2 = angles[1];
+
+    if (isParallel(a1, a2)) {
+      // If the angles are parallel, return max angle + PI / 2. We do this
+      // because the average of two parallel angles is not well defined and
+      // becomes unstable when the angles are close to each other or close to
+      // 180 degrees apart.
+      return wrapAngle2PI(Math.max(a1, a2) + Math.PI / 2);
+    }
+  }
+  let x = 0;
+  let y = 0;
+
+  for (const angle of angles) {
+    x += Math.cos(angle);
+    y += Math.sin(angle);
+  }
+
+  const avgAngle = Math.atan2(y, x);
+  return avgAngle < 0 ? avgAngle + 2 * Math.PI : avgAngle;
+}
+
+/**
+ * Determines if two angles are parallel. This is the case if the difference
+ * between the angles is 0 or PI
+ * @param angle1 The first angle
+ * @param angle2 The second angle
+ */
+export function isParallel(angle1: number, angle2: number): boolean {
+  const delta = Math.abs(angleDelta(angle1, angle2));
+  return approxEquals(delta, 0) || approxEquals(delta, Math.PI);
 }
 
 /**

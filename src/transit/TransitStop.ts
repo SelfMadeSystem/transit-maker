@@ -1,6 +1,7 @@
 import { Color } from '../components/color/Color';
 import { Path2Dpp } from '../utils/Path2Dpp';
 import { id } from '../utils/id';
+import { averageAngle } from '../utils/mathUtils';
 import { Vector2 } from '../utils/vec';
 import { Action, connectStopsAction } from './Action';
 import { Label } from './Label';
@@ -45,7 +46,7 @@ export type SavedStopStyle = {
 export const DEFAULT_STOP_STYLE: StopStyle = {
   fillColor: Color.BLACK,
   strokeColor: 'route',
-  edges: 0,
+  edges: 3,
   edgeOrientation: 0,
   edgeFollowsRoute: true,
   radius: 5,
@@ -354,10 +355,9 @@ export class TransitStop implements Actionable, Movable {
       stretch,
     } = this.getStyle();
 
-    const connectionsAngle =
-      Array.from(this.connections)
-        .map(connection => connection.getAngle(this))
-        .reduce((sum, angle) => sum + angle, 0) / this.connections.size;
+    const connectionsAngle = averageAngle(
+      Array.from(this.connections).map(connection => connection.getAngle(this)),
+    );
 
     const offset = Vector2.fromAngle(
       connectionsAngle + (this.lateralOtherSide ? Math.PI : 0),
