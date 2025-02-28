@@ -9,6 +9,8 @@ export type RouteColor = Color | 'route';
 
 export type RouteStyle = {
   color: Color;
+  // TODO: Make the styles be shared styles and have option to create a new
+  // style for this route
   connectionStyle: ConnectionStyle;
   stopStyle: StopStyle;
   terminusStyle: StopStyle;
