@@ -155,12 +155,12 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
   const [layers, setLayers] = useState(style.layers);
 
   function addLayer() {
-    setLayers([...layers, clone(layers[layers.length - 1])]);
+    setLayers((style.layers = [...layers, clone(layers[layers.length - 1])]));
   }
 
   function removeLayer(index: number) {
     if (layers.length === 1) return;
-    setLayers(layers.filter((_, i) => i !== index));
+    setLayers((style.layers = layers.filter((_, i) => i !== index)));
   }
 
   return (
