@@ -7,7 +7,7 @@ import { Label } from './Label';
 import { ConnectionStyle, TransitConnection } from './TransitConnection';
 import { TransitRoute, createDefaultRoute } from './TransitRoute';
 import { StopStyle, TransitStop } from './TransitStop';
-import { ActionableItem } from './types';
+import { ActionableItem, LayeredDrawableItem } from './types';
 
 export type SavedStyle<Style> = {
   style: Style;
@@ -43,12 +43,8 @@ export class TransitMap {
     this.defaultRoute = createDefaultRoute(this);
     this.defaultRoute.style.roundRadius = 0;
     this.defaultRoute.style.zIndex = 1;
-    this.defaultRoute.style.stopStyle.strokeColor = Color.WHITE;
-    this.defaultRoute.style.terminusStyle.strokeColor = new Color(
-      255,
-      255,
-      255,
-    );
+    this.defaultRoute.style.stopStyle.layers[1].strokeColor = Color.WHITE;
+    this.defaultRoute.style.terminusStyle.layers[1].strokeColor = Color.WHITE;
   }
 
   getRoutesStopStyles(): Map<string, SavedStyle<StopStyle>> {
@@ -146,8 +142,8 @@ export class TransitMap {
     return null;
   }
 
-  connectionsByZIndex(): TransitConnection[][] {
-    const connections: Map<number, TransitConnection[]> = new Map();
+  stuffByZIndex(): LayeredDrawableItem[][] {
+    const connections: Map<number, LayeredDrawableItem[]> = new Map();
     const routeLen = this.routes.size;
     for (const connection of this.connections) {
       const routeIndex = this.routes.indexOf(connection.route);
@@ -158,6 +154,19 @@ export class TransitMap {
         connections.set(zIndex, []);
       }
       connections.get(zIndex)!.push(connection);
+    }
+
+    for (const stop of this.stops) {
+      const route = stop.getRoute();
+      const routeIndex = this.routes.indexOf(route);
+      const routeZ = route.style.zIndex;
+      const stopZ = stop.zIndex;
+      const connectionZ = route.style.stopZIndex;
+      const zIndex = routeZ + connectionZ + stopZ + routeIndex / routeLen;
+      if (!connections.has(zIndex)) {
+        connections.set(zIndex, []);
+      }
+      connections.get(zIndex)!.push(stop);
     }
 
     const connectionsArray = Array.from(connections.entries());
@@ -177,7 +186,7 @@ export class TransitMap {
     },
     selected: ActionableItem | null,
   ) {
-    const connectionsByZ = this.connectionsByZIndex();
+    const connectionsByZ = this.stuffByZIndex();
     for (const image of this.images) {
       if (selected === image) {
         image.drawSelected(fgCtx);
@@ -199,12 +208,6 @@ export class TransitMap {
           }
         }
       }
-    }
-    for (const stop of this.stops) {
-      if (selected === stop) {
-        stop.drawSelected(fgCtx);
-      }
-      stop.draw(ctx);
     }
     for (const label of this.labels) {
       if (selected === label) {

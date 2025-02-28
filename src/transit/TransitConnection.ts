@@ -8,7 +8,7 @@ import { SnapLine } from './Snapping';
 import { SavedStyle, TransitMap } from './TransitMap';
 import { RouteColor, TransitRoute } from './TransitRoute';
 import { TransitStop } from './TransitStop';
-import { Actionable, ClickInfo } from './types';
+import { Actionable, ClickInfo, LayeredDrawable } from './types';
 import { getClosestPoint } from 'svg-path-commander';
 
 export type ConnectionStrokeType = 'solid' | 'dotted' | 'dashed';
@@ -76,7 +76,7 @@ export type PathResult = {
   pathpp: Path2Dpp;
 };
 
-export class TransitConnection implements Actionable {
+export class TransitConnection implements Actionable, LayeredDrawable {
   public id: number = id();
   // TODO: Add support for:
   // - split routes (e.g. REM connection between Bois-Franc, Marie-Curie,

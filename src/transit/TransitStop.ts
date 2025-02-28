@@ -10,10 +10,19 @@ import { SnapInfo, SnapLine } from './Snapping';
 import { TransitConnection } from './TransitConnection';
 import { SavedStyle, TransitMap } from './TransitMap';
 import { RouteColor, TransitRoute } from './TransitRoute';
-import { Actionable, ClickInfo, Movable, PosWithKeys } from './types';
+import {
+  Actionable,
+  ClickInfo,
+  LayeredDrawable,
+  Movable,
+  PosWithKeys,
+} from './types';
 import { getPointAtLength } from 'svg-path-commander';
 
-export type StopStyle = {
+// idk what to call this yet. in TransitConnection, it's called an Outline
+// because it's the outline of the connection. here tho, sometimes there are
+// outlines, sometimes not, so idk what to call it.
+export type StopStyleLayer = {
   fillColor: RouteColor;
   strokeColor: RouteColor;
   /**
@@ -31,26 +40,48 @@ export type StopStyle = {
   rounding: number;
   stretch: number;
   strokeWidth: number;
-  margin: number;
   lateralOffset: number;
   clearFill: boolean;
   clearStroke: boolean;
 };
 
+export type StopStyle = {
+  layers: StopStyleLayer[];
+};
+
+// TODO: Make a SpecificStopStyle
+
 export const DEFAULT_STOP_STYLE: StopStyle = {
-  fillColor: Color.BLACK,
-  strokeColor: 'route',
-  edges: 3,
-  edgeOrientation: 0,
-  edgeFollowsRoute: true,
-  radius: 5,
-  rounding: 5,
-  stretch: 1,
-  strokeWidth: 2,
-  margin: 2,
-  lateralOffset: 0,
-  clearFill: false,
-  clearStroke: false,
+  layers: [
+    {
+      fillColor: Color.TRANSPARENT,
+      strokeColor: Color.TRANSPARENT,
+      edges: 0,
+      edgeOrientation: 0,
+      edgeFollowsRoute: true,
+      radius: 5,
+      rounding: 5,
+      stretch: 1,
+      strokeWidth: 4,
+      lateralOffset: 0,
+      clearFill: false,
+      clearStroke: true,
+    },
+    {
+      fillColor: Color.BLACK,
+      strokeColor: 'route',
+      edges: 0,
+      edgeOrientation: 0,
+      edgeFollowsRoute: true,
+      radius: 5,
+      rounding: 5,
+      stretch: 1,
+      strokeWidth: 2,
+      lateralOffset: 0,
+      clearFill: false,
+      clearStroke: false,
+    },
+  ],
 };
 
 export type RoundingCalculation = {
@@ -64,7 +95,7 @@ export type RoundingCalculation = {
   angle: number;
 } | null;
 
-export class TransitStop implements Actionable, Movable {
+export class TransitStop implements Actionable, Movable, LayeredDrawable {
   public id: number = id();
   // TODO: Add support for:
   // - "long" transfer stations (e.g. Lucien-L'Allier in Montreal is like 3×
@@ -83,6 +114,7 @@ export class TransitStop implements Actionable, Movable {
   public hidden: boolean = false;
   public lateralOtherSide: boolean = false;
   public roundRadius: number | undefined;
+  public zIndex: number = 0;
   public style?: SavedStyle<StopStyle>;
 
   constructor(map: TransitMap, labels: Label[], pos: Vector2) {
@@ -190,19 +222,22 @@ export class TransitStop implements Actionable, Movable {
   getStyle(): StopStyle {
     if (this.hidden) {
       return {
-        fillColor: Color.BLACK,
-        strokeColor: Color.BLACK,
-        edges: 0,
-        edgeOrientation: 0,
-        edgeFollowsRoute: false,
-        radius: 5,
-        rounding: 0,
-        stretch: 1,
-        strokeWidth: 0,
-        margin: 0,
-        lateralOffset: 0,
-        clearFill: false,
-        clearStroke: false,
+        layers: [
+          {
+            fillColor: Color.TRANSPARENT,
+            strokeColor: Color.TRANSPARENT,
+            edges: 0,
+            edgeOrientation: 0,
+            edgeFollowsRoute: false,
+            radius: 5,
+            rounding: 0,
+            stretch: 0,
+            strokeWidth: 0,
+            lateralOffset: 0,
+            clearFill: false,
+            clearStroke: false,
+          },
+        ],
       };
     }
     if (this.style) {
@@ -338,7 +373,7 @@ export class TransitStop implements Actionable, Movable {
     };
   }
 
-  getPath(): Path2Dpp {
+  getPath(layer: StopStyleLayer): Path2Dpp {
     const path = new Path2Dpp();
     const {
       edges,
@@ -348,7 +383,7 @@ export class TransitStop implements Actionable, Movable {
       rounding,
       lateralOffset,
       stretch,
-    } = this.getStyle();
+    } = layer;
 
     const connectionsAngle = (() => {
       if (this.linked?.connection) {
@@ -427,42 +462,47 @@ export class TransitStop implements Actionable, Movable {
     return path;
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
+  *draw(ctx: CanvasRenderingContext2D) {
     this.resetLinkedPos();
     if (this.hidden) {
       return;
     }
-    ctx.save();
-    const roundingStuff = this.calculateRoundingStuff();
-    if (roundingStuff) {
-      ctx.translate(...roundingStuff.stopOffset.a);
-    }
-    const style = this.getStyle();
-    const strokeColor = this.getStopColor(style.strokeColor);
-    const fillColor = this.getStopColor(style.fillColor);
-    ctx.strokeStyle = strokeColor.hex();
-    ctx.fillStyle = fillColor.hex();
-    ctx.lineWidth = style.strokeWidth;
-    const path = this.getPath().toPath2D();
-    if (style.margin > 0 || style.clearFill || style.clearStroke) {
+    const { layers } = this.getStyle();
+
+    for (const layer of layers) {
       ctx.save();
-      ctx.strokeStyle = 'black';
-      ctx.fillStyle = 'black';
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.lineWidth = style.strokeWidth + style.margin;
-      if (style.margin > 0 || style.clearStroke) ctx.stroke(path);
-      if (style.clearFill) ctx.fill(path);
+      const roundingStuff = this.calculateRoundingStuff();
+      if (roundingStuff) {
+        ctx.translate(...roundingStuff.stopOffset.a);
+      }
+      const strokeColor = this.getStopColor(layer.strokeColor);
+      const fillColor = this.getStopColor(layer.fillColor);
+      ctx.strokeStyle = strokeColor.hex();
+      ctx.fillStyle = fillColor.hex();
+      ctx.lineWidth = layer.strokeWidth;
+      const path = this.getPath(layer).toPath2D();
+      if (layer.clearFill || layer.clearStroke) {
+        ctx.save();
+        ctx.strokeStyle = 'black';
+        ctx.fillStyle = 'black';
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.lineWidth = layer.strokeWidth;
+        if (layer.clearStroke) ctx.stroke(path);
+        if (layer.clearFill) ctx.fill(path);
+        ctx.restore();
+      }
+      ctx.fill(path);
+      if (layer.strokeWidth > 0) {
+        ctx.stroke(path);
+      }
       ctx.restore();
+      yield;
     }
-    ctx.fill(path);
-    if (style.strokeWidth > 0) {
-      ctx.stroke(path);
-    }
-    ctx.restore();
   }
 
   drawSelected(ctx: CanvasRenderingContext2D) {
-    const style = this.getStyle();
+    const { layers } = this.getStyle();
+    const layer = layers[0];
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -470,7 +510,7 @@ export class TransitStop implements Actionable, Movable {
     ctx.arc(
       pos.x,
       pos.y,
-      style.radius + style.strokeWidth / 2 + style.margin + 2,
+      layer.radius + layer.strokeWidth / 2 + 2,
       0,
       2 * Math.PI,
     );
@@ -489,11 +529,12 @@ export class TransitStop implements Actionable, Movable {
 
   isOver(x: number, y: number) {
     const pos = this.getDrawPos();
-    const style = this.getStyle();
+    const { layers } = this.getStyle();
+    const layer = layers[0];
 
     return (
       pos.distSq(new Vector2(x, y)) <=
-      (style.radius + style.strokeWidth / 2 + style.margin) ** 2
+      (layer.radius + layer.strokeWidth / 2) ** 2
     );
   }
 

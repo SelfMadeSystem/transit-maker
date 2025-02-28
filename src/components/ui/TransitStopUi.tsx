@@ -17,6 +17,7 @@ export function TransitStopUi({ stop }: { stop: TransitStop }) {
   const [lateralOtherSide, setLateralOtherSide] = useState(
     stop.lateralOtherSide,
   );
+  const [zIndex, setZIndex] = useState(stop.zIndex);
   const hasRoundRadius = roundRadius !== undefined;
 
   const autoStyle = `auto-${id}`;
@@ -113,6 +114,14 @@ export function TransitStopUi({ stop }: { stop: TransitStop }) {
             onChange={() =>
               setLateralOtherSide((stop.lateralOtherSide = !lateralOtherSide))
             }
+          />
+        </label>
+        <label className="flex items-center gap-2">
+          <div className="text-white">Z-index:</div>
+          <NumberInput
+            value={zIndex}
+            onChange={e => setZIndex((stop.zIndex = e))}
+            className="bg-gray-900 text-white"
           />
         </label>
         <button onClick={addLabel} className="bg-gray-900 text-white">

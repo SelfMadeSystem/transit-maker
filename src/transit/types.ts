@@ -42,8 +42,14 @@ export interface Actionable {
   rightClick?(a: ClickInfo): void;
 }
 
+export interface LayeredDrawable {
+  draw(ctx: CanvasRenderingContext2D): Generator<void>;
+}
+
 export type ActionableItem =
   | Label
   | TransitStop
   | TransitConnection
   | DecorationImage;
+
+export type LayeredDrawableItem = TransitStop | TransitConnection;

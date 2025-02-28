@@ -1,24 +1,24 @@
-import { StopStyle } from '../../transit/TransitStop';
+import { StopStyle, StopStyleLayer } from '../../transit/TransitStop';
+import { clone } from '../../utils/clone';
 import { NumberInput } from '../NumberInput';
 import { RouteColorEditor } from '../RouteColorEditor';
 import { useState } from 'react';
 
-export function StopStyleUi({ style }: { style: StopStyle }) {
-  const [fillColor, setFillColor] = useState(style.fillColor);
-  const [strokeColor, setStrokeColor] = useState(style.strokeColor);
-  const [edges, setEdges] = useState(style.edges);
-  const [edgeOrientation, setEdgeOrientation] = useState(style.edgeOrientation);
+function StopStyleLayerUi({ layer }: { layer: StopStyleLayer }) {
+  const [fillColor, setFillColor] = useState(layer.fillColor);
+  const [strokeColor, setStrokeColor] = useState(layer.strokeColor);
+  const [edges, setEdges] = useState(layer.edges);
+  const [edgeOrientation, setEdgeOrientation] = useState(layer.edgeOrientation);
   const [edgeFollowsRoute, setEdgeFollowsRoute] = useState(
-    style.edgeFollowsRoute,
+    layer.edgeFollowsRoute,
   );
-  const [radius, setRadius] = useState(style.radius);
-  const [rounding, setRounding] = useState(style.rounding);
-  const [stretch, setStretch] = useState(style.stretch);
-  const [strokeWidth, setStrokeWidth] = useState(style.strokeWidth);
-  const [margin, setMargin] = useState(style.margin);
-  const [lateralOffset, setLateralOffset] = useState(style.lateralOffset);
-  const [clearFill, setClearFill] = useState(style.clearFill);
-  const [clearStroke, setClearStroke] = useState(style.clearStroke);
+  const [radius, setRadius] = useState(layer.radius);
+  const [rounding, setRounding] = useState(layer.rounding);
+  const [stretch, setStretch] = useState(layer.stretch);
+  const [strokeWidth, setStrokeWidth] = useState(layer.strokeWidth);
+  const [lateralOffset, setLateralOffset] = useState(layer.lateralOffset);
+  const [clearFill, setClearFill] = useState(layer.clearFill);
+  const [clearStroke, setClearStroke] = useState(layer.clearStroke);
 
   return (
     <>
@@ -26,21 +26,21 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
         <div className="text-white">Fill color:</div>
         <RouteColorEditor
           color={fillColor}
-          onChange={fill => setFillColor((style.fillColor = fill))}
+          onChange={fill => setFillColor((layer.fillColor = fill))}
         />
       </label>
       <label className="flex items-center gap-2">
         <div className="text-white">Stroke color:</div>
         <RouteColorEditor
           color={strokeColor}
-          onChange={stroke => setStrokeColor((style.strokeColor = stroke))}
+          onChange={stroke => setStrokeColor((layer.strokeColor = stroke))}
         />
       </label>
       <label className="flex items-center gap-2">
         <div className="text-white">Edges:</div>
         <select
           value={edges}
-          onChange={e => setEdges((style.edges = parseInt(e.target.value)))}
+          onChange={e => setEdges((layer.edges = parseInt(e.target.value)))}
           className="bg-gray-900 text-white"
         >
           <option value="0">Circle</option>
@@ -58,7 +58,7 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
               value={edgeOrientation}
               onChange={e =>
                 setEdgeOrientation(
-                  (style.edgeOrientation = parseInt(e.target.value)),
+                  (layer.edgeOrientation = parseInt(e.target.value)),
                 )
               }
               className="bg-gray-900 text-white"
@@ -76,7 +76,7 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
               checked={edgeFollowsRoute}
               onChange={() =>
                 setEdgeFollowsRoute(
-                  (style.edgeFollowsRoute = !edgeFollowsRoute),
+                  (layer.edgeFollowsRoute = !edgeFollowsRoute),
                 )
               }
             />
@@ -88,7 +88,7 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
         <NumberInput
           value={radius}
           min={0}
-          onChange={e => setRadius((style.radius = e))}
+          onChange={e => setRadius((layer.radius = e))}
           className="bg-gray-900 text-white"
         />
       </label>
@@ -97,7 +97,7 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
         <NumberInput
           value={strokeWidth}
           min={0}
-          onChange={e => setStrokeWidth((style.strokeWidth = e))}
+          onChange={e => setStrokeWidth((layer.strokeWidth = e))}
           className="bg-gray-900 text-white"
         />
       </label>
@@ -108,7 +108,7 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
           <NumberInput
             value={rounding}
             min={0}
-            onChange={e => setRounding((style.rounding = e))}
+            onChange={e => setRounding((layer.rounding = e))}
             className="bg-gray-900 text-white"
           />
         </label>
@@ -119,16 +119,7 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
           value={stretch}
           min={0}
           step={0.1}
-          onChange={e => setStretch((style.stretch = e))}
-          className="bg-gray-900 text-white"
-        />
-      </label>
-      <label className="flex items-center gap-2">
-        <div className="text-white">Margin:</div>
-        <NumberInput
-          value={margin}
-          min={0}
-          onChange={e => setMargin((style.margin = e))}
+          onChange={e => setStretch((layer.stretch = e))}
           className="bg-gray-900 text-white"
         />
       </label>
@@ -136,7 +127,7 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
         <div className="text-white">Lateral offset:</div>
         <NumberInput
           value={lateralOffset}
-          onChange={e => setLateralOffset((style.lateralOffset = e))}
+          onChange={e => setLateralOffset((layer.lateralOffset = e))}
           className="bg-gray-900 text-white"
         />
       </label>
@@ -145,7 +136,7 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
         <input
           type="checkbox"
           checked={clearFill}
-          onChange={() => setClearFill((style.clearFill = !clearFill))}
+          onChange={() => setClearFill((layer.clearFill = !clearFill))}
         />
       </label>
       <label className="flex items-center gap-2">
@@ -153,9 +144,44 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
         <input
           type="checkbox"
           checked={clearStroke}
-          onChange={() => setClearStroke((style.clearStroke = !clearStroke))}
+          onChange={() => setClearStroke((layer.clearStroke = !clearStroke))}
         />
       </label>
     </>
+  );
+}
+
+export function StopStyleUi({ style }: { style: StopStyle }) {
+  const [layers, setLayers] = useState(style.layers);
+
+  function addLayer() {
+    setLayers([...layers, clone(layers[layers.length - 1])]);
+  }
+
+  function removeLayer(index: number) {
+    if (layers.length === 1) return;
+    setLayers(layers.filter((_, i) => i !== index));
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button className="bg-gray-800 p-1 text-white" onClick={addLayer}>
+        Add layer
+      </button>
+      <div className="ml-4">
+        {layers.map((layer, i) => (
+          <details key={i}>
+            <summary className="text-white">Layer {i + 1}</summary>
+            <StopStyleLayerUi layer={layer} />
+            <button
+              className="bg-gray-800 p-1 text-white"
+              onClick={() => removeLayer(i)}
+            >
+              Remove layer
+            </button>
+          </details>
+        ))}
+      </div>
+    </div>
   );
 }

@@ -1,4 +1,5 @@
 import { Color } from '../components/color/Color';
+import { clone } from '../utils/clone';
 import { id } from '../utils/id';
 import { ConnectionStyle } from './TransitConnection';
 import { TransitMap } from './TransitMap';
@@ -15,6 +16,7 @@ export type RouteStyle = {
   roundRadius: number;
   roundDistInstead: boolean; // distance from original instead of radius of circle
   zIndex: number;
+  stopZIndex: number;
 };
 
 export class TransitRoute {
@@ -49,13 +51,10 @@ export class TransitRoute {
       lateralOffset: 5,
       roundRadius: 10,
       roundDistInstead: true,
-      stopStyle: {
-        ...DEFAULT_STOP_STYLE,
-      },
-      terminusStyle: {
-        ...DEFAULT_STOP_STYLE,
-      },
+      stopStyle: clone(DEFAULT_STOP_STYLE),
+      terminusStyle: clone(DEFAULT_STOP_STYLE),
       zIndex: 0,
+      stopZIndex: 1,
     };
     this.map.routes.add(this);
   }

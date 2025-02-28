@@ -13,6 +13,7 @@ export function RouteStyleUi({ style }: { style: RouteStyle }) {
   );
   const [lateralOffset, setLateralOffset] = useState(style.lateralOffset);
   const [zIndex, setZIndex] = useState(style.zIndex);
+  const [stopZIndex, setStopZIndex] = useState(style.stopZIndex);
 
   return (
     <div className="flex flex-col gap-2">
@@ -52,6 +53,14 @@ export function RouteStyleUi({ style }: { style: RouteStyle }) {
         <NumberInput
           value={zIndex}
           onChange={e => setZIndex((style.zIndex = e))}
+          className="bg-gray-900 text-white"
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Stop Z index:</div>
+        <NumberInput
+          value={stopZIndex}
+          onChange={e => setStopZIndex((style.stopZIndex = e))}
           className="bg-gray-900 text-white"
         />
       </label>
