@@ -321,15 +321,20 @@ export class SvgDrawingContext implements DrawingContext {
     } else if (type === 'fill') {
       elem.setAttribute('fill', state.fill.hex());
     }
+    if (state.transform.length === 0) return;
     elem.setAttribute(
       'transform',
       state.transform
         .map(t => {
           if ('translate' in t) {
+            if (t.translate.x === 0 && t.translate.y === 0) return '';
             return `translate(${t.translate.x}, ${t.translate.y})`;
           } else if ('rotate' in t) {
+            if (t.rotate === 0) return '';
             return `rotate(${t.rotate})`;
           } else if ('scale' in t) {
+            if (t.scale.x === 1 && t.scale.y === 1) return '';
+            if (t.scale.x === t.scale.y) return `scale(${t.scale.x})`;
             return `scale(${t.scale.x}, ${t.scale.y})`;
           }
         })
