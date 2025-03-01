@@ -57,7 +57,7 @@ export const DEFAULT_STOP_STYLE: StopStyle = {
     {
       fillColor: Color.TRANSPARENT,
       strokeColor: Color.TRANSPARENT,
-      edges: 1,
+      edges: 0,
       edgeOrientation: 0,
       edgeFollowsRoute: true,
       radius: 5,
@@ -71,7 +71,7 @@ export const DEFAULT_STOP_STYLE: StopStyle = {
     {
       fillColor: Color.BLACK,
       strokeColor: 'route',
-      edges: 1,
+      edges: 0,
       edgeOrientation: 0,
       edgeFollowsRoute: true,
       radius: 5,
