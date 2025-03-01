@@ -27,7 +27,8 @@ export type StopStyleLayer = {
   strokeColor: RouteColor;
   /**
    * 0: circle :)
-   * 1-2: not supported
+   * 1: rectangle with `radius` side-length and `stretch`
+   * 2: not supported
    * 3+: polygon with `edges` edges and `radius` radius
    */
   edges: number;
@@ -56,11 +57,11 @@ export const DEFAULT_STOP_STYLE: StopStyle = {
     {
       fillColor: Color.TRANSPARENT,
       strokeColor: Color.TRANSPARENT,
-      edges: 0,
+      edges: 1,
       edgeOrientation: 0,
       edgeFollowsRoute: true,
       radius: 5,
-      rounding: 5,
+      rounding: 0,
       stretch: 1,
       strokeWidth: 4,
       lateralOffset: 0,
@@ -70,11 +71,11 @@ export const DEFAULT_STOP_STYLE: StopStyle = {
     {
       fillColor: Color.BLACK,
       strokeColor: 'route',
-      edges: 0,
+      edges: 1,
       edgeOrientation: 0,
       edgeFollowsRoute: true,
       radius: 5,
-      rounding: 5,
+      rounding: 0,
       stretch: 1,
       strokeWidth: 2,
       lateralOffset: 0,
@@ -408,6 +409,26 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
 
     if (edges === 0) {
       path.arc(...offset.a, radius, 0, 2 * Math.PI);
+    } else if (edges === 1) {
+      const halfSize = new Vector2(radius * stretch, radius).mult(0.5);
+      const tl = halfSize.mult(-1).rotateBy(connectionsAngle);
+      const tr = halfSize.mult(1, -1).rotateBy(connectionsAngle);
+      const br = halfSize.rotateBy(connectionsAngle);
+      const bl = halfSize.mult(-1, 1).rotateBy(connectionsAngle);
+      const start = tl.avg(tr);
+      path.moveTo(...start.add(offset).a);
+
+      const list = [tr, br, bl, tl];
+
+      const round = Math.min(rounding, radius / 2, (radius * stretch) / 2);
+
+      for (let i = 0; i < list.length; i++) {
+        const current = list[i].add(offset);
+        const next = list[(i + 1) % list.length].add(offset);
+
+        path.arcTo(...current.a, ...next.a, round);
+      }
+      path.closePath();
     } else {
       const stretchFactor = new Vector2(stretch, 1);
       const angleStep = (2 * Math.PI) / edges;
@@ -431,12 +452,11 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
         polyAngle += Math.PI;
       }
       const points = [];
-      const r = radius + rounding / 2;
       for (let i = 0; i < edges; i++) {
         points.push(
           new Vector2(
-            r * Math.cos(angleStep * i + polyAngle),
-            r * Math.sin(angleStep * i + polyAngle),
+            radius * Math.cos(angleStep * i + polyAngle),
+            radius * Math.sin(angleStep * i + polyAngle),
           )
             .rotateBy(-connectionsAngle)
             .mult(...stretchFactor.a)
@@ -445,8 +465,7 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
         );
       }
 
-      const vertexAngle = Math.PI * 0.5 - Math.PI / edges;
-      const roundRadius = Math.tan(vertexAngle / 2) * rounding;
+      const round = Math.min(rounding, radius * Math.cos(Math.PI / edges));
       const startPoint = points[0].avg(points[1]);
 
       path.moveTo(...startPoint.a);
@@ -455,7 +474,7 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
         const current = points[i % edges];
         const next = points[nextIndex];
 
-        path.arcTo(...current.a, ...next.a, roundRadius);
+        path.arcTo(...current.a, ...next.a, round);
       }
       path.closePath();
     }

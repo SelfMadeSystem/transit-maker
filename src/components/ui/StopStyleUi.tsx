@@ -44,6 +44,7 @@ function StopStyleLayerUi({ layer }: { layer: StopStyleLayer }) {
           className="bg-gray-900 text-white"
         >
           <option value="0">Circle</option>
+          <option value="1">Rectangle</option>
           <option value="3">Triangle</option>
           <option value="4">Square</option>
           <option value="5">Pentagon</option>
