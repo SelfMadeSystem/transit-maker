@@ -306,10 +306,18 @@ export class SvgDrawingContext implements DrawingContext {
     if (type === 'stroke') {
       elem.setAttribute('stroke', state.stroke.hex());
       elem.setAttribute('stroke-width', state.strokeWidth.toString());
-      elem.setAttribute('stroke-dasharray', state.strokeDash.join(' '));
-      elem.setAttribute('stroke-dashoffset', state.strokeDashOffset.toString());
-      elem.setAttribute('stroke-linecap', state.strokeLineCap);
-      elem.setAttribute('stroke-linejoin', state.strokeLineJoin);
+      if (state.strokeDash.length > 0) {
+        elem.setAttribute('stroke-dasharray', state.strokeDash.join(' '));
+        if (state.strokeDashOffset !== 0)
+          elem.setAttribute(
+            'stroke-dashoffset',
+            state.strokeDashOffset.toString(),
+          );
+      }
+      if (state.strokeLineCap !== 'butt')
+        elem.setAttribute('stroke-linecap', state.strokeLineCap);
+      if (state.strokeLineJoin !== 'miter')
+        elem.setAttribute('stroke-linejoin', state.strokeLineJoin);
     } else if (type === 'fill') {
       elem.setAttribute('fill', state.fill.hex());
     }
