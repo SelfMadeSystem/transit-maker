@@ -503,7 +503,7 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
       const path = this.getPath(layer);
       ctx.fillPath(path, layer.clearFill);
       if (layer.strokeWidth > 0) {
-        ctx.strokePath(path);
+        ctx.strokePath(path, layer.clearStroke);
       }
       ctx.restore();
       yield;

@@ -119,6 +119,7 @@ export class CanvasDrawingContext implements DrawingContext {
     const path = pathpp.toPath2D();
     if (clear) {
       this.ctx.save();
+      this.ctx.strokeStyle = '#000';
       this.ctx.globalCompositeOperation = 'destination-out';
       this.ctx.stroke(path);
       this.ctx.restore();
