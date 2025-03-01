@@ -266,7 +266,14 @@ export class SvgDrawingContext implements DrawingContext {
 
   setBackground(color: Color) {
     this.bg = color;
-    this.svg.setAttribute('style', `background-color: ${color.hex()}`);
+    this.svg.setAttribute('style', `background-color: ${color.toCss()}`);
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', '0');
+    rect.setAttribute('y', '0');
+    rect.setAttribute('width', '100%');
+    rect.setAttribute('height', '100%');
+    rect.setAttribute('fill', color.toCss());
+    this.svg.insertBefore(rect, this.bgG);
   }
 
   private getState() {
