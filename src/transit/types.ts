@@ -1,3 +1,4 @@
+import { DrawingContext } from '../utils/drawingContext';
 import { Vector2 } from '../utils/vec';
 import { DecorationImage } from './DecorationImage';
 import { Label } from './Label';
@@ -43,7 +44,7 @@ export interface Actionable {
 }
 
 export interface LayeredDrawable {
-  draw(ctx: CanvasRenderingContext2D): Generator<void>;
+  draw(ctx: DrawingContext): Generator<void>;
 }
 
 export type ActionableItem =

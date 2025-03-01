@@ -19,6 +19,7 @@ import {
   transform,
 } from '../transit/Transformable';
 import { ActionableItem, PosWithKeys, Transformable } from '../transit/types';
+import { CanvasDrawingContext } from '../utils/drawingContext';
 import { Vector2 } from '../utils/vec';
 import createCanvasComponent from './CanvasComponent';
 import { waitForInput } from './context-menu';
@@ -32,6 +33,8 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
     if (!ctx) throw new Error('Failed to get 2d context');
     const fgCtx = fgCanvas.getContext('2d');
     if (!fgCtx) throw new Error('Failed to get 2d context');
+
+    const drawingCtx = new CanvasDrawingContext(bgCtx, ctx);
 
     let zoom = 3;
     let offsetX = 200;
@@ -80,7 +83,7 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           c.scale(zoom, zoom);
         }
 
-        map.draw({ bgCtx, ctx, fgCtx }, selected);
+        map.draw({ ctx: drawingCtx, fgCtx }, selected);
         if (selected && 'getSize' in selected) {
           drawTransformableRegion(ctx, zoom, selected);
           const mousePos = mouseToPos({

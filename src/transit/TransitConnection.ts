@@ -1,5 +1,6 @@
 import { Color } from '../components/color/Color';
 import { Path2Dpp } from '../utils/Path2Dpp';
+import { DrawingContext } from '../utils/drawingContext';
 import { id } from '../utils/id';
 import { angleDelta, wrapAngle2PI } from '../utils/mathUtils';
 import { Vector2, lineLineIntersection, sameHalfPlane } from '../utils/vec';
@@ -70,10 +71,9 @@ export const DEFALUT_CONNECTION_STYLE: SpecificConnectionStyle = {
 };
 
 export type PathResult = {
-  path: Path2D;
+  path: Path2Dpp;
   length: number;
   rounded: boolean;
-  pathpp: Path2Dpp;
 };
 
 export class TransitConnection implements Actionable, LayeredDrawable {
@@ -187,7 +187,7 @@ export class TransitConnection implements Actionable, LayeredDrawable {
     return color;
   }
 
-  *draw(ctx: CanvasRenderingContext2D) {
+  *draw(ctx: DrawingContext) {
     if (this.specificStyle.hidden) return;
 
     const { path, length } = this.getPath(true);
@@ -197,25 +197,25 @@ export class TransitConnection implements Actionable, LayeredDrawable {
       const color = this.getColor(oultineColor);
       let lineLength = 0;
       let lineDist = 0;
-      ctx.lineCap = lineCap;
       ctx.save();
+      ctx.setStrokeLineCap(lineCap);
       let offset = this.specificStyle.spacingOffset;
       switch (outline.strokeType) {
         case 'solid':
-          ctx.setLineDash([]);
+          ctx.setStrokeDash([]);
           break;
         case 'dotted':
-          ctx.setLineDash([
+          ctx.setStrokeDash([
             0,
             outline.dottedSpacing * this.specificStyle.spacingMultiplier,
           ]);
           lineDist =
             outline.dottedSpacing * this.specificStyle.spacingMultiplier;
-          ctx.lineCap = 'round';
+          ctx.setStrokeLineCap('round');
           offset += outline.dottedOffset;
           break;
         case 'dashed':
-          ctx.setLineDash([
+          ctx.setStrokeDash([
             outline.dashedLength,
             outline.dashedSpacing * this.specificStyle.spacingMultiplier,
           ]);
@@ -227,19 +227,14 @@ export class TransitConnection implements Actionable, LayeredDrawable {
           break;
       }
 
-      ctx.lineDashOffset += lineLength * 0.5 + lineDist * offset - length / 2;
+      ctx.setStrokeDashOffset(
+        lineLength * 0.5 + lineDist * offset - length / 2,
+      );
 
-      ctx.lineWidth = width;
-      if (clear && color.a < 1) {
-        ctx.save();
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.strokeStyle = 'black';
-        ctx.stroke(path);
-        ctx.restore();
-      }
+      ctx.setStrokeWidth(width);
 
-      ctx.strokeStyle = color.hex();
-      ctx.stroke(path);
+      ctx.setStroke(color);
+      ctx.strokePath(path, clear);
       ctx.restore();
       yield;
     }
@@ -254,7 +249,8 @@ export class TransitConnection implements Actionable, LayeredDrawable {
     ctx.lineDashOffset = (Date.now() / 200) % (lineWidth * 2);
     ctx.strokeStyle = 'white';
     ctx.lineWidth = outline.width + 2;
-    const { path } = this.getPath();
+    const { path: pathpp } = this.getPath();
+    const path = pathpp.toPath2D();
     ctx.stroke(path);
     ctx.globalCompositeOperation = 'destination-out';
     ctx.strokeStyle = 'black';
@@ -387,10 +383,9 @@ export class TransitConnection implements Actionable, LayeredDrawable {
     const length = path.getTotalLength();
 
     const result: PathResult = {
-      path: path.toPath2D(),
+      path: path,
       length,
       rounded: !!(fromRounding || toRounding),
-      pathpp: path,
     };
 
     this.pathCache = result;
@@ -401,8 +396,9 @@ export class TransitConnection implements Actionable, LayeredDrawable {
   isOver(x: number, y: number, ctx: CanvasRenderingContext2D) {
     const style = this.getStyle();
     const width = style.outlines[0].width + 2;
-    const { path } = this.getPath();
+    const { path: pathpp } = this.getPath();
     ctx.lineWidth = width;
+    const path = pathpp.toPath2D();
     return ctx.isPointInStroke(path, x, y);
   }
 
@@ -538,7 +534,7 @@ export class TransitConnection implements Actionable, LayeredDrawable {
 
   doubleClick({ pos, setSelected, shiftKey }: ClickInfo): void {
     if (shiftKey) {
-      const { pathpp } = this.getPath();
+      const { path: pathpp } = this.getPath();
       const c = getClosestPoint(pathpp.getSVGPath().segments, pos);
       const closest = new Vector2(c);
       const stop = createStopAction(this.map, [], closest).data;
@@ -555,7 +551,7 @@ export class TransitConnection implements Actionable, LayeredDrawable {
 
   rightClick({ pos, setSelected }: ClickInfo) {
     const stop = splitConnectionAction(this.map, this).data.stop;
-    const { pathpp } = this.getPath();
+    const { path: pathpp } = this.getPath();
     const closest = new Vector2(
       getClosestPoint(pathpp.getSVGPath().segments, pos),
     );

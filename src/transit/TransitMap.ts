@@ -1,6 +1,7 @@
 import { Color } from '../components/color/Color';
 import { OrderedSet } from '../utils/OrderedSet';
 import { clone } from '../utils/clone';
+import { CanvasDrawingContext } from '../utils/drawingContext';
 import { id } from '../utils/id';
 import { DecorationImage } from './DecorationImage';
 import { History } from './History';
@@ -169,27 +170,25 @@ export class TransitMap {
 
   draw(
     {
-      bgCtx,
       ctx,
       fgCtx,
     }: {
-      bgCtx: CanvasRenderingContext2D;
-      ctx: CanvasRenderingContext2D;
-      fgCtx: CanvasRenderingContext2D;
+      ctx: CanvasDrawingContext;
+      fgCtx?: CanvasRenderingContext2D;
     },
     selected: ActionableItem | null,
   ) {
     const connectionsByZ = this.stuffByZIndex();
     for (const image of this.images) {
-      if (selected === image) {
+      if (fgCtx && selected === image) {
         image.drawSelected(fgCtx);
       }
-      image.draw(bgCtx);
+      image.draw(ctx);
     }
     for (const connections of connectionsByZ) {
       const iters = new Set<Generator>();
       for (const connection of connections) {
-        if (selected === connection) {
+        if (fgCtx && selected === connection) {
           connection.drawSelected(fgCtx);
         }
         iters.add(connection.draw(ctx));
@@ -203,7 +202,7 @@ export class TransitMap {
       }
     }
     for (const label of this.labels) {
-      if (selected === label) {
+      if (fgCtx && selected === label) {
         label.drawSelected(fgCtx);
       }
       label.draw(ctx);

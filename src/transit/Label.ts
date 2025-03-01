@@ -1,4 +1,5 @@
 import { Color } from '../components/color/Color';
+import { CanvasDrawingContext, DrawingContext } from '../utils/drawingContext';
 import { id } from '../utils/id';
 import { Vector2 } from '../utils/vec';
 import { isOverTransformable } from './Transformable';
@@ -98,30 +99,19 @@ export class Label implements Transformable, Actionable {
     }px '${this.style.font}'`;
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
-    this.getDimensions(ctx);
+  draw(ctx: DrawingContext) {
+    if (ctx instanceof CanvasDrawingContext) this.getDimensions(ctx.getCtx());
     ctx.save();
     const drawPos = this.getDrawPos();
     ctx.translate(...drawPos.a);
     ctx.rotate(this.rotation);
     ctx.scale(...this.scale.a);
-    ctx.font = this.getFont();
-    ctx.fillStyle = this.style.color.hex();
-    ctx.textAlign = this.style.textAlign;
-    ctx.textBaseline = this.style.textBaseline;
+    ctx.setFont(this.getFont());
+    ctx.setFill(this.style.color);
+    ctx.setTextAlign(this.style.textAlign);
+    ctx.setTextBaseline(this.style.textBaseline);
 
-    if (this.style.margin > 0 || this.style.color.a < 1) {
-      ctx.save();
-      ctx.strokeStyle = 'black';
-      ctx.fillStyle = 'black';
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.lineWidth = this.style.margin * 2;
-      ctx.strokeText(this.text, 0, 0);
-      ctx.fillText(this.text, 0, 0);
-      ctx.restore();
-    }
-
-    ctx.fillText(this.text, 0, 0);
+    ctx.fillText(this.text, 0, 0, this.style.margin > 0);
     ctx.restore();
   }
 

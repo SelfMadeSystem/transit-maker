@@ -1,5 +1,6 @@
 import { Color } from '../components/color/Color';
 import { Path2Dpp } from '../utils/Path2Dpp';
+import { DrawingContext } from '../utils/drawingContext';
 import getPropertiesAtPoint from '../utils/getPropertiesAtPoint';
 import { id } from '../utils/id';
 import { averageAngle, wrapAngle2PI } from '../utils/mathUtils';
@@ -388,7 +389,7 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
 
     const connectionsAngle = (() => {
       if (this.linked?.connection) {
-        const { pathpp, length } = this.linked.connection.getPath();
+        const { path: pathpp, length } = this.linked.connection.getPath();
         return wrapAngle2PI(
           pathpp.getTangentAtLength(this.linked.length * length).angle() +
             Math.PI / 2,
@@ -481,7 +482,7 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
     return path;
   }
 
-  *draw(ctx: CanvasRenderingContext2D) {
+  *draw(ctx: DrawingContext) {
     this.resetLinkedPos();
     if (this.hidden) {
       return;
@@ -496,23 +497,13 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
       }
       const strokeColor = this.getStopColor(layer.strokeColor);
       const fillColor = this.getStopColor(layer.fillColor);
-      ctx.strokeStyle = strokeColor.hex();
-      ctx.fillStyle = fillColor.hex();
-      ctx.lineWidth = layer.strokeWidth;
-      const path = this.getPath(layer).toPath2D();
-      if (layer.clearFill || layer.clearStroke) {
-        ctx.save();
-        ctx.strokeStyle = 'black';
-        ctx.fillStyle = 'black';
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.lineWidth = layer.strokeWidth;
-        if (layer.clearStroke) ctx.stroke(path);
-        if (layer.clearFill) ctx.fill(path);
-        ctx.restore();
-      }
-      ctx.fill(path);
+      ctx.setStroke(strokeColor);
+      ctx.setFill(fillColor);
+      ctx.setStrokeWidth(layer.strokeWidth);
+      const path = this.getPath(layer);
+      ctx.fillPath(path, layer.clearFill);
       if (layer.strokeWidth > 0) {
-        ctx.stroke(path);
+        ctx.strokePath(path);
       }
       ctx.restore();
       yield;
@@ -584,7 +575,7 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
   private resetLinkedPos() {
     if (this.linked) {
       const { connection, length: ll } = this.linked;
-      const { pathpp, length } = connection.getPath();
+      const { path: pathpp, length } = connection.getPath();
       this.pos = new Vector2(
         getPointAtLength(pathpp.getSVGPath().segments, length * ll),
       );
@@ -595,7 +586,7 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
     const { shiftKey, ctrlKey, pos } = l;
     if (this.linked) {
       const { connection } = this.linked;
-      const { pathpp, length } = connection.getPath();
+      const { path: pathpp, length } = connection.getPath();
       if (shiftKey) {
         const snapDists = [1 / 4, 1 / 3, 1 / 2, 2 / 3, 3 / 4];
         const poses = snapDists.map(d =>

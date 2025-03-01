@@ -63,3 +63,29 @@ export function useFonts() {
 
   return { fonts, uploadFont };
 }
+
+export type ParsedFont = {
+  size?: number;
+  unit?: string;
+  weight?: string;
+  family: string;
+};
+
+export function parseFont(font: string): ParsedFont {
+  const fontRegex =
+    /^(?:(\d+(?:\.\d+)?)(px|pt|em|rem|%))?\s*(?:(\w+)\s+)?(.+)$/;
+  const match = font.match(fontRegex);
+
+  if (!match) {
+    throw new Error('Invalid font string');
+  }
+
+  const [, size, unit, weight, family] = match;
+
+  return {
+    size: size ? parseFloat(size) : undefined,
+    unit: unit || undefined,
+    weight: weight || undefined,
+    family: family.trim(),
+  };
+}

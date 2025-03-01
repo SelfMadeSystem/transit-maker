@@ -1,3 +1,4 @@
+import { DrawingContext } from '../utils/drawingContext';
 import { id } from '../utils/id';
 import { Vector2 } from '../utils/vec';
 import { isOverTransformable } from './Transformable';
@@ -53,7 +54,7 @@ export class DecorationImage implements Transformable, Actionable {
     );
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
+  draw(ctx: DrawingContext) {
     ctx.save();
     const size = this.getSize();
     ctx.translate(...this.pos.a);
