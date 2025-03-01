@@ -111,7 +111,7 @@ export class TransitConnection implements Actionable, LayeredDrawable {
   }
 
   getStyle(): ConnectionStyle {
-    return this.style?.style ?? this.route.style.connectionStyle;
+    return this.style?.style ?? this.route.style.connectionStyle.style;
   }
 
   reAdd(): void {

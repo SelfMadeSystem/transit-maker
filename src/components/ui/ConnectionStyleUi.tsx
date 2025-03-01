@@ -1,11 +1,14 @@
+import { EditorContext } from '../../EditorContext';
 import {
   ConnectionOutline,
   ConnectionStyle,
   DEFALUT_CONNECTION_OUTLINE,
 } from '../../transit/TransitConnection';
+import { SavedStyle } from '../../transit/TransitMap';
+import { clone } from '../../utils/clone';
 import { NumberInput } from '../NumberInput';
 import { RouteColorEditor } from '../RouteColorEditor';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 
 function ConnectionOutlineDotted({
   outline,
@@ -234,5 +237,115 @@ export function ConnectionStyleUi({ style }: { style: ConnectionStyle }) {
         ))}
       </div>
     </div>
+  );
+}
+
+export function ConnectionStyleSelector({
+  allowNone,
+  style,
+  setStyle,
+  getStyle,
+}:
+  | {
+      allowNone?: never;
+      style: SavedStyle<ConnectionStyle>;
+      setStyle: (style: SavedStyle<ConnectionStyle>) => void;
+      getStyle?: never;
+    }
+  | {
+      allowNone: true;
+      style: SavedStyle<ConnectionStyle> | undefined;
+      setStyle: (style: SavedStyle<ConnectionStyle> | undefined) => void;
+      getStyle: () => ConnectionStyle;
+    }) {
+  const { map } = useContext(EditorContext);
+  const [styles, setStyles] = useState(() => map.getAllConnectionStyles());
+
+  const autoStyle = 'Auto';
+  const newStyle = 'New style';
+  const styleId = style ? '-' + style.id : autoStyle;
+
+  return (
+    <>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Connection style:</div>
+        <select
+          value={styleId}
+          onChange={e => {
+            const newId = e.target.value;
+            switch (newId) {
+              case autoStyle:
+                if (allowNone) {
+                  setStyle(undefined);
+                }
+                break;
+              case newStyle: {
+                const style: SavedStyle<ConnectionStyle> = {
+                  name: `New style`,
+                  id: `_${Date.now()}`,
+                  style: clone(
+                    getStyle?.() ?? map.defaultConnectionStyle.style,
+                  ),
+                  removable: true,
+                };
+                map.addSavedConnectionStyle(style);
+                setStyle(style);
+                setStyles(map.getAllConnectionStyles());
+                break;
+              }
+              default: {
+                const id = newId.substring(1);
+                setStyle(styles.find(style => style.id === id)!);
+                break;
+              }
+            }
+          }}
+          className="bg-gray-900 text-white"
+        >
+          {allowNone && <option value={autoStyle}>Auto</option>}
+          {styles.map(style => (
+            <option key={style.id} value={`-${style.id}`}>
+              {style.name}
+            </option>
+          ))}
+          <option value={newStyle}>New style</option>
+        </select>
+      </label>
+
+      {style ? (
+        <details>
+          <summary className="text-white">Style details</summary>
+          {style.removable && (
+            <label className="flex items-center gap-2">
+              <div className="text-white">Name:</div>
+              <input
+                type="text"
+                defaultValue={style.name}
+                onChange={e => (style.name = e.target.value)}
+                className="bg-gray-900 text-white"
+              />
+            </label>
+          )}
+          <ConnectionStyleUi style={style.style} />
+          {style.removable && (
+            <button
+              onClick={() => {
+                if (!confirm('u sure buddy?')) return;
+                map.removeSavedConnectionStyle(style.id);
+                if (allowNone) {
+                  setStyle(undefined);
+                } else {
+                  setStyle(map.defaultConnectionStyle);
+                }
+                setStyles(map.getAllConnectionStyles());
+              }}
+              className="cursor-pointer rounded-md bg-red-900 text-white"
+            >
+              Remove
+            </button>
+          )}
+        </details>
+      ) : null}
+    </>
   );
 }

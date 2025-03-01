@@ -1,9 +1,8 @@
 import { Color } from '../components/color/Color';
-import { clone } from '../utils/clone';
 import { id } from '../utils/id';
 import { ConnectionStyle } from './TransitConnection';
-import { TransitMap } from './TransitMap';
-import { DEFAULT_STOP_STYLE, StopStyle } from './TransitStop';
+import { SavedStyle, TransitMap } from './TransitMap';
+import { StopStyle } from './TransitStop';
 
 export type RouteColor = Color | 'route';
 
@@ -11,9 +10,9 @@ export type RouteStyle = {
   color: Color;
   // TODO: Make the styles be shared styles and have option to create a new
   // style for this route
-  connectionStyle: ConnectionStyle;
-  stopStyle: StopStyle;
-  terminusStyle: StopStyle;
+  connectionStyle: SavedStyle<ConnectionStyle>;
+  stopStyle: SavedStyle<StopStyle>;
+  terminusStyle: SavedStyle<StopStyle>;
   lateralOffset: number;
   roundRadius: number;
   roundDistInstead: boolean; // distance from original instead of radius of circle
@@ -32,29 +31,12 @@ export class TransitRoute {
     this.name = name;
     this.style = {
       color,
-      connectionStyle: {
-        outlines: [
-          {
-            color: Color.TRANSPARENT,
-            width: 4,
-            clear: true,
-            strokeType: 'solid',
-            lineCap: 'butt',
-          },
-          {
-            color: 'route',
-            width: 2,
-            clear: false,
-            strokeType: 'solid',
-            lineCap: 'round',
-          },
-        ],
-      },
+      connectionStyle: map.defaultConnectionStyle,
+      stopStyle: map.defaultStopStyle,
+      terminusStyle: map.defaultStopStyle,
       lateralOffset: 5,
       roundRadius: 10,
       roundDistInstead: true,
-      stopStyle: clone(DEFAULT_STOP_STYLE),
-      terminusStyle: clone(DEFAULT_STOP_STYLE),
       zIndex: 0,
       stopZIndex: 1,
     };

@@ -1,8 +1,8 @@
 import { RouteStyle } from '../../transit/TransitRoute';
 import { NumberInput } from '../NumberInput';
 import ColorInput from '../color/ColorInput';
-import { ConnectionStyleUi } from './ConnectionStyleUi';
-import { StopStyleUi } from './StopStyleUi';
+import { ConnectionStyleSelector } from './ConnectionStyleUi';
+import { StopStyleSelector } from './StopStyleUi';
 import { useState } from 'react';
 
 export function RouteStyleUi({ style }: { style: RouteStyle }) {
@@ -14,6 +14,9 @@ export function RouteStyleUi({ style }: { style: RouteStyle }) {
   const [lateralOffset, setLateralOffset] = useState(style.lateralOffset);
   const [zIndex, setZIndex] = useState(style.zIndex);
   const [stopZIndex, setStopZIndex] = useState(style.stopZIndex);
+  const [connectionStyle, setConnectionStyle] = useState(style.connectionStyle);
+  const [stopStyle, setStopStyle] = useState(style.stopStyle);
+  const [terminusStyle, setTerminusStyle] = useState(style.terminusStyle);
 
   return (
     <div className="flex flex-col gap-2">
@@ -66,15 +69,30 @@ export function RouteStyleUi({ style }: { style: RouteStyle }) {
       </label>
       <details>
         <summary className="text-white">Connection style</summary>
-        <ConnectionStyleUi style={style.connectionStyle} />
+        <ConnectionStyleSelector
+          style={connectionStyle}
+          setStyle={setConnectionStyle}
+        />
       </details>
       <details>
         <summary className="text-white">Stop style</summary>
-        <StopStyleUi style={style.stopStyle} />
+        <StopStyleSelector
+          setStyle={s => {
+            style.stopStyle = s;
+            setStopStyle(s);
+          }}
+          style={stopStyle}
+        />
       </details>
       <details>
         <summary className="text-white">Terminus style</summary>
-        <StopStyleUi style={style.terminusStyle} />
+        <StopStyleSelector
+          setStyle={s => {
+            style.terminusStyle = s;
+            setTerminusStyle(s);
+          }}
+          style={terminusStyle}
+        />
       </details>
     </div>
   );

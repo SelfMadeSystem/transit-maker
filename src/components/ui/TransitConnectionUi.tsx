@@ -1,23 +1,16 @@
 import { EditorContext } from '../../EditorContext';
-import {
-  ConnectionStyle,
-  TransitConnection,
-} from '../../transit/TransitConnection';
-import { SavedStyle } from '../../transit/TransitMap';
-import { clone } from '../../utils/clone';
+import { TransitConnection } from '../../transit/TransitConnection';
 import { NumberInput } from '../NumberInput';
-import { ConnectionStyleUi } from './ConnectionStyleUi';
-import { useContext, useId, useState } from 'react';
+import { ConnectionStyleSelector } from './ConnectionStyleUi';
+import { useContext, useState } from 'react';
 
 export function TransitConnectionUi({
   connection,
 }: {
   connection: TransitConnection;
 }) {
-  const id = useId();
   const { map } = useContext(EditorContext);
   const { routes } = map;
-  const [styles, setStyles] = useState(() => map.getAllConnectionStyles());
   const [style, setStyle] = useState(connection.style);
   const [hidden, setHidden] = useState(connection.specificStyle.hidden);
   const [spacingMultiplier, setSpacingMultiplier] = useState(
@@ -28,15 +21,6 @@ export function TransitConnectionUi({
   );
   const [route, setRoute] = useState(connection.route);
   const [zIndex, setZIndex] = useState(connection.specificStyle.zIndex);
-
-  const autoStyle = `auto-${id}`;
-  const newStyle = `new-${id}`;
-  const styleName = connection.style ? connection.style.name : autoStyle;
-
-  function unsetStyle() {
-    connection.style = undefined;
-    setStyle(undefined);
-  }
 
   return (
     <>
@@ -103,47 +87,6 @@ export function TransitConnectionUi({
         </label>
 
         <label className="flex items-center gap-2">
-          <div className="text-white">Connection style:</div>
-          <select
-            value={styleName}
-            onChange={e => {
-              const name = e.target.value;
-              switch (name) {
-                case autoStyle:
-                  connection.style = undefined;
-                  setStyle(undefined);
-                  break;
-                case newStyle: {
-                  const style: SavedStyle<ConnectionStyle> = {
-                    name: `New style ${id}`,
-                    id: `new-${id}`,
-                    style: clone(connection.getStyle()),
-                    removable: true,
-                  };
-                  map.addSavedConnectionStyle(style);
-                  connection.style = style;
-                  setStyle(style);
-                  setStyles(map.getAllConnectionStyles());
-                  break;
-                }
-                default:
-                  connection.style = styles.find(style => style.name === name);
-                  setStyle(connection.style);
-                  break;
-              }
-            }}
-            className="bg-gray-900 text-white"
-          >
-            <option value={autoStyle}>Auto</option>
-            {styles.map(style => (
-              <option key={style.name} value={style.name}>
-                {style.name}
-              </option>
-            ))}
-            <option value={newStyle}>New style</option>
-          </select>
-        </label>
-        <label className="flex items-center gap-2">
           <div className="text-white">Z index:</div>
           <NumberInput
             value={zIndex}
@@ -151,35 +94,15 @@ export function TransitConnectionUi({
             className="bg-gray-900 text-white"
           />
         </label>
-        {style ? (
-          <details>
-            <summary className="text-white">Style</summary>
-            {style.removable && (
-              <label className="flex items-center gap-2">
-                <div className="text-white">Name:</div>
-                <input
-                  type="text"
-                  defaultValue={style.name}
-                  onChange={e => (style.name = e.target.value)}
-                  className="bg-gray-900 text-white"
-                />
-              </label>
-            )}
-            <ConnectionStyleUi style={style.style} />
-            {style.removable && (
-              <button
-                onClick={() => {
-                  if (!confirm('u sure buddy?')) return;
-                  map.removeSavedConnectionStyle(style.id);
-                  unsetStyle();
-                }}
-                className="cursor-pointer rounded-md bg-red-900 text-white"
-              >
-                Remove
-              </button>
-            )}
-          </details>
-        ) : null}
+        <ConnectionStyleSelector
+          allowNone
+          getStyle={() => connection.getStyle()}
+          setStyle={s => {
+            connection.style = s;
+            setStyle(s);
+          }}
+          style={style}
+        />
       </div>
     </>
   );

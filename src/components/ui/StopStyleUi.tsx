@@ -1,8 +1,10 @@
+import { EditorContext } from '../../EditorContext';
+import { SavedStyle } from '../../transit/TransitMap';
 import { StopStyle, StopStyleLayer } from '../../transit/TransitStop';
 import { clone } from '../../utils/clone';
 import { NumberInput } from '../NumberInput';
 import { RouteColorEditor } from '../RouteColorEditor';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 
 function StopStyleLayerUi({ layer }: { layer: StopStyleLayer }) {
   const [fillColor, setFillColor] = useState(layer.fillColor);
@@ -184,5 +186,113 @@ export function StopStyleUi({ style }: { style: StopStyle }) {
         ))}
       </div>
     </div>
+  );
+}
+
+export function StopStyleSelector({
+  allowNone,
+  style,
+  setStyle,
+  getStyle,
+}:
+  | {
+      allowNone?: never;
+      style: SavedStyle<StopStyle>;
+      setStyle: (style: SavedStyle<StopStyle>) => void;
+      getStyle?: never;
+    }
+  | {
+      allowNone: true;
+      style: SavedStyle<StopStyle> | undefined;
+      setStyle: (style: SavedStyle<StopStyle> | undefined) => void;
+      getStyle: () => StopStyle;
+    }) {
+  const { map } = useContext(EditorContext);
+  const [styles, setStyles] = useState(() => map.getAllStopStyles());
+
+  const autoStyle = 'Auto';
+  const newStyle = 'New style';
+  const styleId = style ? '-' + style.id : autoStyle;
+
+  return (
+    <>
+      <label className="flex items-center gap-2">
+        <div className="text-white">Stop style:</div>
+        <select
+          value={styleId}
+          onChange={e => {
+            const newId = e.target.value;
+            switch (newId) {
+              case autoStyle:
+                if (allowNone) {
+                  setStyle(undefined);
+                }
+                break;
+              case newStyle: {
+                const style: SavedStyle<StopStyle> = {
+                  name: `New style`,
+                  id: `_${Date.now()}`,
+                  style: clone(getStyle?.() ?? map.defaultStopStyle.style),
+                  removable: true,
+                };
+                map.addSavedStopStyle(style);
+                setStyle(style);
+                setStyles(map.getAllStopStyles());
+                break;
+              }
+              default: {
+                const id = newId.substring(1);
+                setStyle(styles.find(style => style.id === id)!);
+                break;
+              }
+            }
+          }}
+          className="bg-gray-900 text-white"
+        >
+          {allowNone && <option value={autoStyle}>Auto</option>}
+          {styles.map(style => (
+            <option key={style.id} value={`-${style.id}`}>
+              {style.name}
+            </option>
+          ))}
+          <option value={newStyle}>New style</option>
+        </select>
+      </label>
+
+      {style ? (
+        <details>
+          <summary className="text-white">Style details</summary>
+          {style.removable && (
+            <label className="flex items-center gap-2">
+              <div className="text-white">Name:</div>
+              <input
+                type="text"
+                defaultValue={style.name}
+                onChange={e => (style.name = e.target.value)}
+                className="bg-gray-900 text-white"
+              />
+            </label>
+          )}
+          <StopStyleUi style={style.style} />
+          {style.removable && (
+            <button
+              onClick={() => {
+                if (!confirm('u sure buddy?')) return;
+                map.removeSavedStopStyle(style.id);
+                if (allowNone) {
+                  setStyle(undefined);
+                } else {
+                  setStyle(map.defaultStopStyle);
+                }
+                setStyles(map.getAllStopStyles());
+              }}
+              className="cursor-pointer rounded-md bg-red-900 text-white"
+            >
+              Remove
+            </button>
+          )}
+        </details>
+      ) : null}
+    </>
   );
 }

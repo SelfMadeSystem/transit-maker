@@ -247,9 +247,9 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
     const key = this.connections.size === 1 ? 'terminusStyle' : 'stopStyle';
     const routes = this.getRoutes();
     if (routes.size === 1) {
-      return routes.values().next().value!.style[key];
+      return routes.values().next().value!.style[key].style;
     }
-    return this.map.defaultRoute.style[key];
+    return this.map.defaultRoute.style[key].style;
   }
 
   getRoute(): TransitRoute {

@@ -1,17 +1,11 @@
-import { EditorContext } from '../../EditorContext';
 import { createLabelAction } from '../../transit/Action';
-import { SavedStyle } from '../../transit/TransitMap';
-import { StopStyle, TransitStop } from '../../transit/TransitStop';
-import { clone } from '../../utils/clone';
+import { TransitStop } from '../../transit/TransitStop';
 import { NumberInput } from '../NumberInput';
-import { StopStyleUi } from './StopStyleUi';
-import { useContext, useId, useState } from 'react';
+import { StopStyleSelector } from './StopStyleUi';
+import { useState } from 'react';
 
 export function TransitStopUi({ stop }: { stop: TransitStop }) {
-  const id = useId();
   const [style, setStyle] = useState(stop.style);
-  const { map } = useContext(EditorContext);
-  const [styles, setStyles] = useState(() => map.getAllStopStyles());
   const [hidden, setHidden] = useState(stop.hidden);
   const [roundRadius, setRoundRadius] = useState(stop.roundRadius);
   const [lateralOtherSide, setLateralOtherSide] = useState(
@@ -20,18 +14,9 @@ export function TransitStopUi({ stop }: { stop: TransitStop }) {
   const [zIndex, setZIndex] = useState(stop.zIndex);
   const hasRoundRadius = roundRadius !== undefined;
 
-  const autoStyle = `auto-${id}`;
-  const newStyle = `new-${id}`;
-  const styleName = stop.style ? stop.style.name : autoStyle;
-
   function addLabel() {
     const label = createLabelAction(stop.map, 'New label').data;
     stop.addLabel(label);
-  }
-
-  function unsetStyle() {
-    stop.style = undefined;
-    setStyle(undefined);
   }
 
   return (
@@ -45,47 +30,6 @@ export function TransitStopUi({ stop }: { stop: TransitStop }) {
             checked={hidden}
             onChange={() => setHidden((stop.hidden = !hidden))}
           />
-        </label>
-        <label className="flex items-center gap-2">
-          <div className="text-white">Stop style:</div>
-          <select
-            value={styleName}
-            onChange={e => {
-              const name = e.target.value;
-              switch (name) {
-                case autoStyle:
-                  stop.style = undefined;
-                  setStyle(undefined);
-                  break;
-                case newStyle: {
-                  const style: SavedStyle<StopStyle> = {
-                    name: `New style ${id}`,
-                    id: `new-${id}`,
-                    style: clone(stop.getStyle()),
-                    removable: true,
-                  };
-                  map.addSavedStopStyle(style);
-                  stop.style = style;
-                  setStyle(style);
-                  setStyles(map.getAllStopStyles());
-                  break;
-                }
-                default:
-                  stop.style = styles.find(style => style.name === name);
-                  setStyle(stop.style);
-                  break;
-              }
-            }}
-            className="bg-gray-900 text-white"
-          >
-            <option value={autoStyle}>Auto</option>
-            {styles.map(style => (
-              <option key={style.name} value={style.name}>
-                {style.name}
-              </option>
-            ))}
-            <option value={newStyle}>New style</option>
-          </select>
         </label>
         <label className="flex items-center gap-2">
           <div className="text-white">Round radius:</div>
@@ -127,36 +71,16 @@ export function TransitStopUi({ stop }: { stop: TransitStop }) {
         <button onClick={addLabel} className="bg-gray-900 text-white">
           Add label
         </button>
-        {style ? (
-          <details>
-            <summary className="text-white">Style details</summary>
-            {style.removable && (
-              <label className="flex items-center gap-2">
-                <div className="text-white">Name:</div>
-                <input
-                  type="text"
-                  defaultValue={style.name}
-                  onChange={e => (style.name = e.target.value)}
-                  className="bg-gray-900 text-white"
-                />
-              </label>
-            )}
-            <StopStyleUi style={style.style} />
-            {style.removable && (
-              <button
-                onClick={() => {
-                  if (!confirm('u sure buddy?')) return;
-                  map.removeSavedStopStyle(id);
-                  unsetStyle();
-                }}
-                className="cursor-pointer rounded-md bg-red-900 text-white"
-              >
-                Remove
-              </button>
-            )}
-          </details>
-        ) : null}
       </div>
+      <StopStyleSelector
+        allowNone
+        getStyle={() => stop.getStyle()}
+        setStyle={s => {
+          stop.style = s;
+          setStyle(s);
+        }}
+        style={style}
+      />
     </>
   );
 }
