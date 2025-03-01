@@ -141,6 +141,24 @@ export class Color implements Clonable {
     return str;
   }
 
+  /**
+   * Returns the most compact CSS representation of the color
+   */
+  toCss() {
+    if (this.a === 0) {
+      return '#0000';
+    }
+    if (this.a < 1) {
+      return this.hex();
+    }
+    if (this.r % 17 === 0 && this.g % 17 === 0 && this.b % 17 === 0) {
+      return `#${(this.r / 17).toString(16)}${(this.g / 17).toString(16)}${(
+        this.b / 17
+      ).toString(16)}`;
+    }
+    return this.hex();
+  }
+
   clone(): Color {
     return this; // Color is immutable
   }

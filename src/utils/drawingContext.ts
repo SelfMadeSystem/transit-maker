@@ -337,7 +337,10 @@ export class SvgDrawingContext implements DrawingContext {
             if (t.scale.x === t.scale.y) return `scale(${t.scale.x})`;
             return `scale(${t.scale.x}, ${t.scale.y})`;
           }
+          return '';
         })
+        .map(s => s.trim())
+        .filter(s => s !== '')
         .join(' '),
     );
   }
