@@ -36,6 +36,7 @@ export class TransitMap {
   public connections: Set<TransitConnection> = new Set();
   public images: Set<DecorationImage> = new Set();
   public defaultRoute: TransitRoute;
+  public backgroundColor: Color = Color.BLACK; // I like MTL's black background
   public history: History = new History(() => {});
   public savedStopStyles: Map<string, SavedStyle<StopStyle>> = new Map();
   public savedConnectionStyles: Map<string, SavedStyle<ConnectionStyle>> =

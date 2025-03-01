@@ -83,6 +83,8 @@ export const MapComponent = createCanvasComponent<EditorContextType>({
           c.scale(zoom, zoom);
         }
 
+        drawingCtx.setBackground(map.backgroundColor);
+
         map.draw({ ctx: drawingCtx, fgCtx }, selected);
         if (selected && 'getSize' in selected) {
           drawTransformableRegion(ctx, zoom, selected);

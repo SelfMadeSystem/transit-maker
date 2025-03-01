@@ -63,6 +63,8 @@ export class CanvasDrawingContext implements DrawingContext {
   }
 
   setBackground(color: Color) {
+    this.bgCtx.save();
+    this.bgCtx.setTransform(1, 0, 0, 1, 0, 0);
     this.bgCtx.fillStyle = color.hex();
     this.bgCtx.fillRect(
       0,
@@ -70,6 +72,7 @@ export class CanvasDrawingContext implements DrawingContext {
       this.bgCtx.canvas.width,
       this.bgCtx.canvas.height,
     );
+    this.bgCtx.restore();
   }
 
   setStrokeWidth(width: number) {

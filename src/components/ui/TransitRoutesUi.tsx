@@ -1,5 +1,6 @@
 import { TransitMap } from '../../transit/TransitMap';
 import { TransitRoute, createDefaultRoute } from '../../transit/TransitRoute';
+import ColorInput from '../color/ColorInput';
 import { RouteUi } from './RouteUi';
 import { useState } from 'react';
 
@@ -11,6 +12,7 @@ export function TransitRoutesUi({
   routes: Set<TransitRoute>;
   map: TransitMap;
 }) {
+  const [bgColor, setBgColor] = useState(map.backgroundColor);
   const [routes, setRoutes] = useState(_routes);
   const [route, setRoute] = useState<TransitRoute | null>(null);
 
@@ -27,6 +29,14 @@ export function TransitRoutesUi({
 
   return (
     <>
+      <div className="text-white">Background color:</div>
+      <ColorInput
+        color={bgColor}
+        setColor={color => {
+          map.backgroundColor = color;
+          setBgColor(color);
+        }}
+      />
       <div className="text-white">Modify routes</div>
       <div className="flex items-center gap-2">
         <div className="text-white">Select route:</div>

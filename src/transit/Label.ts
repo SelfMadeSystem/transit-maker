@@ -111,7 +111,12 @@ export class Label implements Transformable, Actionable {
     ctx.setTextAlign(this.style.textAlign);
     ctx.setTextBaseline(this.style.textBaseline);
 
-    ctx.fillText(this.text, 0, 0, this.style.margin > 0);
+    if (this.style.margin > 0) {
+      ctx.setStroke(Color.TRANSPARENT);
+      ctx.setStrokeWidth(this.style.margin * 2);
+      ctx.strokeText(this.text, 0, 0, true);
+    }
+    ctx.fillText(this.text, 0, 0);
     ctx.restore();
   }
 
