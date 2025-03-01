@@ -163,6 +163,7 @@ export class CanvasDrawingContext implements DrawingContext {
     if (clear) {
       this.ctx.save();
       this.ctx.fillStyle = '#000';
+      this.ctx.globalCompositeOperation = 'destination-out';
       this.ctx.fillText(text, x, y, maxWidth);
       this.ctx.restore();
     }
@@ -179,6 +180,7 @@ export class CanvasDrawingContext implements DrawingContext {
     if (clear) {
       this.ctx.save();
       this.ctx.strokeStyle = '#000';
+      this.ctx.globalCompositeOperation = 'destination-out';
       this.ctx.strokeText(text, x, y, maxWidth);
       this.ctx.restore();
     }
