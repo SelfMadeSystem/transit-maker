@@ -258,7 +258,7 @@ export default function createCanvasComponent<
       }
 
       if (result?.wheel) {
-        window.addEventListener(
+        canvas.addEventListener(
           'wheel',
           (e: WheelEvent) => {
             const rect = canvas.getBoundingClientRect();
@@ -274,7 +274,7 @@ export default function createCanvasComponent<
       }
 
       if (result?.scroll) {
-        window.addEventListener(
+        canvas.addEventListener(
           'scroll',
           e => {
             const rect = canvas.getBoundingClientRect();
