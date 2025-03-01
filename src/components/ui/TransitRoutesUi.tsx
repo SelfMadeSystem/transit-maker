@@ -27,6 +27,17 @@ export function TransitRoutesUi({
     }
   }
 
+  function exportAsSvg() {
+    const svg = map.exportAsSvg();
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'transit-map.svg';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <>
       <div className="text-white">Background color:</div>
@@ -59,7 +70,10 @@ export function TransitRoutesUi({
       {route ? (
         <RouteUi key={route.id} route={route} />
       ) : (
-        <button onClick={addRoute}>Add route</button>
+        <div className="flex gap-2">
+          <button onClick={addRoute}>Add route</button>
+          <button onClick={exportAsSvg}>Export as SVG</button>
+        </div>
       )}
     </>
   );

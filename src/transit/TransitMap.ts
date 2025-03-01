@@ -1,7 +1,7 @@
 import { Color } from '../components/color/Color';
 import { OrderedSet } from '../utils/OrderedSet';
 import { clone } from '../utils/clone';
-import { CanvasDrawingContext } from '../utils/drawingContext';
+import { DrawingContext, SvgDrawingContext } from '../utils/drawingContext';
 import { id } from '../utils/id';
 import { DecorationImage } from './DecorationImage';
 import { History } from './History';
@@ -174,7 +174,7 @@ export class TransitMap {
       ctx,
       fgCtx,
     }: {
-      ctx: CanvasDrawingContext;
+      ctx: DrawingContext;
       fgCtx?: CanvasRenderingContext2D;
     },
     selected: ActionableItem | null,
@@ -208,5 +208,21 @@ export class TransitMap {
       }
       label.draw(ctx);
     }
+  }
+
+  exportAsSvg(): string {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
+    svg.setAttribute('viewBox', '0 0 1000 1000');
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    const ctx = new SvgDrawingContext(svg);
+
+    ctx.setBackground(this.backgroundColor);
+
+    this.draw({ ctx }, null);
+
+    return ctx.export();
   }
 }
