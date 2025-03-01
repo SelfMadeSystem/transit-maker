@@ -304,7 +304,7 @@ export class SvgDrawingContext implements DrawingContext {
   private applyState(elem: SVGElement, type?: 'fill' | 'stroke') {
     const state = this.getState();
     if (type === 'stroke') {
-      elem.setAttribute('stroke', state.stroke.hex());
+      elem.setAttribute('stroke', state.stroke.toCss());
       elem.setAttribute('stroke-width', state.strokeWidth.toString());
       if (state.strokeDash.length > 0) {
         elem.setAttribute('stroke-dasharray', state.strokeDash.join(' '));
@@ -319,7 +319,7 @@ export class SvgDrawingContext implements DrawingContext {
       if (state.strokeLineJoin !== 'miter')
         elem.setAttribute('stroke-linejoin', state.strokeLineJoin);
     } else if (type === 'fill') {
-      elem.setAttribute('fill', state.fill.hex());
+      elem.setAttribute('fill', state.fill.toCss());
     }
     if (state.transform.length === 0) return;
     elem.setAttribute(
