@@ -14,7 +14,7 @@ import { getClosestPoint } from 'svg-path-commander';
 
 export type ConnectionStrokeType = 'solid' | 'dotted' | 'dashed';
 
-type BaseConnectionOutline = {
+type BaseConnectionStroke = {
   color: RouteColor;
   width: number;
   clear: boolean;
@@ -22,29 +22,29 @@ type BaseConnectionOutline = {
   lineCap: CanvasLineCap;
 };
 
-type DottedConnectionOutline = BaseConnectionOutline & {
+type DottedConnectionStroke = BaseConnectionStroke & {
   strokeType: 'dotted';
   dottedSpacing: number;
   dottedOffset: number;
 };
 
-type DashedConnectionOutline = BaseConnectionOutline & {
+type DashedConnectionStroke = BaseConnectionStroke & {
   strokeType: 'dashed';
   dashedLength: number;
   dashedSpacing: number;
   dashedOffset: number;
 };
 
-type SolidConnectionOutline = BaseConnectionOutline & {
+type SolidConnectionStroke = BaseConnectionStroke & {
   strokeType: 'solid';
 };
 
-export type ConnectionOutline =
-  | DottedConnectionOutline
-  | DashedConnectionOutline
-  | SolidConnectionOutline;
+export type ConnectionStroke =
+  | DottedConnectionStroke
+  | DashedConnectionStroke
+  | SolidConnectionStroke;
 
-export const DEFALUT_CONNECTION_OUTLINE: ConnectionOutline = {
+export const DEFALUT_CONNECTION_STROKE: ConnectionStroke = {
   color: 'route',
   width: 1,
   clear: false,
@@ -53,7 +53,7 @@ export const DEFALUT_CONNECTION_OUTLINE: ConnectionOutline = {
 };
 
 export type ConnectionStyle = {
-  outlines: ConnectionOutline[];
+  strokes: ConnectionStroke[];
 };
 
 export type SpecificConnectionStyle = {
@@ -192,38 +192,38 @@ export class TransitConnection implements Actionable, LayeredDrawable {
 
     const { path, length } = this.getPath(true);
     const style = this.getStyle();
-    for (const outline of style.outlines) {
-      const { width, clear, color: oultineColor, lineCap } = outline;
+    for (const stroke of style.strokes) {
+      const { width, clear, color: oultineColor, lineCap } = stroke;
       const color = this.getColor(oultineColor);
       let lineLength = 0;
       let lineDist = 0;
       ctx.save();
       ctx.setStrokeLineCap(lineCap);
       let offset = this.specificStyle.spacingOffset;
-      switch (outline.strokeType) {
+      switch (stroke.strokeType) {
         case 'solid':
           ctx.setStrokeDash([]);
           break;
         case 'dotted':
           ctx.setStrokeDash([
             0,
-            outline.dottedSpacing * this.specificStyle.spacingMultiplier,
+            stroke.dottedSpacing * this.specificStyle.spacingMultiplier,
           ]);
           lineDist =
-            outline.dottedSpacing * this.specificStyle.spacingMultiplier;
+            stroke.dottedSpacing * this.specificStyle.spacingMultiplier;
           ctx.setStrokeLineCap('round');
-          offset += outline.dottedOffset;
+          offset += stroke.dottedOffset;
           break;
         case 'dashed':
           ctx.setStrokeDash([
-            outline.dashedLength,
-            outline.dashedSpacing * this.specificStyle.spacingMultiplier,
+            stroke.dashedLength,
+            stroke.dashedSpacing * this.specificStyle.spacingMultiplier,
           ]);
-          lineLength = outline.dashedLength;
+          lineLength = stroke.dashedLength;
           lineDist =
-            outline.dashedLength +
-            outline.dashedSpacing * this.specificStyle.spacingMultiplier;
-          offset += outline.dashedOffset;
+            stroke.dashedLength +
+            stroke.dashedSpacing * this.specificStyle.spacingMultiplier;
+          offset += stroke.dashedOffset;
           break;
       }
 
@@ -243,12 +243,12 @@ export class TransitConnection implements Actionable, LayeredDrawable {
   drawSelected(ctx: CanvasRenderingContext2D): void {
     ctx.save();
     const style = this.getStyle();
-    const outline = style.outlines[0];
-    const lineWidth = outline.width;
+    const stroke = style.strokes[0];
+    const lineWidth = stroke.width;
     ctx.setLineDash([lineWidth, lineWidth]);
     ctx.lineDashOffset = (Date.now() / 200) % (lineWidth * 2);
     ctx.strokeStyle = 'white';
-    ctx.lineWidth = outline.width + 2;
+    ctx.lineWidth = stroke.width + 2;
     const { path: pathpp } = this.getPath();
     const path = pathpp.toPath2D();
     ctx.stroke(path);
@@ -256,7 +256,7 @@ export class TransitConnection implements Actionable, LayeredDrawable {
     ctx.strokeStyle = 'black';
     ctx.setLineDash([]);
     ctx.lineCap = 'square';
-    ctx.lineWidth = outline.width;
+    ctx.lineWidth = stroke.width;
     ctx.stroke(path);
     ctx.restore();
   }
@@ -395,7 +395,7 @@ export class TransitConnection implements Actionable, LayeredDrawable {
 
   isOver(x: number, y: number, ctx: CanvasRenderingContext2D) {
     const style = this.getStyle();
-    const width = style.outlines[0].width + 2;
+    const width = style.strokes[0].width + 2;
     const { path: pathpp } = this.getPath();
     ctx.lineWidth = width;
     const path = pathpp.toPath2D();

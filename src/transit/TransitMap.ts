@@ -43,7 +43,7 @@ export class TransitMap {
     new Map();
   public defaultConnectionStyle: SavedStyle<ConnectionStyle> = {
     style: {
-      outlines: [
+      strokes: [
         {
           color: Color.TRANSPARENT,
           width: 4,

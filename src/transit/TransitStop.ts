@@ -20,9 +20,9 @@ import {
 } from './types';
 import { getPointAtLength } from 'svg-path-commander';
 
-// idk what to call this yet. in TransitConnection, it's called an Outline
-// because it's the outline of the connection. here tho, sometimes there are
-// outlines, sometimes not, so idk what to call it.
+// idk what to call this yet. in TransitConnection, it's called an Stroke
+// because it's the stroke of the connection. here tho, sometimes there are
+// strokes, sometimes not, so idk what to call it.
 export type StopStyleLayer = {
   fillColor: RouteColor;
   strokeColor: RouteColor;

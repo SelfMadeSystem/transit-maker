@@ -1,8 +1,8 @@
 import { EditorContext } from '../../EditorContext';
 import {
-  ConnectionOutline,
+  ConnectionStroke,
   ConnectionStyle,
-  DEFALUT_CONNECTION_OUTLINE,
+  DEFALUT_CONNECTION_STROKE,
 } from '../../transit/TransitConnection';
 import { SavedStyle } from '../../transit/TransitMap';
 import { clone } from '../../utils/clone';
@@ -10,13 +10,13 @@ import { NumberInput } from '../NumberInput';
 import { RouteColorEditor } from '../RouteColorEditor';
 import { useContext, useState } from 'react';
 
-function ConnectionOutlineDotted({
-  outline,
+function ConnectionStrokeDotted({
+  stroke,
 }: {
-  outline: ConnectionOutline & { strokeType: 'dotted' };
+  stroke: ConnectionStroke & { strokeType: 'dotted' };
 }) {
-  const [dottedSpacing, setDottedSpacing] = useState(outline.dottedSpacing);
-  const [dottedOffset, setDottedOffset] = useState(outline.dottedOffset);
+  const [dottedSpacing, setDottedSpacing] = useState(stroke.dottedSpacing);
+  const [dottedOffset, setDottedOffset] = useState(stroke.dottedOffset);
 
   return (
     <>
@@ -25,7 +25,7 @@ function ConnectionOutlineDotted({
         <NumberInput
           value={dottedSpacing}
           min={0}
-          onChange={e => setDottedSpacing((outline.dottedSpacing = e))}
+          onChange={e => setDottedSpacing((stroke.dottedSpacing = e))}
           className="bg-gray-900 text-white"
         />
       </label>
@@ -36,7 +36,7 @@ function ConnectionOutlineDotted({
           min={0}
           max={1}
           step={0.01}
-          onChange={e => setDottedOffset((outline.dottedOffset = e))}
+          onChange={e => setDottedOffset((stroke.dottedOffset = e))}
           className="bg-gray-900 text-white"
         />
       </label>
@@ -44,14 +44,14 @@ function ConnectionOutlineDotted({
   );
 }
 
-function ConnectionOutlineDashed({
-  outline,
+function ConnectionStrokeDashed({
+  stroke,
 }: {
-  outline: ConnectionOutline & { strokeType: 'dashed' };
+  stroke: ConnectionStroke & { strokeType: 'dashed' };
 }) {
-  const [dashedLength, setDashedLength] = useState(outline.dashedLength);
-  const [dashedSpacing, setDashedSpacing] = useState(outline.dashedSpacing);
-  const [dashedOffset, setDashedOffset] = useState(outline.dashedOffset);
+  const [dashedLength, setDashedLength] = useState(stroke.dashedLength);
+  const [dashedSpacing, setDashedSpacing] = useState(stroke.dashedSpacing);
+  const [dashedOffset, setDashedOffset] = useState(stroke.dashedOffset);
 
   return (
     <>
@@ -60,7 +60,7 @@ function ConnectionOutlineDashed({
         <NumberInput
           value={dashedLength}
           min={0}
-          onChange={e => setDashedLength((outline.dashedLength = e))}
+          onChange={e => setDashedLength((stroke.dashedLength = e))}
           className="bg-gray-900 text-white"
         />
       </label>
@@ -69,7 +69,7 @@ function ConnectionOutlineDashed({
         <NumberInput
           value={dashedSpacing}
           min={0}
-          onChange={e => setDashedSpacing((outline.dashedSpacing = e))}
+          onChange={e => setDashedSpacing((stroke.dashedSpacing = e))}
           className="bg-gray-900 text-white"
         />
       </label>
@@ -80,7 +80,7 @@ function ConnectionOutlineDashed({
           min={0}
           max={1}
           step={0.01}
-          onChange={e => setDashedOffset((outline.dashedOffset = e))}
+          onChange={e => setDashedOffset((stroke.dashedOffset = e))}
           className="bg-gray-900 text-white"
         />
       </label>
@@ -88,33 +88,33 @@ function ConnectionOutlineDashed({
   );
 }
 
-export function ConnectionOutlineUi({
-  outline,
-  removeOutline,
+export function ConnectionStrokeUi({
+  stroke,
+  removeStroke,
   index,
 }: {
-  outline: ConnectionOutline;
-  removeOutline: () => void;
+  stroke: ConnectionStroke;
+  removeStroke: () => void;
   index: number;
 }) {
-  const [width, setWidth] = useState(outline.width);
-  const [color, setColor] = useState(outline.color);
-  const [clear, setClear] = useState(outline.clear);
-  const [lineCap, setLineCap] = useState(outline.lineCap);
-  const [strokeType, setStrokeType] = useState(outline.strokeType);
+  const [width, setWidth] = useState(stroke.width);
+  const [color, setColor] = useState(stroke.color);
+  const [clear, setClear] = useState(stroke.clear);
+  const [lineCap, setLineCap] = useState(stroke.lineCap);
+  const [strokeType, setStrokeType] = useState(stroke.strokeType);
 
   return (
     <details>
       <summary className="flex flex-row items-center gap-2 text-white">
-        <div>Outline {index + 1}</div>
+        <div>Stroke {index + 1}</div>
         <RouteColorEditor
           color={color}
-          onChange={c => setColor((outline.color = c))}
+          onChange={c => setColor((stroke.color = c))}
         />
         <NumberInput
           value={width}
           min={0}
-          onChange={e => setWidth((outline.width = e))}
+          onChange={e => setWidth((stroke.width = e))}
           className="w-8 bg-gray-900 text-white"
         />
       </summary>
@@ -124,7 +124,7 @@ export function ConnectionOutlineUi({
           <input
             type="checkbox"
             checked={clear}
-            onChange={() => setClear((outline.clear = !clear))}
+            onChange={() => setClear((stroke.clear = !clear))}
           />
         </label>
         <label className="flex items-center gap-2">
@@ -132,7 +132,7 @@ export function ConnectionOutlineUi({
           <select
             value={lineCap}
             onChange={e =>
-              setLineCap((outline.lineCap = e.target.value as CanvasLineCap))
+              setLineCap((stroke.lineCap = e.target.value as CanvasLineCap))
             }
             className="bg-gray-900 text-white"
           >
@@ -147,31 +147,31 @@ export function ConnectionOutlineUi({
             value={strokeType}
             onChange={e => {
               const newStrokeType = e.target
-                .value as ConnectionOutline['strokeType'];
+                .value as ConnectionStroke['strokeType'];
               switch (newStrokeType) {
                 case 'dotted':
-                  outline.strokeType = 'dotted';
+                  stroke.strokeType = 'dotted';
                   (
-                    outline as ConnectionOutline & { strokeType: 'dotted' }
+                    stroke as ConnectionStroke & { strokeType: 'dotted' }
                   ).dottedSpacing = 2;
                   (
-                    outline as ConnectionOutline & { strokeType: 'dotted' }
+                    stroke as ConnectionStroke & { strokeType: 'dotted' }
                   ).dottedOffset = 0;
                   break;
                 case 'dashed':
-                  outline.strokeType = 'dashed';
+                  stroke.strokeType = 'dashed';
                   (
-                    outline as ConnectionOutline & { strokeType: 'dashed' }
+                    stroke as ConnectionStroke & { strokeType: 'dashed' }
                   ).dashedLength = 2;
                   (
-                    outline as ConnectionOutline & { strokeType: 'dashed' }
+                    stroke as ConnectionStroke & { strokeType: 'dashed' }
                   ).dashedSpacing = 2;
                   (
-                    outline as ConnectionOutline & { strokeType: 'dashed' }
+                    stroke as ConnectionStroke & { strokeType: 'dashed' }
                   ).dashedOffset = 0;
                   break;
                 default:
-                  outline.strokeType = 'solid';
+                  stroke.strokeType = 'solid';
                   break;
               }
               setStrokeType(newStrokeType);
@@ -184,57 +184,57 @@ export function ConnectionOutlineUi({
           </select>
         </label>
         {strokeType === 'dotted' ? (
-          <ConnectionOutlineDotted
-            outline={outline as ConnectionOutline & { strokeType: 'dotted' }}
+          <ConnectionStrokeDotted
+            stroke={stroke as ConnectionStroke & { strokeType: 'dotted' }}
           />
         ) : strokeType === 'dashed' ? (
-          <ConnectionOutlineDashed
-            outline={outline as ConnectionOutline & { strokeType: 'dashed' }}
+          <ConnectionStrokeDashed
+            stroke={stroke as ConnectionStroke & { strokeType: 'dashed' }}
           />
         ) : null}
       </div>
-      <button className="bg-gray-800 p-1 text-white" onClick={removeOutline}>
-        Remove outline
+      <button className="bg-gray-800 p-1 text-white" onClick={removeStroke}>
+        Remove stroke
       </button>
     </details>
   );
 }
 
 export function ConnectionStyleUi({ style }: { style: ConnectionStyle }) {
-  const [outlines, setOutlines] = useState(style.outlines);
+  const [strokes, setStrokes] = useState(style.strokes);
 
-  function addOutline() {
-    const newOutlines = [
-      ...outlines,
+  function addStroke() {
+    const newStrokes = [
+      ...strokes,
       {
-        ...DEFALUT_CONNECTION_OUTLINE,
+        ...DEFALUT_CONNECTION_STROKE,
       },
     ];
 
-    setOutlines(newOutlines);
-    style.outlines = newOutlines;
+    setStrokes(newStrokes);
+    style.strokes = newStrokes;
   }
 
-  function removeOutline(index: number) {
-    const newOutlines = [...outlines];
-    newOutlines.splice(index, 1);
+  function removeStroke(index: number) {
+    const newStrokes = [...strokes];
+    newStrokes.splice(index, 1);
 
-    setOutlines(newOutlines);
-    style.outlines = newOutlines;
+    setStrokes(newStrokes);
+    style.strokes = newStrokes;
   }
 
   return (
     <div className="flex flex-col gap-2">
-      <button className="bg-gray-800 p-1 text-white" onClick={addOutline}>
-        Add outline
+      <button className="bg-gray-800 p-1 text-white" onClick={addStroke}>
+        Add stroke
       </button>
       <div className="ml-4">
-        {outlines.map((outline, i) => (
-          <ConnectionOutlineUi
+        {strokes.map((stroke, i) => (
+          <ConnectionStrokeUi
             key={i}
             index={i}
-            outline={outline}
-            removeOutline={() => removeOutline(i)}
+            stroke={stroke}
+            removeStroke={() => removeStroke(i)}
           />
         ))}
       </div>
