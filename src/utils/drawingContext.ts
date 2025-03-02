@@ -1,8 +1,8 @@
 import { Color } from '../components/color/Color';
 import { Path2Dpp } from './Path2Dpp';
-import { clone } from './clone';
 
 export interface DrawingContext {
+  setCtx(which: 'bg' | 'fg'): void;
   setBackground(color: Color): void;
   setStrokeWidth(width: number): void;
   setStrokeDash(dash: number[]): void;
@@ -48,10 +48,13 @@ export interface DrawingContext {
 export class CanvasDrawingContext implements DrawingContext {
   private bgCtx: CanvasRenderingContext2D;
   private ctx: CanvasRenderingContext2D;
+  private currentCtx: CanvasRenderingContext2D;
+  private ctxHistory: CanvasRenderingContext2D[] = [];
 
   constructor(bgCtx: CanvasRenderingContext2D, ctx: CanvasRenderingContext2D) {
     this.bgCtx = bgCtx;
     this.ctx = ctx;
+    this.currentCtx = ctx;
   }
 
   getBgCtx() {
@@ -59,7 +62,11 @@ export class CanvasDrawingContext implements DrawingContext {
   }
 
   getCtx() {
-    return this.ctx;
+    return this.currentCtx;
+  }
+
+  setCtx(which: 'bg' | 'fg') {
+    this.currentCtx = which === 'bg' ? this.bgCtx : this.ctx;
   }
 
   setBackground(color: Color) {
@@ -76,55 +83,55 @@ export class CanvasDrawingContext implements DrawingContext {
   }
 
   setStrokeWidth(width: number) {
-    this.ctx.lineWidth = width;
+    this.currentCtx.lineWidth = width;
   }
 
   setStrokeDash(dash: number[]) {
-    this.ctx.setLineDash(dash);
+    this.currentCtx.setLineDash(dash);
   }
 
   setStrokeDashOffset(offset: number) {
-    this.ctx.lineDashOffset = offset;
+    this.currentCtx.lineDashOffset = offset;
   }
 
   setStrokeLineCap(cap: CanvasLineCap) {
-    this.ctx.lineCap = cap;
+    this.currentCtx.lineCap = cap;
   }
 
   setStrokeLineJoin(join: CanvasLineJoin) {
-    this.ctx.lineJoin = join;
+    this.currentCtx.lineJoin = join;
   }
 
   setFill(color: Color) {
-    this.ctx.fillStyle = color.hex();
+    this.currentCtx.fillStyle = color.hex();
   }
 
   setStroke(color: Color) {
-    this.ctx.strokeStyle = color.hex();
+    this.currentCtx.strokeStyle = color.hex();
   }
 
   fillPath(pathpp: Path2Dpp, clear?: true) {
     const path = pathpp.toPath2D();
     if (clear) {
-      this.ctx.save();
-      this.ctx.globalCompositeOperation = 'destination-out';
-      this.ctx.fillStyle = '#000';
-      this.ctx.fill(path);
-      this.ctx.restore();
+      this.currentCtx.save();
+      this.currentCtx.globalCompositeOperation = 'destination-out';
+      this.currentCtx.fillStyle = '#000';
+      this.currentCtx.fill(path);
+      this.currentCtx.restore();
     }
-    this.ctx.fill(path);
+    this.currentCtx.fill(path);
   }
 
   strokePath(pathpp: Path2Dpp, clear?: true) {
     const path = pathpp.toPath2D();
     if (clear) {
-      this.ctx.save();
-      this.ctx.strokeStyle = '#000';
-      this.ctx.globalCompositeOperation = 'destination-out';
-      this.ctx.stroke(path);
-      this.ctx.restore();
+      this.currentCtx.save();
+      this.currentCtx.strokeStyle = '#000';
+      this.currentCtx.globalCompositeOperation = 'destination-out';
+      this.currentCtx.stroke(path);
+      this.currentCtx.restore();
     }
-    this.ctx.stroke(path);
+    this.currentCtx.stroke(path);
   }
 
   drawImage(
@@ -135,22 +142,22 @@ export class CanvasDrawingContext implements DrawingContext {
     dHeight?: number,
   ) {
     if (dWidth && dHeight) {
-      this.ctx.drawImage(image, dx, dy, dWidth, dHeight);
+      this.currentCtx.drawImage(image, dx, dy, dWidth, dHeight);
     } else {
-      this.ctx.drawImage(image, dx, dy);
+      this.currentCtx.drawImage(image, dx, dy);
     }
   }
 
   setFont(font: string) {
-    this.ctx.font = font;
+    this.currentCtx.font = font;
   }
 
   setTextAlign(align: CanvasTextAlign) {
-    this.ctx.textAlign = align;
+    this.currentCtx.textAlign = align;
   }
 
   setTextBaseline(baseline: CanvasTextBaseline) {
-    this.ctx.textBaseline = baseline;
+    this.currentCtx.textBaseline = baseline;
   }
 
   fillText(
@@ -161,13 +168,13 @@ export class CanvasDrawingContext implements DrawingContext {
     maxWidth?: number,
   ) {
     if (clear) {
-      this.ctx.save();
-      this.ctx.fillStyle = '#000';
-      this.ctx.globalCompositeOperation = 'destination-out';
-      this.ctx.fillText(text, x, y, maxWidth);
-      this.ctx.restore();
+      this.currentCtx.save();
+      this.currentCtx.fillStyle = '#000';
+      this.currentCtx.globalCompositeOperation = 'destination-out';
+      this.currentCtx.fillText(text, x, y, maxWidth);
+      this.currentCtx.restore();
     }
-    this.ctx.fillText(text, x, y, maxWidth);
+    this.currentCtx.fillText(text, x, y, maxWidth);
   }
 
   strokeText(
@@ -178,33 +185,40 @@ export class CanvasDrawingContext implements DrawingContext {
     maxWidth?: number,
   ) {
     if (clear) {
-      this.ctx.save();
-      this.ctx.strokeStyle = '#000';
-      this.ctx.globalCompositeOperation = 'destination-out';
-      this.ctx.strokeText(text, x, y, maxWidth);
-      this.ctx.restore();
+      this.currentCtx.save();
+      this.currentCtx.strokeStyle = '#000';
+      this.currentCtx.globalCompositeOperation = 'destination-out';
+      this.currentCtx.strokeText(text, x, y, maxWidth);
+      this.currentCtx.restore();
     }
-    this.ctx.strokeText(text, x, y, maxWidth);
+    this.currentCtx.strokeText(text, x, y, maxWidth);
   }
 
   save() {
     this.ctx.save();
+    this.bgCtx.save();
+    this.ctxHistory.push(this.currentCtx);
   }
 
   restore() {
     this.ctx.restore();
+    this.bgCtx.restore();
+    this.currentCtx = this.ctxHistory.pop() ?? this.ctx;
   }
 
   translate(x: number, y: number) {
     this.ctx.translate(x, y);
+    this.bgCtx.translate(x, y);
   }
 
   rotate(angle: number) {
     this.ctx.rotate(angle);
+    this.bgCtx.rotate(angle);
   }
 
   scale(x: number, y: number) {
     this.ctx.scale(x, y);
+    this.bgCtx.scale(x, y);
   }
 }
 
@@ -231,6 +245,7 @@ type SvgDrawingState = {
   textAlign: CanvasTextAlign;
   textBaseline: CanvasTextBaseline;
   transform: SvgTransform[];
+  context: SVGGElement;
 };
 
 export class SvgDrawingContext implements DrawingContext {
@@ -238,30 +253,40 @@ export class SvgDrawingContext implements DrawingContext {
   private svg: SVGSVGElement;
   private bgG: SVGGElement;
   private g: SVGGElement;
-  private state: SvgDrawingState[] = [
-    {
-      stroke: new Color(0, 0, 0, 0),
-      fill: new Color(0, 0, 0, 0),
-      strokeWidth: 1,
-      strokeDash: [],
-      strokeDashOffset: 0,
-      strokeLineCap: 'butt',
-      strokeLineJoin: 'miter',
-      font: '10px sans-serif',
-      textAlign: 'start',
-      textBaseline: 'alphabetic',
-      transform: [],
-    },
-  ];
+  private currentG: SVGGElement;
+  private state: SvgDrawingState[];
   private usedFonts: Set<string> = new Set();
 
   constructor(svg: SVGSVGElement) {
     this.svg = svg;
     this.bg = new Color(0, 0, 0, 0);
     this.bgG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    this.g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    this.currentG = this.g = document.createElementNS(
+      'http://www.w3.org/2000/svg',
+      'g',
+    );
     this.svg.appendChild(this.bgG);
     this.svg.appendChild(this.g);
+    this.state = [
+      {
+        stroke: new Color(0, 0, 0, 0),
+        fill: new Color(0, 0, 0, 0),
+        strokeWidth: 1,
+        strokeDash: [],
+        strokeDashOffset: 0,
+        strokeLineCap: 'butt',
+        strokeLineJoin: 'miter',
+        font: '10px sans-serif',
+        textAlign: 'start',
+        textBaseline: 'alphabetic',
+        transform: [],
+        context: this.g,
+      },
+    ];
+  }
+
+  setCtx(which: 'bg' | 'fg') {
+    this.currentG = which === 'bg' ? this.bgG : this.g;
   }
 
   setBackground(color: Color) {
@@ -359,9 +384,9 @@ export class SvgDrawingContext implements DrawingContext {
       const path = pathpp.toSVGPath();
       this.applyState(path, 'fill');
       path.setAttribute('fill', this.bg.hex());
-      this.g.appendChild(path);
+      this.currentG.appendChild(path);
     }
-    this.g.appendChild(path);
+    this.currentG.appendChild(path);
   }
 
   strokePath(pathpp: Path2Dpp, clear?: true) {
@@ -371,9 +396,9 @@ export class SvgDrawingContext implements DrawingContext {
       const path = pathpp.toSVGPath();
       this.applyState(path, 'stroke');
       path.setAttribute('stroke', this.bg.hex());
-      this.g.appendChild(path);
+      this.currentG.appendChild(path);
     }
-    this.g.appendChild(path);
+    this.currentG.appendChild(path);
   }
 
   private imageToBase64(image: CanvasImageSource): string {
@@ -401,7 +426,7 @@ export class SvgDrawingContext implements DrawingContext {
       img.setAttribute('width', dWidth.toString());
       img.setAttribute('height', dHeight.toString());
     }
-    this.g.appendChild(img);
+    this.currentG.appendChild(img);
   }
 
   setFont(font: string) {
@@ -438,9 +463,9 @@ export class SvgDrawingContext implements DrawingContext {
       const textElem = this.createTextPath(text, x, y);
       this.applyState(textElem, 'fill');
       textElem.setAttribute('fill', this.bg.hex());
-      this.g.appendChild(textElem);
+      this.currentG.appendChild(textElem);
     }
-    this.g.appendChild(textElem);
+    this.currentG.appendChild(textElem);
   }
 
   strokeText(text: string, x: number, y: number, clear?: boolean) {
@@ -450,13 +475,13 @@ export class SvgDrawingContext implements DrawingContext {
       const textElem = this.createTextPath(text, x, y);
       this.applyState(textElem, 'stroke');
       textElem.setAttribute('stroke', this.bg.hex());
-      this.g.appendChild(textElem);
+      this.currentG.appendChild(textElem);
     }
-    this.g.appendChild(textElem);
+    this.currentG.appendChild(textElem);
   }
 
   save() {
-    this.state.push(clone(this.getState()));
+    this.state.push({ ...this.getState() });
   }
 
   restore() {

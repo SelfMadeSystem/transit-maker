@@ -56,6 +56,7 @@ export class DecorationImage implements Transformable, Actionable {
 
   draw(ctx: DrawingContext) {
     ctx.save();
+    ctx.setCtx('bg');
     const size = this.getSize();
     ctx.translate(...this.pos.a);
     ctx.rotate(this.rotation);
