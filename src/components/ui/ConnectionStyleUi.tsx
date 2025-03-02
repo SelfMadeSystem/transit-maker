@@ -90,8 +90,12 @@ function ConnectionOutlineDashed({
 
 export function ConnectionOutlineUi({
   outline,
+  removeOutline,
+  index,
 }: {
   outline: ConnectionOutline;
+  removeOutline: () => void;
+  index: number;
 }) {
   const [width, setWidth] = useState(outline.width);
   const [color, setColor] = useState(outline.color);
@@ -100,97 +104,99 @@ export function ConnectionOutlineUi({
   const [strokeType, setStrokeType] = useState(outline.strokeType);
 
   return (
-    <div className="flex flex-col gap-2">
-      <label className="flex items-center gap-2">
-        <div className="text-white">Width:</div>
-        <NumberInput
-          value={width}
-          min={0}
-          onChange={e => setWidth((outline.width = e))}
-          className="bg-gray-900 text-white"
-        />
-      </label>
-      <label className="flex items-center gap-2">
-        <div className="text-white">Color:</div>
+    <details>
+      <summary className="flex flex-row items-center gap-2 text-white">
+        <div>Outline {index + 1}</div>
         <RouteColorEditor
           color={color}
           onChange={c => setColor((outline.color = c))}
         />
-      </label>
-      <label className="flex items-center gap-2">
-        <div className="text-white">Clear:</div>
-        <input
-          type="checkbox"
-          checked={clear}
-          onChange={() => setClear((outline.clear = !clear))}
+        <NumberInput
+          value={width}
+          min={0}
+          onChange={e => setWidth((outline.width = e))}
+          className="w-8 bg-gray-900 text-white"
         />
-      </label>
-      <label className="flex items-center gap-2">
-        <div className="text-white">Line cap:</div>
-        <select
-          value={lineCap}
-          onChange={e =>
-            setLineCap((outline.lineCap = e.target.value as CanvasLineCap))
-          }
-          className="bg-gray-900 text-white"
-        >
-          <option value="butt">Butt</option>
-          <option value="round">Round</option>
-          <option value="square">Square</option>
-        </select>
-      </label>
-      <label className="flex items-center gap-2">
-        <div className="text-white">Stroke type:</div>
-        <select
-          value={strokeType}
-          onChange={e => {
-            const newStrokeType = e.target
-              .value as ConnectionOutline['strokeType'];
-            switch (newStrokeType) {
-              case 'dotted':
-                outline.strokeType = 'dotted';
-                (
-                  outline as ConnectionOutline & { strokeType: 'dotted' }
-                ).dottedSpacing = 2;
-                (
-                  outline as ConnectionOutline & { strokeType: 'dotted' }
-                ).dottedOffset = 0;
-                break;
-              case 'dashed':
-                outline.strokeType = 'dashed';
-                (
-                  outline as ConnectionOutline & { strokeType: 'dashed' }
-                ).dashedLength = 2;
-                (
-                  outline as ConnectionOutline & { strokeType: 'dashed' }
-                ).dashedSpacing = 2;
-                (
-                  outline as ConnectionOutline & { strokeType: 'dashed' }
-                ).dashedOffset = 0;
-                break;
-              default:
-                outline.strokeType = 'solid';
-                break;
+      </summary>
+      <div className="flex flex-col gap-2 pl-2">
+        <label className="flex items-center gap-2">
+          <div className="text-white">Clear:</div>
+          <input
+            type="checkbox"
+            checked={clear}
+            onChange={() => setClear((outline.clear = !clear))}
+          />
+        </label>
+        <label className="flex items-center gap-2">
+          <div className="text-white">Line cap:</div>
+          <select
+            value={lineCap}
+            onChange={e =>
+              setLineCap((outline.lineCap = e.target.value as CanvasLineCap))
             }
-            setStrokeType(newStrokeType);
-          }}
-          className="bg-gray-900 text-white"
-        >
-          <option value="solid">Solid</option>
-          <option value="dotted">Dotted</option>
-          <option value="dashed">Dashed</option>
-        </select>
-      </label>
-      {strokeType === 'dotted' ? (
-        <ConnectionOutlineDotted
-          outline={outline as ConnectionOutline & { strokeType: 'dotted' }}
-        />
-      ) : strokeType === 'dashed' ? (
-        <ConnectionOutlineDashed
-          outline={outline as ConnectionOutline & { strokeType: 'dashed' }}
-        />
-      ) : null}
-    </div>
+            className="bg-gray-900 text-white"
+          >
+            <option value="butt">Butt</option>
+            <option value="round">Round</option>
+            <option value="square">Square</option>
+          </select>
+        </label>
+        <label className="flex items-center gap-2">
+          <div className="text-white">Stroke type:</div>
+          <select
+            value={strokeType}
+            onChange={e => {
+              const newStrokeType = e.target
+                .value as ConnectionOutline['strokeType'];
+              switch (newStrokeType) {
+                case 'dotted':
+                  outline.strokeType = 'dotted';
+                  (
+                    outline as ConnectionOutline & { strokeType: 'dotted' }
+                  ).dottedSpacing = 2;
+                  (
+                    outline as ConnectionOutline & { strokeType: 'dotted' }
+                  ).dottedOffset = 0;
+                  break;
+                case 'dashed':
+                  outline.strokeType = 'dashed';
+                  (
+                    outline as ConnectionOutline & { strokeType: 'dashed' }
+                  ).dashedLength = 2;
+                  (
+                    outline as ConnectionOutline & { strokeType: 'dashed' }
+                  ).dashedSpacing = 2;
+                  (
+                    outline as ConnectionOutline & { strokeType: 'dashed' }
+                  ).dashedOffset = 0;
+                  break;
+                default:
+                  outline.strokeType = 'solid';
+                  break;
+              }
+              setStrokeType(newStrokeType);
+            }}
+            className="bg-gray-900 text-white"
+          >
+            <option value="solid">Solid</option>
+            <option value="dotted">Dotted</option>
+            <option value="dashed">Dashed</option>
+          </select>
+        </label>
+        {strokeType === 'dotted' ? (
+          <ConnectionOutlineDotted
+            outline={outline as ConnectionOutline & { strokeType: 'dotted' }}
+          />
+        ) : strokeType === 'dashed' ? (
+          <ConnectionOutlineDashed
+            outline={outline as ConnectionOutline & { strokeType: 'dashed' }}
+          />
+        ) : null}
+      </div>
+      <button className="bg-gray-800 p-1 text-white" onClick={removeOutline}>
+        Remove outline
+      </button>
+    </details>
   );
 }
 
@@ -224,16 +230,12 @@ export function ConnectionStyleUi({ style }: { style: ConnectionStyle }) {
       </button>
       <div className="ml-4">
         {outlines.map((outline, i) => (
-          <details key={i}>
-            <summary className="text-white">Outline {i + 1}</summary>
-            <ConnectionOutlineUi outline={outline} />
-            <button
-              className="bg-gray-800 p-1 text-white"
-              onClick={() => removeOutline(i)}
-            >
-              Remove outline
-            </button>
-          </details>
+          <ConnectionOutlineUi
+            key={i}
+            index={i}
+            outline={outline}
+            removeOutline={() => removeOutline(i)}
+          />
         ))}
       </div>
     </div>
