@@ -45,6 +45,7 @@ export class TransitMap {
     style: {
       strokes: [
         {
+          id: 0,
           color: Color.TRANSPARENT,
           width: 4,
           clear: true,
@@ -52,6 +53,7 @@ export class TransitMap {
           lineCap: 'butt',
         },
         {
+          id: 1,
           color: 'route',
           width: 2,
           clear: false,

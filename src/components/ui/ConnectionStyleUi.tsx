@@ -2,12 +2,30 @@ import { EditorContext } from '../../EditorContext';
 import {
   ConnectionStroke,
   ConnectionStyle,
-  DEFALUT_CONNECTION_STROKE,
 } from '../../transit/TransitConnection';
 import { SavedStyle } from '../../transit/TransitMap';
 import { clone } from '../../utils/clone';
 import { NumberInput } from '../NumberInput';
 import { RouteColorEditor } from '../RouteColorEditor';
+import {
+  DndContext,
+  DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { mdiChevronRight, mdiDragVertical } from '@mdi/js';
+import Icon from '@mdi/react';
 import { useContext, useState } from 'react';
 
 function ConnectionStrokeDotted({
@@ -91,22 +109,40 @@ function ConnectionStrokeDashed({
 export function ConnectionStrokeUi({
   stroke,
   removeStroke,
-  index,
+  id,
 }: {
   stroke: ConnectionStroke;
   removeStroke: () => void;
-  index: number;
+  id: number;
 }) {
+  const [open, setOpen] = useState(false);
   const [width, setWidth] = useState(stroke.width);
   const [color, setColor] = useState(stroke.color);
   const [clear, setClear] = useState(stroke.clear);
   const [lineCap, setLineCap] = useState(stroke.lineCap);
   const [strokeType, setStrokeType] = useState(stroke.strokeType);
 
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
-    <details>
-      <summary className="flex flex-row items-center gap-2 text-white">
-        <div>Stroke {index + 1}</div>
+    <div ref={setNodeRef} style={style}>
+      <div
+        onClick={e => {
+          if (e.target instanceof HTMLInputElement) return;
+          setOpen(o => !o);
+        }}
+        className="flex flex-row items-center gap-2 bg-gray-900 text-white"
+      >
+        <div className={`${open ? 'rotate-90' : ''} transition-all`}>
+          <Icon path={mdiChevronRight} size={1} />
+        </div>
+        <div>Stroke</div>
         <RouteColorEditor
           color={color}
           onChange={c => setColor((stroke.color = c))}
@@ -117,86 +153,100 @@ export function ConnectionStrokeUi({
           onChange={e => setWidth((stroke.width = e))}
           className="w-8 bg-gray-900 text-white"
         />
-      </summary>
-      <div className="flex flex-col gap-2 pl-2">
-        <label className="flex items-center gap-2">
-          <div className="text-white">Clear:</div>
-          <input
-            type="checkbox"
-            checked={clear}
-            onChange={() => setClear((stroke.clear = !clear))}
-          />
-        </label>
-        <label className="flex items-center gap-2">
-          <div className="text-white">Line cap:</div>
-          <select
-            value={lineCap}
-            onChange={e =>
-              setLineCap((stroke.lineCap = e.target.value as CanvasLineCap))
-            }
-            className="bg-gray-900 text-white"
-          >
-            <option value="butt">Butt</option>
-            <option value="round">Round</option>
-            <option value="square">Square</option>
-          </select>
-        </label>
-        <label className="flex items-center gap-2">
-          <div className="text-white">Stroke type:</div>
-          <select
-            value={strokeType}
-            onChange={e => {
-              const newStrokeType = e.target
-                .value as ConnectionStroke['strokeType'];
-              switch (newStrokeType) {
-                case 'dotted':
-                  stroke.strokeType = 'dotted';
-                  (
-                    stroke as ConnectionStroke & { strokeType: 'dotted' }
-                  ).dottedSpacing = 2;
-                  (
-                    stroke as ConnectionStroke & { strokeType: 'dotted' }
-                  ).dottedOffset = 0;
-                  break;
-                case 'dashed':
-                  stroke.strokeType = 'dashed';
-                  (
-                    stroke as ConnectionStroke & { strokeType: 'dashed' }
-                  ).dashedLength = 2;
-                  (
-                    stroke as ConnectionStroke & { strokeType: 'dashed' }
-                  ).dashedSpacing = 2;
-                  (
-                    stroke as ConnectionStroke & { strokeType: 'dashed' }
-                  ).dashedOffset = 0;
-                  break;
-                default:
-                  stroke.strokeType = 'solid';
-                  break;
-              }
-              setStrokeType(newStrokeType);
-            }}
-            className="bg-gray-900 text-white"
-          >
-            <option value="solid">Solid</option>
-            <option value="dotted">Dotted</option>
-            <option value="dashed">Dashed</option>
-          </select>
-        </label>
-        {strokeType === 'dotted' ? (
-          <ConnectionStrokeDotted
-            stroke={stroke as ConnectionStroke & { strokeType: 'dotted' }}
-          />
-        ) : strokeType === 'dashed' ? (
-          <ConnectionStrokeDashed
-            stroke={stroke as ConnectionStroke & { strokeType: 'dashed' }}
-          />
-        ) : null}
+        <div
+          {...attributes}
+          {...listeners}
+          className="ml-auto cursor-move px-4"
+        >
+          <Icon path={mdiDragVertical} size={1} />
+        </div>
       </div>
-      <button className="bg-gray-800 p-1 text-white" onClick={removeStroke}>
-        Remove stroke
-      </button>
-    </details>
+      {open && (
+        <>
+          <div className="flex flex-col gap-2 pl-2">
+            <label className="flex items-center gap-2">
+              <div className="text-white">Clear:</div>
+              <input
+                type="checkbox"
+                checked={clear}
+                onChange={() => setClear((stroke.clear = !clear))}
+              />
+            </label>
+            <label className="flex items-center gap-2">
+              <div className="text-white">Line cap:</div>
+              <select
+                value={lineCap}
+                onChange={e =>
+                  setLineCap((stroke.lineCap = e.target.value as CanvasLineCap))
+                }
+                className="bg-gray-900 text-white"
+              >
+                <option value="butt">Butt</option>
+                <option value="round">Round</option>
+                <option value="square">Square</option>
+              </select>
+            </label>
+            <label className="flex items-center gap-2">
+              <div className="text-white">Stroke type:</div>
+              <select
+                value={strokeType}
+                onChange={e => {
+                  const newStrokeType = e.target
+                    .value as ConnectionStroke['strokeType'];
+                  switch (newStrokeType) {
+                    case 'dotted':
+                      stroke.strokeType = 'dotted';
+                      (
+                        stroke as ConnectionStroke & { strokeType: 'dotted' }
+                      ).dottedSpacing = 2;
+                      (
+                        stroke as ConnectionStroke & { strokeType: 'dotted' }
+                      ).dottedOffset = 0;
+                      break;
+                    case 'dashed':
+                      stroke.strokeType = 'dashed';
+                      (
+                        stroke as ConnectionStroke & { strokeType: 'dashed' }
+                      ).dashedLength = 2;
+                      (
+                        stroke as ConnectionStroke & { strokeType: 'dashed' }
+                      ).dashedSpacing = 2;
+                      (
+                        stroke as ConnectionStroke & { strokeType: 'dashed' }
+                      ).dashedOffset = 0;
+                      break;
+                    default:
+                      stroke.strokeType = 'solid';
+                      break;
+                  }
+                  setStrokeType(newStrokeType);
+                }}
+                className="bg-gray-900 text-white"
+              >
+                <option value="solid">Solid</option>
+                <option value="dotted">Dotted</option>
+                <option value="dashed">Dashed</option>
+              </select>
+            </label>
+            {strokeType === 'dotted' ? (
+              <ConnectionStrokeDotted
+                stroke={stroke as ConnectionStroke & { strokeType: 'dotted' }}
+              />
+            ) : strokeType === 'dashed' ? (
+              <ConnectionStrokeDashed
+                stroke={stroke as ConnectionStroke & { strokeType: 'dashed' }}
+              />
+            ) : null}
+          </div>
+          <button
+            className="cursor-pointer bg-red-800 p-1 text-white"
+            onClick={removeStroke}
+          >
+            Remove stroke
+          </button>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -207,7 +257,8 @@ export function ConnectionStyleUi({ style }: { style: ConnectionStyle }) {
     const newStrokes = [
       ...strokes,
       {
-        ...DEFALUT_CONNECTION_STROKE,
+        ...clone(strokes[strokes.length - 1] ?? style.strokes[0]),
+        id: Date.now(),
       },
     ];
 
@@ -216,6 +267,8 @@ export function ConnectionStyleUi({ style }: { style: ConnectionStyle }) {
   }
 
   function removeStroke(index: number) {
+    if (strokes.length === 1) return;
+
     const newStrokes = [...strokes];
     newStrokes.splice(index, 1);
 
@@ -223,20 +276,56 @@ export function ConnectionStyleUi({ style }: { style: ConnectionStyle }) {
     style.strokes = newStrokes;
   }
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setStrokes(strokes => {
+        const oldIndex = strokes.findIndex(stroke => stroke.id === active.id);
+        const newIndex = strokes.findIndex(stroke => stroke.id === over.id);
+
+        const newArray = arrayMove(strokes, oldIndex, newIndex);
+        style.strokes = newArray;
+        return newArray;
+      });
+    }
+  }
+
   return (
     <div className="flex flex-col gap-2">
-      <button className="bg-gray-800 p-1 text-white" onClick={addStroke}>
+      <button
+        className="cursor-pointer bg-gray-800 p-1 text-white"
+        onClick={addStroke}
+      >
         Add stroke
       </button>
       <div className="ml-4">
-        {strokes.map((stroke, i) => (
-          <ConnectionStrokeUi
-            key={i}
-            index={i}
-            stroke={stroke}
-            removeStroke={() => removeStroke(i)}
-          />
-        ))}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={strokes}
+            strategy={verticalListSortingStrategy}
+          >
+            {strokes.map((stroke, i) => (
+              <ConnectionStrokeUi
+                key={stroke.id}
+                id={stroke.id}
+                stroke={stroke}
+                removeStroke={() => removeStroke(i)}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
       </div>
     </div>
   );

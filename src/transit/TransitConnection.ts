@@ -15,6 +15,7 @@ import { getClosestPoint } from 'svg-path-commander';
 export type ConnectionStrokeType = 'solid' | 'dotted' | 'dashed';
 
 type BaseConnectionStroke = {
+  id: number;
   color: RouteColor;
   width: number;
   clear: boolean;
@@ -43,14 +44,6 @@ export type ConnectionStroke =
   | DottedConnectionStroke
   | DashedConnectionStroke
   | SolidConnectionStroke;
-
-export const DEFALUT_CONNECTION_STROKE: ConnectionStroke = {
-  color: 'route',
-  width: 1,
-  clear: false,
-  strokeType: 'solid',
-  lineCap: 'round',
-};
 
 export type ConnectionStyle = {
   strokes: ConnectionStroke[];
