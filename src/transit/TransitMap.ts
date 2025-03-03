@@ -1,6 +1,5 @@
 import { Color } from '../components/color/Color';
 import { OrderedSet } from '../utils/OrderedSet';
-import { clone } from '../utils/clone';
 import { DrawingContext, SvgDrawingContext } from '../utils/drawingContext';
 import { id } from '../utils/id';
 import { DecorationImage } from './DecorationImage';
@@ -8,7 +7,7 @@ import { History } from './History';
 import { Label } from './Label';
 import { ConnectionStyle, TransitConnection } from './TransitConnection';
 import { TransitRoute, createDefaultRoute } from './TransitRoute';
-import { DEFAULT_STOP_STYLE, StopStyle, TransitStop } from './TransitStop';
+import { StopStyle, TransitStop } from './TransitStop';
 import { ActionableItem, LayeredDrawableItem } from './types';
 
 export type SavedStyle<Style> = {
@@ -67,7 +66,40 @@ export class TransitMap {
     removable: false,
   };
   public defaultStopStyle: SavedStyle<StopStyle> = {
-    style: clone(DEFAULT_STOP_STYLE),
+    style: {
+      layers: [
+        {
+          id: 1,
+          fillColor: Color.TRANSPARENT,
+          strokeColor: Color.TRANSPARENT,
+          edges: 0,
+          edgeOrientation: 0,
+          edgeFollowsRoute: true,
+          radius: 5,
+          rounding: 0,
+          stretch: 1,
+          strokeWidth: 4,
+          lateralOffset: 0,
+          clearFill: false,
+          clearStroke: true,
+        },
+        {
+          id: 2,
+          fillColor: Color.BLACK,
+          strokeColor: 'route',
+          edges: 0,
+          edgeOrientation: 0,
+          edgeFollowsRoute: true,
+          radius: 5,
+          rounding: 0,
+          stretch: 1,
+          strokeWidth: 2,
+          lateralOffset: 0,
+          clearFill: false,
+          clearStroke: false,
+        },
+      ],
+    },
     id: '__default_stop_style__',
     name: 'Default Stop Style',
     removable: false,

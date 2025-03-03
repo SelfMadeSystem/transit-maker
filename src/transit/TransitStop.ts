@@ -24,6 +24,7 @@ import { getPointAtLength } from 'svg-path-commander';
 // because it's the stroke of the connection. here tho, sometimes there are
 // strokes, sometimes not, so idk what to call it.
 export type StopStyleLayer = {
+  id: number;
   fillColor: RouteColor;
   strokeColor: RouteColor;
   /**
@@ -52,39 +53,6 @@ export type StopStyle = {
 };
 
 // TODO: Make a SpecificStopStyle
-
-export const DEFAULT_STOP_STYLE: StopStyle = {
-  layers: [
-    {
-      fillColor: Color.TRANSPARENT,
-      strokeColor: Color.TRANSPARENT,
-      edges: 0,
-      edgeOrientation: 0,
-      edgeFollowsRoute: true,
-      radius: 5,
-      rounding: 0,
-      stretch: 1,
-      strokeWidth: 4,
-      lateralOffset: 0,
-      clearFill: false,
-      clearStroke: true,
-    },
-    {
-      fillColor: Color.BLACK,
-      strokeColor: 'route',
-      edges: 0,
-      edgeOrientation: 0,
-      edgeFollowsRoute: true,
-      radius: 5,
-      rounding: 0,
-      stretch: 1,
-      strokeWidth: 2,
-      lateralOffset: 0,
-      clearFill: false,
-      clearStroke: false,
-    },
-  ],
-};
 
 export type RoundingCalculation = {
   ogPos: Vector2;
@@ -226,6 +194,7 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
       return {
         layers: [
           {
+            id: -1,
             fillColor: Color.TRANSPARENT,
             strokeColor: Color.TRANSPARENT,
             edges: 0,

@@ -109,11 +109,9 @@ function ConnectionStrokeDashed({
 export function ConnectionStrokeUi({
   stroke,
   removeStroke,
-  id,
 }: {
   stroke: ConnectionStroke;
   removeStroke: () => void;
-  id: number;
 }) {
   const [open, setOpen] = useState(false);
   const [width, setWidth] = useState(stroke.width);
@@ -123,7 +121,7 @@ export function ConnectionStrokeUi({
   const [strokeType, setStrokeType] = useState(stroke.strokeType);
 
   const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id });
+    useSortable({ id: stroke.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -319,7 +317,6 @@ export function ConnectionStyleUi({ style }: { style: ConnectionStyle }) {
             {strokes.map((stroke, i) => (
               <ConnectionStrokeUi
                 key={stroke.id}
-                id={stroke.id}
                 stroke={stroke}
                 removeStroke={() => removeStroke(i)}
               />
