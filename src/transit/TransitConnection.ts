@@ -180,6 +180,27 @@ export class TransitConnection implements Actionable, LayeredDrawable {
     return color;
   }
 
+  /**
+   * Draws the transit connection on the given drawing context.
+   * This method is implemented as a generator to allow for layer-by-layer
+   * drawing. This is necessary because each layer may will different styles and
+   * wet don't want layers from different connections to be drawn on top of each
+   * other.
+   *
+   * @param ctx The drawing context to draw on.
+   * @yields Yields after each stroke is drawn.
+   *
+   * The drawing process involves the following steps:
+   * 1. Check if the connection is hidden. If it is, return early.
+   * 2. Get the path and length of the connection.
+   * 3. Get the style of the connection.
+   * 4. For each stroke in the style:
+   *   a. Set the stroke properties (width, color, line cap, etc.).
+   *   b. Configure the dashed pattern based on the stroke type.
+   *   c. Draw the stroke.
+   *   d. Yield control to the caller.
+   * 5. Restore the drawing context state after each stroke is drawn.
+   */
   *draw(ctx: DrawingContext) {
     if (this.specificStyle.hidden) return;
 

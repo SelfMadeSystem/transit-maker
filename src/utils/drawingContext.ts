@@ -2,17 +2,80 @@ import { Color } from '../components/color/Color';
 import { Path2Dpp } from './Path2Dpp';
 
 export interface DrawingContext {
-  setCtx(which: 'bg' | 'fg'): void;
+  /**
+   * Set the current context to either the background or middle ground context.
+   * Eventually, might add a foreground context if needed.
+   * @param which - 'bg' for background, 'mg' for middle ground
+   */
+  setCtx(which: 'bg' | 'mg'): void;
+  /**
+   * Set the background color of the canvas.
+   * @param color - The color to set the background to
+   */
   setBackground(color: Color): void;
+  /**
+   * Set the stroke width for the current context.
+   * @param width - The width of the stroke
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineWidth
+   */
   setStrokeWidth(width: number): void;
+  /**
+   * Set the stroke dash pattern for the current context.
+   * @param dash - An array of numbers that specify distances to alternately draw a line and a gap
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/setLineDash
+   */
   setStrokeDash(dash: number[]): void;
+  /**
+   * Set the stroke dash offset for the current context.
+   * @param offset - The amount to offset the dash pattern
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineDashOffset
+   */
   setStrokeDashOffset(offset: number): void;
+  /**
+   * Set the stroke line cap for the current context.
+   * @param cap - The style of the end caps for a line
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineCap
+   */
   setStrokeLineCap(cap: CanvasLineCap): void;
+  /**
+   * Set the stroke line join for the current context.
+   * @param join - The type of corner created when two lines meet
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineJoin
+   */
   setStrokeLineJoin(join: CanvasLineJoin): void;
+  /**
+   * Set the fill color for the current context.
+   * @param color - The color to fill shapes with
+   */
   setFill(color: Color): void;
+  /**
+   * Set the stroke color for the current context.
+   * @param color - The color to stroke shapes with
+   */
   setStroke(color: Color): void;
-  fillPath(path: Path2Dpp, clear?: boolean): void;
-  strokePath(path: Path2Dpp, clear?: boolean): void;
+  /**
+   * Fill a path with the current fill color.
+   * @param path - The path to fill
+   * @param erase - Whether to erase the content behind the path on the canvas before filling
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/fill
+   */
+  fillPath(path: Path2Dpp, erase?: boolean): void;
+  /**
+   * Stroke a path with the current stroke color.
+   * @param path - The path to stroke
+   * @param erase - Whether to erase the content behind the path on the canvas before stroking
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/stroke
+   */
+  strokePath(path: Path2Dpp, erase?: boolean): void;
+  /**
+   * Draw an image on the canvas.
+   * @param image - The image to draw
+   * @param dx - The x-coordinate at which to place the image
+   * @param dy - The y-coordinate at which to place the image
+   * @param dWidth - The width of the image to draw
+   * @param dHeight - The height of the image to draw
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage
+   */
   drawImage(
     image: CanvasImageSource,
     dx: number,
@@ -20,27 +83,85 @@ export interface DrawingContext {
     dWidth?: number,
     dHeight?: number,
   ): void;
+  /**
+   * Set the font for the current context.
+   * @param font - The font to use
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/font
+   */
   setFont(font: string): void;
+  /**
+   * Set the text alignment for the current context.
+   * @param align - The alignment of text
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/textAlign
+   */
   setTextAlign(align: CanvasTextAlign): void;
+  /**
+   * Set the text baseline for the current context.
+   * @param baseline - The baseline of text
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/textBaseline
+   */
   setTextBaseline(baseline: CanvasTextBaseline): void;
+  /**
+   * Fill text on the canvas.
+   * @param text - The text to fill
+   * @param x - The x-coordinate at which to place the text
+   * @param y - The y-coordinate at which to place the text
+   * @param erase - Whether to erase the content behind the text on the canvas before filling
+   * @param maxWidth - The maximum width to draw the text
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/fillText
+   */
   fillText(
     text: string,
     x: number,
     y: number,
-    clear?: boolean,
+    erase?: boolean,
     maxWidth?: number,
   ): void;
+  /**
+   * Stroke text on the canvas.
+   * @param text - The text to stroke
+   * @param x - The x-coordinate at which to place the text
+   * @param y - The y-coordinate at which to place the text
+   * @param erase - Whether to erase the content behind the text on the canvas before stroking
+   * @param maxWidth - The maximum width to draw the text
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/strokeText
+   */
   strokeText(
     text: string,
     x: number,
     y: number,
-    clear?: boolean,
+    erase?: boolean,
     maxWidth?: number,
   ): void;
+  /**
+   * Save the current context state.
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/save
+   */
   save(): void;
+  /**
+   * Restore the last saved context state.
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/restore
+   */
   restore(): void;
+  /**
+   * Translate the all contexts by the given x and y coordinates.
+   * @param x - The x-coordinate to translate by
+   * @param y - The y-coordinate to translate by
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/translate
+   */
   translate(x: number, y: number): void;
+  /**
+   * Rotate the all contexts by the given angle.
+   * @param angle - The angle to rotate by
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/rotate
+   */
   rotate(angle: number): void;
+  /**
+   * Scale the all contexts by the given x and y factors.
+   * @param x - The factor to scale the x-axis by
+   * @param y - The factor to scale the y-axis by
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/scale
+   */
   scale(x: number, y: number): void;
 }
 
@@ -65,7 +186,7 @@ export class CanvasDrawingContext implements DrawingContext {
     return this.currentCtx;
   }
 
-  setCtx(which: 'bg' | 'fg') {
+  setCtx(which: 'bg' | 'mg') {
     this.currentCtx = which === 'bg' ? this.bgCtx : this.ctx;
   }
 
@@ -110,9 +231,9 @@ export class CanvasDrawingContext implements DrawingContext {
     this.currentCtx.strokeStyle = color.hex();
   }
 
-  fillPath(pathpp: Path2Dpp, clear?: true) {
+  fillPath(pathpp: Path2Dpp, erase?: true) {
     const path = pathpp.toPath2D();
-    if (clear) {
+    if (erase) {
       this.currentCtx.save();
       this.currentCtx.globalCompositeOperation = 'destination-out';
       this.currentCtx.fillStyle = '#000';
@@ -122,9 +243,9 @@ export class CanvasDrawingContext implements DrawingContext {
     this.currentCtx.fill(path);
   }
 
-  strokePath(pathpp: Path2Dpp, clear?: true) {
+  strokePath(pathpp: Path2Dpp, erase?: true) {
     const path = pathpp.toPath2D();
-    if (clear) {
+    if (erase) {
       this.currentCtx.save();
       this.currentCtx.strokeStyle = '#000';
       this.currentCtx.globalCompositeOperation = 'destination-out';
@@ -164,10 +285,10 @@ export class CanvasDrawingContext implements DrawingContext {
     text: string,
     x: number,
     y: number,
-    clear?: boolean,
+    erase?: boolean,
     maxWidth?: number,
   ) {
-    if (clear) {
+    if (erase) {
       this.currentCtx.save();
       this.currentCtx.fillStyle = '#000';
       this.currentCtx.globalCompositeOperation = 'destination-out';
@@ -181,10 +302,10 @@ export class CanvasDrawingContext implements DrawingContext {
     text: string,
     x: number,
     y: number,
-    clear?: boolean,
+    erase?: boolean,
     maxWidth?: number,
   ) {
-    if (clear) {
+    if (erase) {
       this.currentCtx.save();
       this.currentCtx.strokeStyle = '#000';
       this.currentCtx.globalCompositeOperation = 'destination-out';
@@ -285,7 +406,7 @@ export class SvgDrawingContext implements DrawingContext {
     ];
   }
 
-  setCtx(which: 'bg' | 'fg') {
+  setCtx(which: 'bg' | 'mg') {
     this.currentG = which === 'bg' ? this.bgG : this.g;
   }
 
@@ -377,10 +498,10 @@ export class SvgDrawingContext implements DrawingContext {
     );
   }
 
-  fillPath(pathpp: Path2Dpp, clear?: true) {
+  fillPath(pathpp: Path2Dpp, erase?: true) {
     const path = pathpp.toSVGPath();
     this.applyState(path, 'fill');
-    if (clear) {
+    if (erase) {
       const path = pathpp.toSVGPath();
       this.applyState(path, 'fill');
       path.setAttribute('fill', this.bg.hex());
@@ -389,10 +510,10 @@ export class SvgDrawingContext implements DrawingContext {
     this.currentG.appendChild(path);
   }
 
-  strokePath(pathpp: Path2Dpp, clear?: true) {
+  strokePath(pathpp: Path2Dpp, erase?: true) {
     const path = pathpp.toSVGPath();
     this.applyState(path, 'stroke');
-    if (clear) {
+    if (erase) {
       const path = pathpp.toSVGPath();
       this.applyState(path, 'stroke');
       path.setAttribute('stroke', this.bg.hex());
@@ -456,10 +577,10 @@ export class SvgDrawingContext implements DrawingContext {
     return textElem;
   }
 
-  fillText(text: string, x: number, y: number, clear?: boolean) {
+  fillText(text: string, x: number, y: number, erase?: boolean) {
     const textElem = this.createTextPath(text, x, y);
     this.applyState(textElem, 'fill');
-    if (clear) {
+    if (erase) {
       const textElem = this.createTextPath(text, x, y);
       this.applyState(textElem, 'fill');
       textElem.setAttribute('fill', this.bg.hex());
@@ -468,10 +589,10 @@ export class SvgDrawingContext implements DrawingContext {
     this.currentG.appendChild(textElem);
   }
 
-  strokeText(text: string, x: number, y: number, clear?: boolean) {
+  strokeText(text: string, x: number, y: number, erase?: boolean) {
     const textElem = this.createTextPath(text, x, y);
     this.applyState(textElem, 'stroke');
-    if (clear) {
+    if (erase) {
       const textElem = this.createTextPath(text, x, y);
       this.applyState(textElem, 'stroke');
       textElem.setAttribute('stroke', this.bg.hex());

@@ -451,6 +451,26 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
     return path;
   }
 
+  /**
+   * Draws the transit stop on the given drawing context.
+   * This method is implemented as a generator to allow for layer-by-layer
+   * drawing. This is necessary because each layer may will different styles and
+   * wet don't want layers from different stops to be drawn on top of each other.
+   *
+   * @param ctx The drawing context to draw on.
+   * @yields Yields after each stroke is drawn.
+   *
+   * The drawing process involves the following steps:
+   * 1. Check if the stop is hidden. If it is, return early.
+   * 2. Get the style of the stop.
+   * 3. For each layer in the style:
+   *   a. Save the current drawing state.
+   *   b. Set the appropriate properties on the drawing context.
+   *   c. Get the path of the stop.
+   *   d. Draw the path.
+   *   e. Restore the drawing state.
+   *   f. Yield control to the caller.
+   */
   *draw(ctx: DrawingContext) {
     this.resetLinkedPos();
     if (this.hidden) {
