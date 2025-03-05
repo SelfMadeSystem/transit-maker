@@ -409,13 +409,17 @@ export class TransitConnection implements Actionable, LayeredDrawable {
     return ctx.isPointInStroke(path, x, y);
   }
 
-  getAngle(which: TransitStop): number {
+  getAngleVector(which: TransitStop): Vector2 {
     if (which !== this.from && which !== this.to) {
       throw new Error('The stop must be either the from or the to stop');
     }
     const from = this.getDrawPos(which, false);
     const to = this.getOtherDrawPos(which, false);
-    return Math.atan2(to.y - from.y, to.x - from.x);
+    return from.directionTo(to);
+  }
+
+  getAngle(which: TransitStop): number {
+    return this.getAngleVector(which).angle();
   }
 
   getLineLength(): number {
@@ -504,6 +508,9 @@ export class TransitConnection implements Actionable, LayeredDrawable {
     const otherDelta = other.pos.sub(this.getOtherDrawPos(which, false));
     const whichDelta = which.pos.sub(this.getDrawPos(which, false));
     const delta = otherDelta.sub(whichDelta);
+
+    snapLines.push(...other.getLinkedSnapLines());
+    snapLines.push(...which.getLinkedSnapLines());
 
     for (const connection of other.connections) {
       if (connection === this) {

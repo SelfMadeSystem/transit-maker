@@ -18,7 +18,6 @@ import {
   Movable,
   PosWithKeys,
 } from './types';
-import { getPointAtLength } from 'svg-path-commander';
 
 // idk what to call this yet. in TransitConnection, it's called an Stroke
 // because it's the stroke of the connection. here tho, sometimes there are
@@ -341,9 +340,9 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
 
     const connectionsAngle = (() => {
       if (this.linked?.connection) {
-        const { path: pathpp, length } = this.linked.connection.getPath();
+        const { path, length } = this.linked.connection.getPath();
         return wrapAngle2PI(
-          pathpp.getTangentAtLength(this.linked.length * length).angle() +
+          path.getTangentAtLength(this.linked.length * length).angle() +
             Math.PI / 2,
         );
       }
@@ -498,15 +497,15 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
     );
     ctx.stroke();
 
-    // const snapLines = this.getSnapLines();
-    // for (const snapLine of snapLines) {
-    //   snapLine.debugDraw(ctx);
-    // }
+    const snapLines = this.getSnapLines();
+    for (const snapLine of snapLines) {
+      snapLine.debugDraw(ctx);
+    }
 
-    // const snapInfo = new SnapInfo(this.pos, true).addSnapLines(snapLines);
-    // snapInfo.calculateStuff();
+    const snapInfo = new SnapInfo(this.pos, true).addSnapLines(snapLines);
+    snapInfo.calculateStuff();
 
-    // snapInfo.debugDraw(ctx);
+    snapInfo.debugDraw(ctx);
   }
 
   isOver(x: number, y: number) {
@@ -528,6 +527,38 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
     this.pos = pos;
   }
 
+  getLinkedSnapLines(): SnapLine[] {
+    if (!this.linked) {
+      return [];
+    }
+
+    const { connection, length } = this.linked;
+    const { path, length: pathLength } = connection.getPath();
+
+    if (pathLength < 1e-6) {
+      return [];
+    }
+
+    // if (length <= 1e-6) {
+    //   return [
+    //     new SnapLine(this.pos, connection.getAngleVector(connection.from), 1),
+    //   ];
+    // }
+
+    // if (1 - length <= 1e-6) {
+    //   return [
+    //     new SnapLine(this.pos, connection.getAngleVector(connection.to), 1),
+    //   ];
+    // }
+
+    const realLength = length * pathLength;
+
+    const pos = path.getPointAtLength(realLength);
+    const tangent = path.getTangentAtLength(realLength);
+
+    return [new SnapLine(new Vector2(pos), new Vector2(tangent), 1)];
+  }
+
   getSnapLines(): SnapLine[] {
     const snapLines = [];
 
@@ -547,10 +578,8 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
   private resetLinkedPos() {
     if (this.linked) {
       const { connection, length: ll } = this.linked;
-      const { path: pathpp, length } = connection.getPath();
-      this.pos = new Vector2(
-        getPointAtLength(pathpp.getSVGPath().segments, length * ll),
-      );
+      const { path, length } = connection.getPath();
+      this.pos = new Vector2(path.getPointAtLength(length * ll));
     }
   }
 
@@ -558,12 +587,10 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
     const { shiftKey, ctrlKey, pos } = l;
     if (this.linked) {
       const { connection } = this.linked;
-      const { path: pathpp, length } = connection.getPath();
+      const { path, length } = connection.getPath();
       if (shiftKey) {
         const snapDists = [1 / 4, 1 / 3, 1 / 2, 2 / 3, 3 / 4];
-        const poses = snapDists.map(d =>
-          getPointAtLength(pathpp.getSVGPath().segments, length * d),
-        );
+        const poses = snapDists.map(d => path.getPointAtLength(length * d));
 
         let minPos = poses[0];
         let minDist = Math.hypot(minPos.x - pos.x, minPos.y - pos.y);
@@ -581,7 +608,7 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
         this.pos = new Vector2(minPos);
       } else {
         const { closest, length: bestLength } = getPropertiesAtPoint(
-          pathpp.getSVGPath().segments,
+          path.getSVGPath().segments,
           pos,
         );
 
