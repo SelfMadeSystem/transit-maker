@@ -537,10 +537,6 @@ export class TransitConnection implements Actionable, LayeredDrawable {
       this.specificStyle.hidden = true;
     }
     this.specificStyle.zIndex = connection.specificStyle.zIndex;
-    this.specificStyle.lateralOffset = connection.specificStyle.lateralOffset;
-    if (this.from === connection.to || this.to === connection.from) {
-      this.specificStyle.lateralOffset *= -1;
-    }
 
     if (this.from === connection.from) {
       this.fromConnection = connection.fromConnection;
