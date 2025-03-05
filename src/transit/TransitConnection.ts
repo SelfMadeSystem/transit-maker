@@ -203,9 +203,9 @@ export class TransitConnection implements Actionable, LayeredDrawable {
    * 5. Restore the drawing context state after each stroke is drawn.
    */
   *draw(ctx: DrawingContext) {
+    const { path, length } = this.getPath(true);
     if (this.specificStyle.hidden) return;
 
-    const { path, length } = this.getPath(true);
     const style = this.getStyle();
     for (const stroke of style.strokes) {
       const { width, clear, color: oultineColor, lineCap } = stroke;
