@@ -19,6 +19,9 @@ export function TransitConnectionUi({
   const [spacingOffset, setSpacingOffset] = useState(
     connection.specificStyle.spacingOffset,
   );
+  const [lateralOffset, setLateralOffset] = useState(
+    connection.specificStyle.lateralOffset,
+  );
   const [route, setRoute] = useState(connection.route);
   const [zIndex, setZIndex] = useState(connection.specificStyle.zIndex);
 
@@ -61,6 +64,17 @@ export function TransitConnectionUi({
             step={0.01}
             onChange={e =>
               setSpacingOffset((connection.specificStyle.spacingOffset = e))
+            }
+            className="bg-gray-900 text-white"
+          />
+        </label>
+        <label className="flex items-center gap-2">
+          <div className="text-white">Lateral offset:</div>
+          <NumberInput
+            value={lateralOffset}
+            step={1}
+            onChange={e =>
+              setLateralOffset((connection.specificStyle.lateralOffset = e))
             }
             className="bg-gray-900 text-white"
           />

@@ -52,6 +52,7 @@ export type ConnectionStyle = {
 export type SpecificConnectionStyle = {
   spacingMultiplier: number;
   spacingOffset: number; // [0, 1]
+  lateralOffset: number;
   hidden: boolean;
   zIndex: number;
 };
@@ -59,6 +60,7 @@ export type SpecificConnectionStyle = {
 export const DEFALUT_CONNECTION_STYLE: SpecificConnectionStyle = {
   spacingMultiplier: 1,
   spacingOffset: 0,
+  lateralOffset: 0,
   hidden: false,
   zIndex: 0,
 };
@@ -82,7 +84,6 @@ export class TransitConnection implements Actionable, LayeredDrawable {
   public from: TransitStop;
   public to: TransitStop;
   public route: TransitRoute;
-  public lateralOffset: number = 0;
   public fromConnection: TransitConnection | null = null;
   public toConnection: TransitConnection | null = null;
   public specificStyle: SpecificConnectionStyle = {
@@ -146,7 +147,7 @@ export class TransitConnection implements Actionable, LayeredDrawable {
     }
 
     [this.from, this.to] = [this.to, this.from];
-    this.lateralOffset = -this.lateralOffset;
+    this.specificStyle.lateralOffset = -this.specificStyle.lateralOffset;
     [this.fromConnection, this.toConnection] = [
       this.toConnection,
       this.fromConnection,
@@ -275,18 +276,10 @@ export class TransitConnection implements Actionable, LayeredDrawable {
     ctx.restore();
   }
 
-  getLateralOffset() {
-    return Math.max(
-      this.to.getConnectionLateralOffset(),
-      this.from.getConnectionLateralOffset(),
-    );
-  }
-
   getFromToPosInfo(rounding = true) {
     let from = this.from.pos;
     let to = this.to.pos;
-    const lateralOffset =
-      this.lateralOffset * this.from.getConnectionLateralOffset();
+    const { lateralOffset } = this.specificStyle;
 
     if (this.fromConnection) {
       const posInfo = this.fromConnection.getFromToPosInfo(rounding);
@@ -297,9 +290,9 @@ export class TransitConnection implements Actionable, LayeredDrawable {
       to = posInfo[this.toConnection.to === this.to ? 1 : 0];
     }
     if (lateralOffset) {
-      const direction = from.directionTo(to).cw90();
-      if (!this.fromConnection) from = from.add(direction.mult(lateralOffset));
-      if (!this.toConnection) to = to.add(direction.mult(lateralOffset));
+      const direction = from.directionTo(to).cw90().mult(lateralOffset);
+      if (!this.fromConnection) from = from.add(direction);
+      if (!this.toConnection) to = to.add(direction);
     }
 
     if (rounding) {
@@ -537,6 +530,10 @@ export class TransitConnection implements Actionable, LayeredDrawable {
       this.specificStyle.hidden = true;
     }
     this.specificStyle.zIndex = connection.specificStyle.zIndex;
+    this.specificStyle.lateralOffset = connection.specificStyle.lateralOffset;
+    if (this.from === connection.to || this.to === connection.from) {
+      this.specificStyle.lateralOffset *= -1;
+    }
 
     if (this.from === connection.from) {
       this.fromConnection = connection.fromConnection;

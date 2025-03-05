@@ -131,7 +131,6 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
       return; // don't unnecessarily update lateral connections
     }
     this.connections.add(connection);
-    this.updateLateralConnections(connection.getOtherStop(this));
   }
 
   removeConnection(connection: TransitConnection) {
@@ -139,28 +138,6 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
       return;
     }
     this.connections.delete(connection);
-    this.updateLateralConnections(connection.getOtherStop(this));
-  }
-
-  getConnectionLateralOffset() {
-    const firstConnection = Array.from(this.connections)[0];
-    if (!firstConnection) {
-      return 0;
-    }
-    return firstConnection.route.style.lateralOffset;
-  }
-
-  updateLateralConnections(otherStop: TransitStop) {
-    const connections = Array.from(this.connections).filter(
-      c => c.getOtherStop(this) === otherStop,
-    );
-    if (connections.length > 0) {
-      connections.forEach(
-        (c, i) =>
-          (c.lateralOffset =
-            (i - (connections.length - 1) / 2) * (c.to === this ? -1 : 1)),
-      );
-    }
   }
 
   normalizeConnections() {
@@ -240,6 +217,12 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
       connections.get(stop)!.push(connection);
     }
     return connections;
+  }
+
+  getConnectionsWithStop(stop: TransitStop): TransitConnection[] {
+    return Array.from(this.connections).filter(
+      connection => connection.getOtherStop(this) === stop,
+    );
   }
 
   setLabels(labels: Label[]) {
@@ -630,7 +613,18 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
 
   rightClick({ selected }: ClickInfo): void {
     if (selected instanceof TransitStop && selected !== this) {
-      connectStopsAction(this.map, this, selected);
+      const connections = this.getConnectionsWithStop(selected);
+      const connection = connectStopsAction(this.map, this, selected).data;
+      if (connections.length > 0) {
+        const nums = connections.map(
+          c => c.specificStyle.lateralOffset * (c.to === this ? -1 : 1),
+        );
+        const max = Math.max(0, ...nums);
+        const min = Math.min(0, ...nums);
+        const lowest = Math.abs(max) < Math.abs(min) ? max : min;
+        const lowestSign = Math.abs(max) < Math.abs(min) ? 1 : -1;
+        connection.specificStyle.lateralOffset = lowest + 4 * lowestSign;
+      }
     }
   }
 
@@ -677,19 +671,10 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
     }
 
     if (vals.length === 1 && vals[0].length > 1) {
-      this.normalizeConnections();
-      [...this.connections]
-        .sort((a, b) => b.lateralOffset - a.lateralOffset)
-        .forEach(connection => {
-          const c = new TransitConnection(
-            this.map,
-            this,
-            stop,
-            connection.route,
-          );
-          c.inheritStyle(connection);
-        });
-      this.updateLateralConnections(stop);
+      [...this.connections].forEach(connection => {
+        const c = new TransitConnection(this.map, this, stop, connection.route);
+        c.inheritStyle(connection);
+      });
     } else if (vals.length === 1) {
       const onlyConnection = vals[0][0];
       const connection = new TransitConnection(
@@ -727,14 +712,13 @@ export class TransitStop implements Actionable, Movable, LayeredDrawable {
         if (connections.length > 1) {
           const diff = this.pos.sub(connections[0].getOtherStop(this).pos);
           const orth = diff.normalize().cw90();
-          const offset = this.getConnectionLateralOffset();
 
           const newStops: TransitStop[] = [];
           for (let i = 0; i < connections.length; i++) {
             const connection = connections[i];
-            const lateralOffset = connection.lateralOffset;
+            const lateralOffset = connection.specificStyle.lateralOffset;
             const sign = connection.to === this ? 1 : -1;
-            const lateralVector = orth.mult(lateralOffset * offset * sign);
+            const lateralVector = orth.mult(lateralOffset * sign);
             const newPos = this.pos.add(diff).add(lateralVector);
             const newStop = new TransitStop(this.map, [], newPos);
             newStop.inheritStyle(this);
