@@ -156,6 +156,10 @@ export class Vector2 implements Clonable {
   get a(): [number, number] {
     return [this.x, this.y];
   }
+
+  get m(): string {
+    return `M${this.x},${this.y}`;
+  }
 }
 
 const PI = Math.PI;
