@@ -5,6 +5,7 @@ import {
   MSegment,
   NormalArray,
   NormalSegment,
+  PathArray,
   arcTools,
   getPropertiesAtLength,
   getTotalLength,
@@ -183,18 +184,19 @@ function splitSegment(
  * @returns the split paths
  */
 export function splitPathAtLength(
-  path: string,
+  path: string | PathArray,
   length: number,
-): [string, string] {
+): [NormalArray, NormalArray] {
   const normalPath: NormalArray = normalizePath(path);
-  const totalPath = getTotalLength(normalPath);
-  const { index, lengthAtSegment, segment } = getPropertiesAtLength(
-    normalPath,
-    length,
-  );
+  const {
+    index,
+    lengthAtSegment,
+    segment,
+    length: segLen,
+  } = getPropertiesAtLength(normalPath, length);
   const from = new Vector2(getPointAtLength(normalPath, lengthAtSegment));
 
-  const t = length / totalPath;
+  const t = (length - lengthAtSegment) / segLen;
   const [first, mid, second] = splitSegment(from, segment as NormalSegment, t);
 
   const firstPath: NormalArray = [
@@ -208,5 +210,33 @@ export function splitPathAtLength(
     ...normalPath.slice(index + 1),
   ];
 
-  return [pathToString(firstPath), pathToString(secondPath)];
+  return [firstPath, secondPath];
+}
+
+/**
+ * Create a dashed path from a path
+ * @param path the path to dash
+ * @param dashArray the dash array
+ * @returns the dashed path
+ */
+export function dashPath(path: string, dashArray: number[]): string {
+  let currentPath: NormalArray = normalizePath(path);
+  let remainingLength = getTotalLength(currentPath);
+
+  const dashedPath: NormalArray[] = [];
+
+  let i = 0;
+  while (remainingLength > 0) {
+    const dashIndex = i % dashArray.length;
+    const dash = dashArray[dashIndex];
+    const [first, second] = splitPathAtLength(currentPath, dash);
+    if (i % 2 === 0) {
+      dashedPath.push(first);
+    }
+    remainingLength -= dash;
+    currentPath = second;
+    i++;
+  }
+
+  return dashedPath.map(pathToString).join('');
 }
