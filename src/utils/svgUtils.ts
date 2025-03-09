@@ -186,7 +186,7 @@ function splitSegment(
 export function splitPathAtLength(
   path: string | PathArray,
   length: number,
-): [NormalArray, NormalArray] {
+): [NormalArray, NormalArray] | [NormalArray] {
   const normalPath: NormalArray = normalizePath(path);
   const {
     index,
@@ -196,7 +196,11 @@ export function splitPathAtLength(
   } = getPropertiesAtLength(normalPath, length);
   const from = new Vector2(getPointAtLength(normalPath, lengthAtSegment));
 
-  const t = (length - lengthAtSegment) / segLen;
+  const lengthAlongSegment = length - lengthAtSegment;
+  const t = lengthAlongSegment / segLen;
+  if (t > 1) {
+    return [normalPath];
+  }
   const [first, mid, second] = splitSegment(from, segment as NormalSegment, t);
 
   const firstPath: NormalArray = [
@@ -233,10 +237,13 @@ export function dashPath(path: string, dashArray: number[]): string {
     if (i % 2 === 0) {
       dashedPath.push(first);
     }
+    if (!second) {
+      break;
+    }
     remainingLength -= dash;
     currentPath = second;
     i++;
   }
 
-  return dashedPath.map(pathToString).join('');
+  return dashedPath.map(s => pathToString(s, 'off')).join('');
 }
