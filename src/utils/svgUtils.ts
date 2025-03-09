@@ -1,0 +1,201 @@
+import getPointAtLength from './getPointAtLength';
+import { Vector2 } from './vec';
+import {
+  NormalArray,
+  NormalSegment,
+  arcTools,
+  getPropertiesAtLength,
+  getTotalLength,
+  normalizePath,
+  pathToString,
+} from 'svg-path-commander';
+
+const { getPointAtArcLength, getArcLength } = arcTools;
+
+type NormalCommand = NormalSegment[0];
+
+type SplitFunction<T extends NormalCommand> = (
+  from: Vector2,
+  segment: NormalSegment & [T, ...number[]],
+  t: number,
+) => NormalSegment[];
+
+type NumArray<N extends number, R extends number[] = []> = R['length'] extends N
+  ? R
+  : NumArray<N, [number, ...R]>;
+
+const splitFunctions: {
+  [K in Exclude<NormalCommand, 'Z' | 'M'>]: SplitFunction<K>;
+} = {
+  L(from, segment, t) {
+    const to = new Vector2(segment[1], segment[2]);
+    return [
+      ['L', ...from.lerp(to, t).a],
+      ['L', ...to.a],
+    ];
+  },
+  C(from, segment, t) {
+    // cubic bezier
+    // See https://pomax.github.io/bezierinfo/#splitting
+    const [x1, y1, x2, y2, x, y] = segment.slice(1) as NumArray<6>;
+    const p0 = from;
+    const p1 = new Vector2(x1, y1);
+    const p2 = new Vector2(x2, y2);
+    const p3 = new Vector2(x, y);
+
+    const p01 = p0.lerp(p1, t);
+    const p12 = p1.lerp(p2, t);
+    const p23 = p2.lerp(p3, t);
+
+    const p012 = p01.lerp(p12, t);
+    const p123 = p12.lerp(p23, t);
+
+    const p0123 = p012.lerp(p123, t);
+
+    return [
+      ['C', ...p01.a, ...p012.a, ...p0123.a],
+      ['C', ...p123.a, ...p23.a, ...p3.a],
+    ];
+  },
+  Q(from, segment, t) {
+    // quadratic bezier
+    const [x1, y1, x, y] = segment.slice(1) as NumArray<4>;
+    const p0 = from;
+    const p1 = new Vector2(x1, y1);
+    const p2 = new Vector2(x, y);
+
+    const p01 = p0.lerp(p1, t);
+    const p12 = p1.lerp(p2, t);
+
+    const p012 = p01.lerp(p12, t);
+
+    return [
+      ['Q', ...p01.a, ...p012.a],
+      ['Q', ...p12.a, ...p2.a],
+    ];
+  },
+  A(from, segment, t) {
+    const [rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y] =
+      segment.slice(1) as NumArray<7>;
+    const [arc1, arc2] = splitArc(
+      from,
+      new Vector2(x, y),
+      new Vector2(rx, ry),
+      xAxisRotation,
+      largeArcFlag,
+      sweepFlag,
+      t,
+    );
+
+    return [
+      ['A', ...arc1],
+      ['A', ...arc2],
+    ];
+  },
+};
+
+function getEllipseCircumference(rx: number, ry: number): number {
+  // Ramanujan approximation
+  const h = Math.pow(rx - ry, 2) / Math.pow(rx + ry, 2);
+  return Math.PI * (rx + ry) * (1 + (3 * h) / (10 + Math.sqrt(4 - 3 * h)));
+}
+
+function splitArc(
+  from: Vector2,
+  to: Vector2,
+  radii: Vector2,
+  xAxisRotation: number,
+  largeArcFlag: number,
+  sweepFlag: number,
+  t: number,
+): [NumArray<7>, NumArray<7>] {
+  // A: rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y
+
+  // Ensure radii are large enough
+  const xRotRad = (xAxisRotation * Math.PI) / 180;
+
+  const midPoint = from.add(to).div(2);
+  const transformedPoint = from
+    .sub(midPoint)
+    .rotateBy(xRotRad)
+    .div(...radii.a);
+
+  const radiiCheck = transformedPoint.lenSq();
+
+  if (radiiCheck > 1) {
+    radii = radii.mult(Math.sqrt(radiiCheck));
+  }
+
+  const stuffs = [
+    ...from.a,
+    ...radii.a,
+    xAxisRotation,
+    largeArcFlag,
+    sweepFlag,
+    ...to.a,
+  ] as const;
+  const totalLength = getEllipseCircumference(...radii.a);
+  const arcLength = getArcLength(...stuffs);
+  const mid = new Vector2(getPointAtArcLength(...stuffs, arcLength * t));
+
+  let largeArcFlag1 = 0;
+  let largeArcFlag2 = 0;
+
+  if (largeArcFlag === 1) {
+    const length1 = arcLength * t;
+    const length2 = arcLength * (1 - t);
+    const halfLength = totalLength / 2;
+
+    if (length1 > halfLength) {
+      largeArcFlag1 = 1;
+    }
+
+    if (length2 > halfLength) {
+      largeArcFlag2 = 1;
+    }
+  }
+
+  return [
+    [radii.x, radii.y, xAxisRotation, largeArcFlag1, sweepFlag, ...mid.a],
+    [radii.x, radii.y, xAxisRotation, largeArcFlag2, sweepFlag, ...to.a],
+  ];
+}
+
+function splitSegment(
+  from: Vector2,
+  segment: NormalSegment,
+  t: number,
+): NormalSegment[] {
+  switch (segment[0]) {
+    case 'M':
+    case 'Z':
+      throw new Error('Cannot split M or Z commands');
+    default:
+      // @ts-expect-error - Typescript crashes here
+      return splitFunctions[segment[0]](from, segment, t);
+  }
+}
+
+/**
+ * Split a path at a given length
+ * @param path the path to split
+ * @param length the length to split at
+ * @returns the split path
+ */
+export function splitPathAtLength(path: string, length: number): string {
+  const normalPath: NormalArray = normalizePath(path);
+  const totalPath = getTotalLength(normalPath);
+  const { index, lengthAtSegment, segment } = getPropertiesAtLength(
+    normalPath,
+    length,
+  );
+  const from = new Vector2(getPointAtLength(normalPath, lengthAtSegment));
+
+  const t = length / totalPath;
+  const newSegments = splitSegment(from, segment as NormalSegment, t);
+
+  const newPath: NormalArray = [...normalPath];
+  newPath.splice(index, 1, ...newSegments);
+
+  return pathToString(newPath);
+}

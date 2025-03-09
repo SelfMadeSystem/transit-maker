@@ -59,6 +59,10 @@ export class Vector2 implements Clonable {
     return Math.sqrt(this.x * this.x + this.y * this.y);
   }
 
+  setLength(length: number): Vector2 {
+    return this.normalize().mult(length);
+  }
+
   lenSq(): number {
     return this.x * this.x + this.y * this.y;
   }
