@@ -1,6 +1,8 @@
 import getPointAtLength from './getPointAtLength';
 import { Vector2 } from './vec';
 import {
+  ASegment,
+  MSegment,
   NormalArray,
   NormalSegment,
   arcTools,
@@ -14,11 +16,17 @@ const { getPointAtArcLength, getArcLength } = arcTools;
 
 type NormalCommand = NormalSegment[0];
 
+type SplitResult<S extends NormalSegment = NormalSegment> = [
+  first: S,
+  midpoint: Vector2,
+  second: S,
+];
+
 type SplitFunction<T extends NormalCommand> = (
   from: Vector2,
   segment: NormalSegment & [T, ...number[]],
   t: number,
-) => NormalSegment[];
+) => SplitResult;
 
 type NumArray<N extends number, R extends number[] = []> = R['length'] extends N
   ? R
@@ -29,10 +37,8 @@ const splitFunctions: {
 } = {
   L(from, segment, t) {
     const to = new Vector2(segment[1], segment[2]);
-    return [
-      ['L', ...from.lerp(to, t).a],
-      ['L', ...to.a],
-    ];
+    const mid = from.lerp(to, t);
+    return [['L', ...mid.a], mid, ['L', ...to.a]];
   },
   C(from, segment, t) {
     // cubic bezier
@@ -54,6 +60,7 @@ const splitFunctions: {
 
     return [
       ['C', ...p01.a, ...p012.a, ...p0123.a],
+      p0123,
       ['C', ...p123.a, ...p23.a, ...p3.a],
     ];
   },
@@ -69,15 +76,12 @@ const splitFunctions: {
 
     const p012 = p01.lerp(p12, t);
 
-    return [
-      ['Q', ...p01.a, ...p012.a],
-      ['Q', ...p12.a, ...p2.a],
-    ];
+    return [['Q', ...p01.a, ...p012.a], p012, ['Q', ...p12.a, ...p2.a]];
   },
   A(from, segment, t) {
     const [rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y] =
       segment.slice(1) as NumArray<7>;
-    const [arc1, arc2] = splitArc(
+    return splitArc(
       from,
       new Vector2(x, y),
       new Vector2(rx, ry),
@@ -86,11 +90,6 @@ const splitFunctions: {
       sweepFlag,
       t,
     );
-
-    return [
-      ['A', ...arc1],
-      ['A', ...arc2],
-    ];
   },
 };
 
@@ -108,7 +107,7 @@ function splitArc(
   largeArcFlag: number,
   sweepFlag: number,
   t: number,
-): [NumArray<7>, NumArray<7>] {
+): SplitResult<ASegment> {
   // A: rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y
 
   // Ensure radii are large enough
@@ -156,8 +155,9 @@ function splitArc(
   }
 
   return [
-    [radii.x, radii.y, xAxisRotation, largeArcFlag1, sweepFlag, ...mid.a],
-    [radii.x, radii.y, xAxisRotation, largeArcFlag2, sweepFlag, ...to.a],
+    ['A', radii.x, radii.y, xAxisRotation, largeArcFlag1, sweepFlag, ...mid.a],
+    mid,
+    ['A', radii.x, radii.y, xAxisRotation, largeArcFlag2, sweepFlag, ...to.a],
   ];
 }
 
@@ -165,13 +165,13 @@ function splitSegment(
   from: Vector2,
   segment: NormalSegment,
   t: number,
-): NormalSegment[] {
+): [NormalSegment, Vector2, NormalSegment] {
   switch (segment[0]) {
     case 'M':
     case 'Z':
       throw new Error('Cannot split M or Z commands');
     default:
-      // @ts-expect-error - Typescript crashes here
+      // @ts-expect-error - we know this is safe
       return splitFunctions[segment[0]](from, segment, t);
   }
 }
@@ -180,9 +180,12 @@ function splitSegment(
  * Split a path at a given length
  * @param path the path to split
  * @param length the length to split at
- * @returns the split path
+ * @returns the split paths
  */
-export function splitPathAtLength(path: string, length: number): string {
+export function splitPathAtLength(
+  path: string,
+  length: number,
+): [string, string] {
   const normalPath: NormalArray = normalizePath(path);
   const totalPath = getTotalLength(normalPath);
   const { index, lengthAtSegment, segment } = getPropertiesAtLength(
@@ -192,10 +195,18 @@ export function splitPathAtLength(path: string, length: number): string {
   const from = new Vector2(getPointAtLength(normalPath, lengthAtSegment));
 
   const t = length / totalPath;
-  const newSegments = splitSegment(from, segment as NormalSegment, t);
+  const [first, mid, second] = splitSegment(from, segment as NormalSegment, t);
 
-  const newPath: NormalArray = [...normalPath];
-  newPath.splice(index, 1, ...newSegments);
+  const firstPath: NormalArray = [
+    ...(normalPath.slice(0, index) as NormalArray),
+    first,
+  ];
+  const midSegment: MSegment = ['M', ...mid.a];
+  const secondPath: NormalArray = [
+    midSegment,
+    second,
+    ...normalPath.slice(index + 1),
+  ];
 
-  return pathToString(newPath);
+  return [pathToString(firstPath), pathToString(secondPath)];
 }
