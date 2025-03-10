@@ -433,21 +433,30 @@ export function ellipticEinv(
   m: number,
   err: number = EPSILON,
 ): number {
+  if (m < 0 || m > 1) {
+    throw 'The parameter `m` must be in the range [0, 1].';
+  }
+  const max = 2000;
   let result: number = x;
 
+  // FIXME: Handle case where m -> 1 and x -> 3, 5, 7, ...
+
   let delta: number;
+  let E = 0;
 
   let i = 0;
   do {
-    const E = ellipticE(result, m);
+    E = ellipticE(result, m);
     const dE = 1 / Math.sqrt(1 - m * Math.sin(result) ** 2); // Derivative of ellipticE
     delta = E - x;
     result -= delta / dE;
     i++;
-  } while (Math.abs(delta) > err && i < 1000);
+  } while (Math.abs(delta) > err && i < max);
 
-  if (i === 1000) {
-    console.error('ellipticEinv: max iterations reached');
+  if (i === max) {
+    console.error(
+      `ellipticEinv: max iterations reached. x: ${x}, m: ${m}, delta: ${delta}, result: ${result}, E: ${E}`,
+    );
   }
 
   return result;

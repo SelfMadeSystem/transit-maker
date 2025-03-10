@@ -206,11 +206,12 @@ svgPath: ${svgPath}
     const failingCases = [];
 
     for (let i = 0; i < 100; i++) {
-      const radii = randPositiveVec(false).round();
+      const radii = randPositiveVec(false);
       const m = Math.max(radii.y / radii.x, radii.x / radii.y);
 
-      const t1 = Math.random() * (2 * Math.PI - 0.1);
-      const t2 = t1 + Math.random() * (Math.PI * 2 - t1 - 0.1) + 0.1;
+      const minAngle = 0.01;
+      const t1 = Math.random() * (2 * Math.PI - minAngle);
+      const t2 = t1 + Math.random() * (Math.PI * 2 - t1 - minAngle) + minAngle;
       const len = arcLength(radii, t1, t2);
       const endAngle = findEndAngle(radii, t1, len);
 
