@@ -1,4 +1,5 @@
 import { ellipticE } from './integrals';
+import { EPSILON } from './mathUtils';
 import { Vector2 } from './vec';
 
 /**
@@ -62,9 +63,21 @@ export function findEllipseCenter(
   const B = Math.atan(((-delta.x / delta.y) * r.y) / r.x);
   const alpha = A + B;
 
+  if (isNaN(A)) {
+    console.error(
+      `centerOfArc: A is NaN ; ${delta.x} ; ${delta.y} ; ${r.x} ; ${r.y}`,
+    );
+  }
+  if (isNaN(B)) {
+    console.error('centerOfArc: B is NaN');
+  }
+
   // This may be the new center, but we don't know to which of the two
   // solutions it belongs, yet
   let newCenter = pointAtAngle(a, r, alpha);
+  if (isNaN(newCenter.x)) {
+    console.error('centerOfArc: newCenter is NaN');
+  }
 
   // Figure out if it is the correct solution, and adjusting if not
   const mean = a.avg(b);
@@ -139,7 +152,9 @@ export function radiiOfArc(
 
   const radiiCheck = transformedPoint.lenSq();
   if (radiiCheck > 1) {
-    radii = radii.mult(Math.sqrt(radiiCheck));
+    radii = radii.mult(Math.sqrt(radiiCheck) + EPSILON);
+    // EPSILON is added to ensure the radii are large enough. Otherwise, we'll
+    // end up with NaNs in the center calculation (specifically in the A value)
   }
 
   return radii;
@@ -166,18 +181,12 @@ export function centerOfArc(
   largeArcFlag: number,
   sweepFlag: number,
 ): Vector2 {
-  if (from.y > to.y) {
-    [from, to] = [to, from];
-    // idk why this is necessary, but it is
-    sweepFlag = 1 - sweepFlag;
-  }
-
   // Ensure radii are large enough
   const xRotRad = (xAxisRotation * Math.PI) / 180;
 
   radii = radiiOfArc(from, to, radii, xAxisRotation);
 
-  const factor = largeArcFlag === sweepFlag ? 1 : -1;
+  let factor: 1 | -1 = largeArcFlag === sweepFlag ? 1 : -1;
 
   if (radii.x === radii.y) {
     // Angle doesn't matter for circles
@@ -188,6 +197,13 @@ export function centerOfArc(
 
   from = from.rotateBy(-xRotRad);
   to = to.rotateBy(-xRotRad);
+
+  if (from.y > to.y) {
+    [from, to] = [to, from];
+    // idk why this is necessary, but it is
+    sweepFlag = 1 - sweepFlag;
+    factor = -factor as 1 | -1;
+  }
 
   const result = findEllipseCenter(from, to, radii, factor);
 

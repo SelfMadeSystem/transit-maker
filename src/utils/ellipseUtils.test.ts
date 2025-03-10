@@ -10,6 +10,33 @@ import {
 import { Vector2 } from './vec';
 import { describe, expect, it } from 'vitest';
 
+function randFloat() {
+  return Math.random() * 100 - 50;
+}
+
+function randPositive() {
+  if (Math.random() < 0.25) {
+    return Math.random();
+  }
+  return Math.random() * 50 + 1;
+}
+
+function randVec() {
+  if (Math.random() < 0.25) {
+    const l = randFloat();
+    return new Vector2(l, l);
+  }
+  return new Vector2(randFloat(), randFloat());
+}
+
+function randPositiveVec() {
+  if (Math.random() < 0.25) {
+    const l = randPositive();
+    return new Vector2(l, l);
+  }
+  return new Vector2(randPositive(), randPositive());
+}
+
 describe('ellipseUtils', () => {
   it('should find the correct center of a circle', () => {
     const a = new Vector2(0, 0);
@@ -107,18 +134,15 @@ describe('ellipseUtils', () => {
     expect(point2.y).toBeCloseTo(b.y, 5);
   });
 
-  // FIXME: My stuff is buggy lmao
-  /* it('should handle random test case where a === point1 and b === point2', () => {
-    function f() {
-      return Math.random() * 100;
-    }
-    function p() {
-      return Math.random() * 50;
-    }
+  it('should handle random test case where a === point1 and b === point2', () => {
     for (let i = 0; i < 100; i++) {
-      const a = new Vector2(f(), f());
-      const b = new Vector2(f(), f());
-      const ogR = new Vector2(p(), p());
+      const a = randVec();
+      const b = randVec();
+      if (a.equals(b)) {
+        // skip this case for now
+        continue;
+      }
+      const ogR = randPositiveVec();
       let r = ogR;
       const xRot = Math.random() * 360;
       const largeArc = Math.round(Math.random());
@@ -134,11 +158,11 @@ describe('ellipseUtils', () => {
       const point1 = pointAtAngle(center, r, angle1, xRot);
       const point2 = pointAtAngle(center, r, angle2, xRot);
 
-      const svgPath = `M ${a.x} ${a.y} A ${ogR.x} ${ogR.y} ${xRot} ${largeArc} ${sweep} ${b.x} ${b.y} M ${center.s}\
+      const svgPath = `M ${a.x} ${a.y} A ${ogR.x} ${ogR.y} ${xRot} ${largeArc} ${sweep} ${b.x} ${b.y} M${center.s}\
 h10h-20h10v10v-20\
 ${point1.ML(center)}\
 ${point2.ML(center)}`;
-      const message = `a: ${a}, b: ${b}, r: ${ogR}, xRot: ${xRot}, largeArc: ${largeArc}, sweep: ${sweep}
+      const message = `i: ${i} a: ${a}, b: ${b}, r: ${ogR}, xRot: ${xRot}, largeArc: ${largeArc}, sweep: ${sweep}
 
 center: ${center.s}, angle1: ${angle1}, angle2: ${angle2}, point1: ${point1.s}, point2: ${point2.s}
 
@@ -151,5 +175,5 @@ svgPath: ${svgPath}
       expect(point2.x, message).toBeCloseTo(b.x, 5);
       expect(point2.y, message).toBeCloseTo(b.y, 5);
     }
-  }); */
+  });
 });
