@@ -2,6 +2,7 @@
  * Hugest of thanks to this dude:
  * https://gist.github.com/stla/3d80bd6ce636831253ac409197165f39
  */
+import { EPSILON } from './mathUtils';
 
 function hasMoreThanOneZero(...args: number[]) {
   let count = 0;
@@ -26,7 +27,12 @@ function hasMoreThanOneZero(...args: number[]) {
  * @returns The computed value of the Carlson elliptic integral RF(x, y, z).
  * @throws Will throw an error if `err` is nonpositive or if more than one of `x`, `y`, `z` is zero.
  */
-export function CarlsonRF(x: number, y: number, z: number, err: number) {
+export function CarlsonRF(
+  x: number,
+  y: number,
+  z: number,
+  err: number = EPSILON,
+) {
   if (err <= 0) {
     throw 'The value of `err` must be nonnegative.';
   }
@@ -74,7 +80,12 @@ export function CarlsonRF(x: number, y: number, z: number, err: number) {
  * @returns The computed value of the Carlson's RD elliptic integral.
  * @throws Will throw an error if `err` is nonpositive or if more than one of `x`, `y`, `z` is zero.
  */
-export function CarlsonRD(x: number, y: number, z: number, err: number) {
+export function CarlsonRD(
+  x: number,
+  y: number,
+  z: number,
+  err: number = EPSILON,
+) {
   if (err <= 0) {
     throw 'The value of `err` must be nonnegative.';
   }
@@ -140,7 +151,7 @@ export function CarlsonRJ(
   y: number,
   z: number,
   p: number,
-  err: number,
+  err: number = EPSILON,
 ) {
   if (err <= 0) {
     throw 'The value of `err` must be nonnegative.';
@@ -221,7 +232,11 @@ export function CarlsonRJ(
  *
  * @see {@link https://en.wikipedia.org/wiki/Elliptic_integral Elliptic integral on Wikipedia}
  */
-export function ellipticE(phi: number, m: number, err: number): number {
+export function ellipticE(
+  phi: number,
+  m: number,
+  err: number = EPSILON,
+): number {
   let out: number;
   const PI = Math.PI;
   const PI_2 = PI / 2;
@@ -268,7 +283,11 @@ export function ellipticE(phi: number, m: number, err: number): number {
  *   - Otherwise, the function uses the Carlson RF function for the computation.
  * - If `phi` is outside the range [-π/2, π/2], the function adjusts `phi` and recursively computes the result.
  */
-export function ellipticF(phi: number, m: number, err: number): number {
+export function ellipticF(
+  phi: number,
+  m: number,
+  err: number = EPSILON,
+): number {
   let out: number;
   const PI = Math.PI;
   const PI_2 = PI / 2;
@@ -306,7 +325,11 @@ export function ellipticF(phi: number, m: number, err: number): number {
  * @param err - The error tolerance for the computation.
  * @returns The value of the Jacobi Zeta function Z(φ|m).
  */
-export function ellipticZ(phi: number, m: number, err: number): number {
+export function ellipticZ(
+  phi: number,
+  m: number,
+  err: number = EPSILON,
+): number {
   let out: number;
   const PI = Math.PI;
   const PI_2 = PI / 2;
@@ -350,7 +373,7 @@ export function ellipticPI(
   phi: number,
   n: number,
   m: number,
-  err: number,
+  err: number = EPSILON,
 ): number {
   let out: number;
   const PI = Math.PI;

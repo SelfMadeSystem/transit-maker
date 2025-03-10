@@ -31,12 +31,18 @@ export class Vector2 implements Clonable {
     return new Vector2(this.x - other.x, this.y - other.y);
   }
 
-  mult(x: number, y = x): Vector2 {
-    return new Vector2(this.x * x, this.y * y);
+  mult(x: number | Vector2, y?: number): Vector2 {
+    if (x instanceof Vector2) {
+      return new Vector2(this.x * x.x, this.y * x.y);
+    }
+    return new Vector2(this.x * x, this.y * (y ?? x));
   }
 
-  div(x: number, y = x): Vector2 {
-    return new Vector2(this.x / x, this.y / y);
+  div(x: number | Vector2, y?: number): Vector2 {
+    if (x instanceof Vector2) {
+      return new Vector2(this.x / x.x, this.y / x.y);
+    }
+    return new Vector2(this.x / x, this.y / (y ?? x));
   }
 
   mod(other: Vector2): Vector2 {
@@ -157,8 +163,21 @@ export class Vector2 implements Clonable {
     return [this.x, this.y];
   }
 
-  get m(): string {
+  get s(): string {
+    return `${this.x},${this.y}`;
+  }
+
+  // svg path commands
+  get M(): string {
     return `M${this.x},${this.y}`;
+  }
+
+  get L(): string {
+    return `L${this.x},${this.y}`;
+  }
+
+  ML(vec: Vector2): string {
+    return `M${this.x},${this.y} L${vec.x},${vec.y}`;
   }
 }
 

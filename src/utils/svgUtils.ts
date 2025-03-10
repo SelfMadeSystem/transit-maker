@@ -247,3 +247,34 @@ export function dashPath(path: string, dashArray: number[]): string {
 
   return dashedPath.map(s => pathToString(s, 'off')).join('');
 }
+
+function getDashPointsOnPath(path: string, dashArray: number[]): Vector2[] {
+  const normalPath = normalizePath(path);
+  const totalLength = getTotalLength(normalPath);
+
+  const points: Vector2[] = [];
+
+  let i = 0;
+  let currentLength = 0;
+  while (currentLength < totalLength) {
+    const dashIndex = i % dashArray.length;
+    const dash = dashArray[dashIndex];
+    const point = new Vector2(getPointAtLength(normalPath, currentLength));
+    points.push(point);
+    currentLength += dash;
+    i++;
+  }
+
+  return points;
+}
+
+const path = 'M 0 0 L 8 11 A 1 1 0 0 0 5 0 L 2 9 A 6 4 30 1 0 7 14';
+const dashArray = [5, 2];
+
+console.log(dashPath(path, dashArray));
+console.log();
+console.log(
+  getDashPointsOnPath(path, dashArray)
+    .map(p => `M ${p.x} ${p.y}`)
+    .join(' '),
+);

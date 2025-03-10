@@ -6,6 +6,8 @@
  * @author SelfMadeSystem (Shoghi Simon) 2024-11-07
  */
 
+export const EPSILON = 1e-6;
+
 export type Vec2 = { x: number; y: number };
 
 /**
@@ -209,7 +211,7 @@ export function gcd(a: number, b: number): number {
 /**
  * Approx equals function for numbers
  */
-export function approxEquals(a: number, b: number, epsilon = 1e-6): boolean {
+export function approxEquals(a: number, b: number, epsilon = EPSILON): boolean {
   return Math.abs(a - b) < epsilon;
 }
 
