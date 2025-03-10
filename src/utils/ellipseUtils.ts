@@ -220,8 +220,83 @@ export function centerOfArc(
  */
 export function arcLength(radii: Vector2, t1: number, t2: number): number {
   // ellipticE(phi, m) is the complete elliptic integral of the second kind
-  const k = Math.sqrt(1 - radii.y ** 2 / radii.x ** 2);
-  const E1 = ellipticE(t1, k * k);
-  const E2 = ellipticE(t2, k * k);
+  const m = 1 - radii.y ** 2 / radii.x ** 2;
+  const E1 = ellipticE(t1, m);
+  const E2 = ellipticE(t2, m);
   return radii.x * (E2 - E1);
+}
+
+/**
+ * Computes the inverse of the incomplete elliptic integral of the second kind.
+ *
+ * This function uses Newton's method to iteratively find the value `result` such that
+ * `ellipticE(result, m) = x`. The iteration stops when the change `delta` is smaller
+ * than a predefined epsilon value or after a maximum of 1000 iterations.
+ *
+ * @param x - The value of the incomplete elliptic integral of the second kind.
+ * @param m - The parameter of the elliptic integral.
+ * @param err - The maximum error allowed in the result.
+ * @returns The inverse value `result` such that `ellipticE(result, m) = x`.
+ *
+ * @throws Will log an error if the maximum number of iterations (1000) is reached.
+ */
+function ellipticEinv(x: number, m: number, err: number = EPSILON): number {
+  let result: number = x;
+
+  let delta: number;
+
+  let i = 0;
+  do {
+    const E = ellipticE(result, m);
+    const dE = 1 / Math.sqrt(1 - m * Math.sin(result) ** 2); // Derivative of ellipticE
+    delta = E - x;
+    result -= delta / dE;
+    i++;
+  } while (Math.abs(delta) > err && i < 1000);
+
+  if (i === 1000) {
+    console.error('ellipticEinv: max iterations reached');
+  }
+
+  return result;
+}
+
+function findEndAngle(radii: Vector2, t: number, len: number): number {
+  if (len === 0) {
+    return t;
+  }
+  len = Math.abs(len);
+  if (radii.x === radii.y) {
+    return t + len / radii.x;
+  }
+  let swapped = false;
+  if (radii.x < radii.y) {
+    radii = radii.swap();
+    t += Math.PI / 2;
+    swapped = true;
+  }
+  const m = 1 - radii.y ** 2 / radii.x ** 2;
+  const E1 = ellipticE(t, m);
+  // len = radii.x * (ellipticE(result, m) - E1);
+  // how to solve for result?
+  // len / radii.x = ellipticE(result, m) - E1;
+  // len / radii.x + E1 = ellipticE(result, m);
+  // ellipticE(result, m) = len / radii.x + E1;
+  // result = ellipticEinv(len / radii.x + E1, m);
+  const result = ellipticEinv(len / radii.x + E1, m);
+  if (swapped) {
+    return result - Math.PI / 2;
+  }
+  return result;
+}
+
+function tempTest() {
+  const radii = new Vector2(1, 2);
+  const t1 = 0.2;
+  const t2 = 1.5;
+  const len = arcLength(radii, t1, t2);
+  console.log(len);
+  const t = findEndAngle(radii, t1, len);
+  const error = Math.abs(t - t2);
+  console.log(len, t, t2, error);
 }

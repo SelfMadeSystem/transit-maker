@@ -4,6 +4,9 @@
  */
 import { EPSILON } from './mathUtils';
 
+const PI = Math.PI;
+const PI_2 = PI / 2;
+
 function hasMoreThanOneZero(...args: number[]) {
   let count = 0;
   for (const arg of args) {
@@ -238,8 +241,6 @@ export function ellipticE(
   err: number = EPSILON,
 ): number {
   let out: number;
-  const PI = Math.PI;
-  const PI_2 = PI / 2;
   if (phi === 0) {
     out = 0;
   } else if (phi >= -PI_2 && phi <= PI_2) {
@@ -289,8 +290,6 @@ export function ellipticF(
   err: number = EPSILON,
 ): number {
   let out: number;
-  const PI = Math.PI;
-  const PI_2 = PI / 2;
   if (phi === 0 || !isFinite(m)) {
     out = 0;
     // snip second branch which was only for complex numbers
@@ -331,8 +330,6 @@ export function ellipticZ(
   err: number = EPSILON,
 ): number {
   let out: number;
-  const PI = Math.PI;
-  const PI_2 = PI / 2;
   if (!isFinite(m)) {
     out = NaN;
   } else if (m === 1) {
@@ -376,8 +373,6 @@ export function ellipticPI(
   err: number = EPSILON,
 ): number {
   let out: number;
-  const PI = Math.PI;
-  const PI_2 = PI / 2;
   const complete = phi === PI_2;
   if (phi === 0 || !isFinite(n) || !isFinite(m)) {
     out = 0;

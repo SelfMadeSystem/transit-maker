@@ -139,6 +139,10 @@ export class Vector2 implements Clonable {
     return this.add(other).mult(0.5);
   }
 
+  swap(): Vector2 {
+    return new Vector2(this.y, this.x);
+  }
+
   abs(): Vector2 {
     return new Vector2(Math.abs(this.x), Math.abs(this.y));
   }

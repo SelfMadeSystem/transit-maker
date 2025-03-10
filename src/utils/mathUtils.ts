@@ -115,6 +115,13 @@ export function wrapAngle2PI(angle: number): number {
   return wrapNumber(angle, 0, 2 * Math.PI);
 }
 
+/**
+ * Wraps an angle between -PI and PI
+ */
+export function wrapAnglePI(angle: number): number {
+  return wrapNumber(angle, -Math.PI, Math.PI);
+}
+
 export function angleDelta(angle1: number, angle2: number): number {
   let delta = angle2 - angle1;
   delta = ((delta + Math.PI) % (2 * Math.PI)) - Math.PI;
