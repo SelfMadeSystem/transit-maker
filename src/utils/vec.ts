@@ -1,5 +1,5 @@
 import { Clonable } from './clone';
-import { mod } from './mathUtils';
+import { mod, round } from './mathUtils';
 
 export class Vector2 implements Clonable {
   public readonly x: number;
@@ -149,6 +149,10 @@ export class Vector2 implements Clonable {
 
   sign(): Vector2 {
     return new Vector2(Math.sign(this.x), Math.sign(this.y));
+  }
+
+  round(n: number = 1): Vector2 {
+    return new Vector2(round(this.x, n), round(this.y, n));
   }
 
   clone(): Vector2 {

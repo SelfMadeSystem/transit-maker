@@ -20,6 +20,7 @@ function hasMoreThanOneZero(...args: number[]) {
   return false;
 }
 
+//#region Carlson elliptic integrals
 /**
  * Computes the Carlson elliptic integral of the first kind RF(x, y, z).
  *
@@ -218,7 +219,9 @@ export function CarlsonRJ(
   }
   return h / (A * Math.sqrt(A)) + 6 * s;
 }
+//#endregion
 
+//#region Incomplete elliptic integrals
 /**
  * Computes the incomplete elliptic integral of the second kind, E(phi | m).
  *
@@ -407,3 +410,46 @@ export function ellipticPI(
   }
   return out;
 }
+//#endregion
+
+//#region Inverse elliptic integrals
+
+/**
+ * Computes the inverse of the incomplete elliptic integral of the second kind.
+ *
+ * This function uses Newton's method to iteratively find the value `result` such that
+ * `ellipticE(result, m) = x`. The iteration stops when the change `delta` is smaller
+ * than a predefined epsilon value or after a maximum of 1000 iterations.
+ *
+ * @param x - The value of the incomplete elliptic integral of the second kind.
+ * @param m - The parameter of the elliptic integral.
+ * @param err - The maximum error allowed in the result.
+ * @returns The inverse value `result` such that `ellipticE(result, m) = x`.
+ *
+ * @throws Will log an error if the maximum number of iterations (1000) is reached.
+ */
+export function ellipticEinv(
+  x: number,
+  m: number,
+  err: number = EPSILON,
+): number {
+  let result: number = x;
+
+  let delta: number;
+
+  let i = 0;
+  do {
+    const E = ellipticE(result, m);
+    const dE = 1 / Math.sqrt(1 - m * Math.sin(result) ** 2); // Derivative of ellipticE
+    delta = E - x;
+    result -= delta / dE;
+    i++;
+  } while (Math.abs(delta) > err && i < 1000);
+
+  if (i === 1000) {
+    console.error('ellipticEinv: max iterations reached');
+  }
+
+  return result;
+}
+//#endregion

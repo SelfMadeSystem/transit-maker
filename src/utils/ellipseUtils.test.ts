@@ -3,6 +3,7 @@ import {
   centerOfArc,
   findCircleCenter,
   findEllipseCenter,
+  findEndAngle,
   parametricAngle,
   pointAtAngle,
   radiiOfArc,
@@ -14,8 +15,8 @@ function randFloat() {
   return Math.random() * 100 - 50;
 }
 
-function randPositive() {
-  if (Math.random() < 0.25) {
+function randPositive(zero = true) {
+  if (zero && Math.random() < 0.25) {
     return Math.random();
   }
   return Math.random() * 50 + 1;
@@ -29,15 +30,15 @@ function randVec() {
   return new Vector2(randFloat(), randFloat());
 }
 
-function randPositiveVec() {
+function randPositiveVec(zero = true) {
   if (Math.random() < 0.25) {
-    const l = randPositive();
+    const l = randPositive(zero);
     return new Vector2(l, l);
   }
-  return new Vector2(randPositive(), randPositive());
+  return new Vector2(randPositive(zero), randPositive(zero));
 }
 
-describe('ellipseUtils', () => {
+describe('findCircleCenter', () => {
   it('should find the correct center of a circle', () => {
     const a = new Vector2(0, 0);
     const b = new Vector2(4, 0);
@@ -46,7 +47,9 @@ describe('ellipseUtils', () => {
     expect(center.x).toBeCloseTo(2);
     expect(center.y).toBeCloseTo(0);
   });
+});
 
+describe('findEllipseCenter', () => {
   it('should find the correct center of an ellipse', () => {
     const a = new Vector2(0, 0);
     const b = new Vector2(4, 0);
@@ -55,7 +58,9 @@ describe('ellipseUtils', () => {
     expect(center.x).toBeCloseTo(2);
     expect(center.y).toBeCloseTo(0);
   });
+});
 
+describe('parametricAngle', () => {
   it('should calculate the correct parametric angle', () => {
     const center = new Vector2(0, 0);
     const point = new Vector2(1, 1);
@@ -63,7 +68,9 @@ describe('ellipseUtils', () => {
     const angle = parametricAngle(center, point, r);
     expect(angle).toBeCloseTo(Math.PI / 4);
   });
+});
 
+describe('pointAtAngle', () => {
   it('should return the correct point at a given angle', () => {
     const center = new Vector2(0, 0);
     const r = new Vector2(1, 1);
@@ -72,7 +79,9 @@ describe('ellipseUtils', () => {
     expect(point.x).toBeCloseTo(Math.sqrt(2) / 2);
     expect(point.y).toBeCloseTo(Math.sqrt(2) / 2);
   });
+});
 
+describe('radiiOfArc', () => {
   it('should get the correct radii of an ellipse arc', () => {
     const from = new Vector2(0, 0);
     const to = new Vector2(4, 0);
@@ -82,7 +91,9 @@ describe('ellipseUtils', () => {
     expect(result.x).toBeCloseTo(3);
     expect(result.y).toBeCloseTo(2);
   });
+});
 
+describe('centerOfArc', () => {
   it('should find the correct center of an ellipse arc', () => {
     const from = new Vector2(0, 0);
     const to = new Vector2(4, 0);
@@ -101,7 +112,9 @@ describe('ellipseUtils', () => {
     expect(center.x).toBeCloseTo(2);
     expect(center.y).toBeCloseTo(-1.4907119849998598);
   });
+});
 
+describe('arcLength', () => {
   it('should compute the correct length of an elliptical arc', () => {
     const radii = new Vector2(3, 2);
     const t1 = 0;
@@ -109,32 +122,44 @@ describe('ellipseUtils', () => {
     const length = arcLength(radii, t1, t2);
     expect(length).toBeCloseTo(3.966359897322647);
   });
+});
 
-  it('should confirm that point1 and point2 are equal to a and b within a margin of error', () => {
-    const str = 'M 14 12 A 7 5 30 0 0 8 17';
-    const [aX, aY, rX, rY, xRot, largeArc, sweep, bX, bY] = str
-      .match(/(\d+)/g)!
-      .map(Number);
-    const a = new Vector2(aX, aY);
-    const b = new Vector2(bX, bY);
-    let r = new Vector2(rX, rY);
-
-    r = radiiOfArc(a, b, r, xRot);
-    const center = centerOfArc(a, b, r, xRot, largeArc, sweep);
-
-    const angle1 = parametricAngle(center, a, r, xRot);
-    const angle2 = parametricAngle(center, b, r, xRot);
-
-    const point1 = pointAtAngle(center, r, angle1, xRot);
-    const point2 = pointAtAngle(center, r, angle2, xRot);
-
-    expect(point1.x).toBeCloseTo(a.x, 5);
-    expect(point1.y).toBeCloseTo(a.y, 5);
-    expect(point2.x).toBeCloseTo(b.x, 5);
-    expect(point2.y).toBeCloseTo(b.y, 5);
+describe('findEndAngle', () => {
+  it('should return the same angle if length is zero', () => {
+    const radii = new Vector2(3, 2);
+    const t = 1;
+    const len = 0;
+    const endAngle = findEndAngle(radii, t, len);
+    expect(endAngle).toBeCloseTo(t);
   });
 
-  it('should handle random test case where a === point1 and b === point2', () => {
+  it('should handle the case where radii.x equals radii.y', () => {
+    const radii = new Vector2(2, 2);
+    const t = 1;
+    const len = 3;
+    const endAngle = findEndAngle(radii, t, len);
+    expect(endAngle).toBeCloseTo(t + len / radii.x);
+  });
+
+  it('should handle the case where radii.x is less than radii.y', () => {
+    const radii = new Vector2(2, 3);
+    const t = Math.PI / 2;
+    const len = 3.966359897322647;
+    const endAngle = findEndAngle(radii, t, len);
+    expect(endAngle).toBeCloseTo(Math.PI, 5);
+  });
+
+  it('should handle the case where radii.x is greater than radii.y', () => {
+    const radii = new Vector2(3, 2);
+    const t = Math.PI / 2;
+    const len = 3.966359897322647;
+    const endAngle = findEndAngle(radii, t, len);
+    expect(endAngle).toBeCloseTo(Math.PI, 5);
+  });
+});
+
+describe('Fuzz tests', () => {
+  it('[centerOfArc/parametricAngle/pointAtAngle] should handle random test case where a === point1 and b === point2', () => {
     for (let i = 0; i < 100; i++) {
       const a = randVec();
       const b = randVec();
@@ -175,5 +200,38 @@ svgPath: ${svgPath}
       expect(point2.x, message).toBeCloseTo(b.x, 5);
       expect(point2.y, message).toBeCloseTo(b.y, 5);
     }
+  });
+
+  it('[arcLength/findEndAngle] should handle random test case where t2 === result of findEndAngle', () => {
+    const failingCases = [];
+
+    for (let i = 0; i < 100; i++) {
+      const radii = randPositiveVec(false).round();
+      const m = Math.max(radii.y / radii.x, radii.x / radii.y);
+
+      const t1 = Math.random() * (2 * Math.PI - 0.1);
+      const t2 = t1 + Math.random() * (Math.PI * 2 - t1 - 0.1) + 0.1;
+      const len = arcLength(radii, t1, t2);
+      const endAngle = findEndAngle(radii, t1, len);
+
+      // const message = `i: ${i} m: ${m} radii: ${radii}, t1: ${t1}, t2: ${t2}, len: ${len}, endAngle: ${endAngle}`;
+
+      const delta = Math.abs(endAngle - t2);
+      // FIXME: very lenient for large m. I would like for this to be more accurate
+      // I'm not sure if it's arcLength or findEndAngle that's the problem, but it's
+      // probably findEndAngle
+      const maxEpsilon = m < 5 ? 1e-5 : m < 15 ? 1e-3 : 5e-2;
+      if (Math.abs(delta) > maxEpsilon) {
+        failingCases.push(
+          `m: ${m} radii: ${radii} delta: ${delta} len: ${len} maxEpsilon: ${maxEpsilon}`,
+        );
+      }
+    }
+
+    if (failingCases.length > 0) {
+      console.error('Failing cases:', failingCases);
+    }
+
+    expect(failingCases.length).toBe(0);
   });
 });
