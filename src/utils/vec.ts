@@ -177,7 +177,7 @@ export class Vector2 implements Clonable {
   }
 
   ML(vec: Vector2): string {
-    return `M${this.x},${this.y} L${vec.x},${vec.y}`;
+    return `M${this.x},${this.y}L${vec.x},${vec.y}`;
   }
 }
 
