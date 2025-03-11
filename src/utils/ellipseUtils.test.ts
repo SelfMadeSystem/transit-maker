@@ -224,7 +224,7 @@ svgPath: ${svgPath}
       const maxEpsilon = m < 5 ? 1e-5 : m < 15 ? 1e-3 : 5e-2;
       if (Math.abs(delta) > maxEpsilon) {
         failingCases.push(
-          `m: ${m} radii: ${radii} delta: ${delta} len: ${len} maxEpsilon: ${maxEpsilon}`,
+          `m: ${m} radii: ${radii} delta: ${delta} len: ${len} maxEpsilon: ${maxEpsilon} t1: ${t1} expected: ${t2} actual: ${endAngle}`,
         );
       }
     }

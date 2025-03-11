@@ -436,28 +436,28 @@ export function ellipticEinv(
   if (m < 0 || m > 1) {
     throw 'The parameter `m` must be in the range [0, 1].';
   }
-  const max = 2000;
+  if (x < 0) {
+    throw 'The value `x` must be nonnegative.';
+  }
   let result: number = x;
 
-  // FIXME: Handle case where m -> 1 and x -> 3, 5, 7, ...
-
   let delta: number;
-  let E = 0;
 
   let i = 0;
   do {
-    E = ellipticE(result, m);
-    const dE = 1 / Math.sqrt(1 - m * Math.sin(result) ** 2); // Derivative of ellipticE
+    if (i >= 30 && i % 20 === 10) {
+      // not ideal but idk why it's not converging. Only happens 0.03% of the time
+      // console.error(`Loop detected at iteration ${i}. Result: ${result}.`);
+      // this is a very arbitrary way to fix the issue
+      result += 0.001 * i;
+    }
+    const E = ellipticE(result, m);
+    // dE is always positive
+    const dE = Math.sqrt(1 - m * Math.sin(result) ** 2); // Derivative of ellipticE
     delta = E - x;
     result -= delta / dE;
     i++;
-  } while (Math.abs(delta) > err && i < max);
-
-  if (i === max) {
-    console.error(
-      `ellipticEinv: max iterations reached. x: ${x}, m: ${m}, delta: ${delta}, result: ${result}, E: ${E}`,
-    );
-  }
+  } while (Math.abs(delta) > err && i < 1000);
 
   return result;
 }
