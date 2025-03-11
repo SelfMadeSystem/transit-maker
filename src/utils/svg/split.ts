@@ -1,5 +1,5 @@
-import getPointAtLength from './getPointAtLength';
-import { Vector2 } from './vec';
+import getPointAtLength from '../getPointAtLength';
+import { Vector2 } from '../vec';
 import {
   ASegment,
   MSegment,
@@ -268,7 +268,7 @@ function getDashPointsOnPath(path: string, dashArray: number[]): Vector2[] {
   return points;
 }
 
-const path = 'M 0 0 L 8 11 A 1 1 0 0 0 5 0 L 2 9 A 6 4 30 1 0 7 14';
+const path = 'M 1 8 C 15 11 13 1 1 1';
 const dashArray = [5, 2];
 
 console.log(dashPath(path, dashArray));

@@ -178,8 +178,8 @@ export function centerOfArc(
   to: Vector2,
   radii: Vector2,
   xAxisRotation: number,
-  largeArcFlag: number,
-  sweepFlag: number,
+  largeArcFlag: number | boolean,
+  sweepFlag: number | boolean,
 ): Vector2 {
   // Ensure radii are large enough
   const xRotRad = (xAxisRotation * Math.PI) / 180;
@@ -201,7 +201,7 @@ export function centerOfArc(
   if (from.y > to.y) {
     [from, to] = [to, from];
     // idk why this is necessary, but it is
-    sweepFlag = 1 - sweepFlag;
+    sweepFlag = !sweepFlag;
     factor = -factor as 1 | -1;
   }
 
@@ -226,13 +226,158 @@ export function arcLength(radii: Vector2, t1: number, t2: number): number {
   return radii.x * (E2 - E1);
 }
 
+/**
+ * Computer the circumference of an ellipse.
+ *
+ * @param a the major axis of the ellipse
+ * @param b the minor axis of the ellipse
+ */
+export function getEllipseCircumference(a: number, b: number): number {
+  const m = 1 - b ** 2 / a ** 2;
+
+  return 4 * a * ellipticE(Math.PI / 2, m);
+}
+
+/**
+ * Properties of an ellipse arc.
+ */
+export interface EllipseArc {
+  center: Vector2;
+  radii: Vector2;
+  xAxisRotation: number;
+  radRot: number;
+  /**
+   * Start angle from the center of the ellipse.
+   */
+  startAngle: number;
+  /**
+   * End angle from the center of the ellipse.
+   */
+  endAngle: number;
+  /**
+   * The start parametric angle of the ellipse arc.
+   *
+   * Range: [0, 2π)
+   */
+  startParametric: number;
+  /**
+   * The end parametric angle of the ellipse arc.
+   *
+   * Range: startParametric ± [0, 2π)
+   */
+  endParametric: number;
+  direction: number;
+  length: number;
+  from: Vector2;
+  to: Vector2;
+  largeArcFlag: boolean;
+  sweepFlag: boolean;
+}
+
+/**
+ * Given the start and end points of an ellipse arc, as well as the ellipse's
+ * radii, the x-axis rotation, the large arc flag, the sweep flag, returns the
+ * properties of the ellipse arc.
+ *
+ * @param from the start point of the ellipse arc
+ * @param to the end point of the ellipse arc
+ * @param radii the radii of the ellipse
+ * @param xAxisRotation the x-axis rotation of the ellipse
+ * @param largeArcFlag the large arc flag of the ellipse
+ * @param sweepFlag the sweep flag of the ellipse
+ * @returns the properties of the ellipse arc
+ */
+export function ellipseArcProperties(
+  from: Vector2,
+  to: Vector2,
+  radii: Vector2,
+  xAxisRotation: number,
+  largeArcFlag: number | boolean,
+  sweepFlag: number | boolean,
+): EllipseArc {
+  radii = radiiOfArc(from, to, radii, xAxisRotation);
+  const center = centerOfArc(
+    from,
+    to,
+    radii,
+    xAxisRotation,
+    largeArcFlag,
+    sweepFlag,
+  );
+
+  let startParametric = parametricAngle(center, from, radii, xAxisRotation);
+  let endParametric = parametricAngle(center, to, radii, xAxisRotation);
+
+  let startAngle = center.angleTo(from);
+  let endAngle = center.angleTo(to);
+
+  // Ensure the start angle is positive
+  if (startParametric < 0) {
+    startParametric += Math.PI * 2;
+    endParametric += Math.PI * 2;
+    startAngle += Math.PI * 2;
+    endAngle += Math.PI * 2;
+  }
+
+  const paramDelta = endParametric - startParametric;
+
+  // Ensure the end angle is within the range of the start angle
+  if (sweepFlag) {
+    if (paramDelta < 0) {
+      endParametric += Math.PI * 2;
+      endAngle += Math.PI * 2;
+    }
+  } else {
+    if (paramDelta > 0) {
+      endParametric -= Math.PI * 2;
+      endAngle -= Math.PI * 2;
+    }
+  }
+
+  const direction = Math.sign(endParametric - startParametric);
+
+  const length = Math.abs(arcLength(radii, startParametric, endParametric));
+
+  return {
+    center,
+    radii,
+    xAxisRotation,
+    radRot: xAxisRotation * (Math.PI / 180),
+    startAngle,
+    endAngle,
+    startParametric,
+    endParametric,
+    direction,
+    length,
+    from,
+    to,
+    largeArcFlag: !!largeArcFlag,
+    sweepFlag: !!sweepFlag,
+  };
+}
+
+/**
+ * Calculates the end angle of an arc on an ellipse given the radii,
+ * starting angle, arc length, and xAxisRotation.
+ *
+ * @param radii - The radii of the ellipse as a Vector2 object.
+ * @param t - The starting angle in radians.
+ * @param len - The length of the arc. If 0, the end angle is the same as the
+ * starting angle. If negative, the end angle goes clockwise from the starting
+ * angle.
+ * @returns The end angle in radians.
+ */
 export function findEndAngle(radii: Vector2, t: number, len: number): number {
   if (len === 0) {
     return t;
   }
-  len = Math.abs(len);
   if (radii.x === radii.y) {
     return t + len / radii.x;
+  }
+
+  if (len < 0) {
+    const totalLength = getEllipseCircumference(radii.x, radii.y);
+    len = totalLength + len;
   }
   let swapped = false;
   if (radii.x < radii.y) {
