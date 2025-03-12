@@ -8,41 +8,34 @@ import { Vector2 } from '../vec';
 import {
   ASegment,
   CSegment,
-  CubicCoordinates,
   LSegment,
   NormalSegment,
   PathArray,
   QSegment,
-  QuadCoordinates,
-  bezierTools,
   cubicTools,
   normalizePath,
   quadTools,
 } from 'svg-path-commander';
 
-function getBezierLength(
-  ...points: [Vector2, Vector2, Vector2, Vector2] | [Vector2, Vector2, Vector2]
-): number {
-  const a = points.flatMap(p => p.a) as CubicCoordinates | QuadCoordinates;
-  return bezierTools.getBezierLength(a);
-}
 abstract class BaseMoveCommand {
   abstract readonly type: string;
   abstract readonly from: Vector2;
   abstract readonly to: Vector2;
 
   abstract get length(): number;
-  abstract getPointAtLength(length: number): Vector2;
-  // assume (0, 1) for t (exclusive)
-  abstract splitAtT(t: number): [NormalCommand, NormalCommand];
 
   getPointAtT(t: number): Vector2 {
     return this.getPointAtLength(this.length * t);
   }
+  getPointAtLength(length: number): Vector2 {
+    return this.getPointAtT(length / this.length);
+  }
 
+  splitAtT(t: number): [NormalCommand, NormalCommand] {
+    return this.splitAtLength(this.length * t);
+  }
   splitAtLength(length: number): [NormalCommand, NormalCommand] {
-    const t = length / this.length;
-    return this.splitAtT(t);
+    return this.splitAtT(length / this.length);
   }
 
   abstract toString(): string;
@@ -89,21 +82,22 @@ export class CCommand extends BaseMoveCommand {
   }
 
   get length(): number {
-    return getBezierLength(this.from, this.control1, this.control2, this.to);
+    return cubicTools.getCubicLength(
+      ...this.from.a,
+      ...this.control1.a,
+      ...this.control2.a,
+      ...this.to.a,
+    );
   }
 
   getPointAtLength(length: number): Vector2 {
     const t = length / this.length;
     return new Vector2(
       cubicTools.getPointAtCubicLength(
-        this.from.x,
-        this.from.y,
-        this.control1.x,
-        this.control1.y,
-        this.control2.x,
-        this.control2.y,
-        this.to.x,
-        this.to.y,
+        ...this.from.a,
+        ...this.control1.a,
+        ...this.control2.a,
+        ...this.to.a,
         t,
       ),
     );
@@ -149,11 +143,14 @@ export class QCommand extends BaseMoveCommand {
   }
 
   get length(): number {
-    return getBezierLength(this.from, this.control, this.to);
+    return quadTools.getQuadLength(
+      ...this.from.a,
+      ...this.control.a,
+      ...this.to.a,
+    );
   }
 
   getPointAtLength(length: number): Vector2 {
-    const t = length / this.length;
     return new Vector2(
       quadTools.getPointAtQuadLength(
         this.from.x,
@@ -162,23 +159,9 @@ export class QCommand extends BaseMoveCommand {
         this.control.y,
         this.to.x,
         this.to.y,
-        t,
+        length,
       ),
     );
-  }
-
-  splitAtT(t: number): [QCommand, QCommand] {
-    // quadratic bezier
-    const p0 = this.from;
-    const p1 = this.control;
-    const p2 = this.to;
-
-    const p01 = p0.lerp(p1, t);
-    const p12 = p1.lerp(p2, t);
-
-    const p012 = p01.lerp(p12, t);
-
-    return [new QCommand(p0, p01, p012), new QCommand(p012, p12, p2)];
   }
 
   toString(): string {
