@@ -1,9 +1,7 @@
 import {
   EllipseArc,
-  arcLength,
   ellipseArcProperties,
   findEndAngle,
-  getEllipseCircumference,
   pointAtAngle,
 } from '../ellipseUtils';
 import { Vector2 } from '../vec';
@@ -203,7 +201,7 @@ export class ACommand extends BaseMoveCommand {
     super();
   }
 
-  private getArcProperties(): EllipseArc {
+  getArcProperties(): EllipseArc {
     if (!this.arcProperties) {
       this.arcProperties = ellipseArcProperties(
         this.from,
@@ -222,26 +220,24 @@ export class ACommand extends BaseMoveCommand {
   }
 
   getPointAtLength(length: number): Vector2 {
-    const { center, startParametric, radii, xAxisRotation } =
+    const { center, startParametric, radii, xAxisRotation, direction } =
       this.getArcProperties();
-    const angle = findEndAngle(radii, startParametric, length);
+    const angle = findEndAngle(radii, startParametric, length * direction);
     return pointAtAngle(center, radii, angle, xAxisRotation);
   }
 
   splitAtT(t: number): [ACommand, ACommand] {
-    const { startParametric, endParametric, radii } = this.getArcProperties();
+    const { radii, length, ellipseLength } = this.getArcProperties();
 
-    const totalLength = getEllipseCircumference(...radii.a);
-    const arcLen = arcLength(radii, startParametric, endParametric);
-    const mid = new Vector2(this.getPointAtLength(arcLen * t));
+    const mid = new Vector2(this.getPointAtLength(length * t));
 
     let largeArcFlag1 = false;
     let largeArcFlag2 = false;
 
     if (this.large) {
-      const length1 = arcLen * t;
-      const length2 = arcLen * (1 - t);
-      const halfLength = totalLength / 2;
+      const length1 = length * t;
+      const length2 = length * (1 - t);
+      const halfLength = ellipseLength / 2;
 
       if (length1 > halfLength) {
         largeArcFlag1 = true;
@@ -332,7 +328,10 @@ export class SubPath {
     return command.getPointAtLength(remaining);
   }
 
-  splitAtLength(length: number): [SubPath, SubPath] {
+  splitAtLength(length: number): [SubPath] | [SubPath, SubPath] {
+    if (length <= 0 || length >= this.getLength()) {
+      return [this];
+    }
     const { command, index, remaining } = this.getCommandAtLength(length);
     const [first, second] = command.splitAtLength(remaining);
     const firstCommands = this.commands.slice(0, index);
@@ -534,14 +533,3 @@ export function getDashPointsOnPath(
 
   return points;
 }
-
-const path = 'M 1 8 A 2 1 25 0 0 20 0';
-const dashArray = [5, 2];
-
-console.log(dashPath(path, dashArray));
-console.log();
-console.log(
-  getDashPointsOnPath(path, dashArray)
-    .map(p => `M ${p.x} ${p.y}`)
-    .join(' '),
-);

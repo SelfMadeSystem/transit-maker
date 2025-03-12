@@ -220,9 +220,9 @@ export function centerOfArc(
  */
 export function arcLength(radii: Vector2, t1: number, t2: number): number {
   // ellipticE(phi, m) is the complete elliptic integral of the second kind
-  const m = 1 - radii.y ** 2 / radii.x ** 2;
-  const E1 = ellipticE(t1, m);
-  const E2 = ellipticE(t2, m);
+  const m = 1 - (radii.y / radii.x) ** 2;
+  const E1 = ellipticE(t1 - 0.5 * Math.PI, m);
+  const E2 = ellipticE(t2 - 0.5 * Math.PI, m);
   return radii.x * (E2 - E1);
 }
 
@@ -233,7 +233,7 @@ export function arcLength(radii: Vector2, t1: number, t2: number): number {
  * @param b the minor axis of the ellipse
  */
 export function getEllipseCircumference(a: number, b: number): number {
-  const m = 1 - b ** 2 / a ** 2;
+  const m = 1 - (b / a) ** 2;
 
   return 4 * a * ellipticE(Math.PI / 2, m);
 }
@@ -268,6 +268,7 @@ export interface EllipseArc {
   endParametric: number;
   direction: number;
   length: number;
+  ellipseLength: number;
   from: Vector2;
   to: Vector2;
   largeArcFlag: boolean;
@@ -308,8 +309,8 @@ export function ellipseArcProperties(
   let startParametric = parametricAngle(center, from, radii, xAxisRotation);
   let endParametric = parametricAngle(center, to, radii, xAxisRotation);
 
-  let startAngle = center.angleTo(from);
-  let endAngle = center.angleTo(to);
+  let startAngle = center.angleTo(from) - xAxisRotation;
+  let endAngle = center.angleTo(to) - xAxisRotation;
 
   // Ensure the start angle is positive
   if (startParametric < 0) {
@@ -337,6 +338,7 @@ export function ellipseArcProperties(
   const direction = Math.sign(endParametric - startParametric);
 
   const length = Math.abs(arcLength(radii, startParametric, endParametric));
+  const ellipseLength = getEllipseCircumference(radii.x, radii.y);
 
   return {
     center,
@@ -349,6 +351,7 @@ export function ellipseArcProperties(
     endParametric,
     direction,
     length,
+    ellipseLength,
     from,
     to,
     largeArcFlag: !!largeArcFlag,
@@ -385,15 +388,15 @@ export function findEndAngle(radii: Vector2, t: number, len: number): number {
     t += Math.PI / 2;
     swapped = true;
   }
-  const m = 1 - radii.y ** 2 / radii.x ** 2;
-  const E1 = ellipticE(t, m);
-  // len = radii.x * (ellipticE(result, m) - E1);
+  const m = 1 - (radii.y / radii.x) ** 2;
+  const E1 = ellipticE(t - 0.5 * Math.PI, m);
+  // len = radii.x * (ellipticE(result - 0.5 * Math.PI, m) - E1);
   // how to solve for result?
-  // len / radii.x = ellipticE(result, m) - E1;
-  // len / radii.x + E1 = ellipticE(result, m);
-  // ellipticE(result, m) = len / radii.x + E1;
-  // result = ellipticEinv(len / radii.x + E1, m);
-  const result = ellipticEinv(len / radii.x + E1, m);
+  // len / radii.x = ellipticE(result - 0.5 * Math.PI, m) - E1;
+  // len / radii.x + E1 = ellipticE(result - 0.5 * Math.PI, m);
+  // ellipticE(result - 0.5 * Math.PI, m) = len / radii.x + E1;
+  // result - 0.5 * Math.PI = ellipticEinv(len / radii.x + E1, m);
+  const result = ellipticEinv(len / radii.x + E1, m) + 0.5 * Math.PI;
   if (swapped) {
     return result - Math.PI / 2;
   }
