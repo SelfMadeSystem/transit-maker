@@ -2,7 +2,7 @@
  * Hugest of thanks to this dude:
  * https://gist.github.com/stla/3d80bd6ce636831253ac409197165f39
  */
-import { EPSILON } from './mathUtils';
+import { EPSILON } from '../mathUtils';
 
 const PI = Math.PI;
 const PI_2 = PI / 2;

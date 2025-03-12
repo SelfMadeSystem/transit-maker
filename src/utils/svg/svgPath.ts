@@ -3,7 +3,7 @@ import {
   ellipseArcProperties,
   findEndAngle,
   pointAtAngle,
-} from '../ellipseUtils';
+} from '../math/ellipseUtils';
 import { Vector2 } from '../vec';
 import {
   ASegment,

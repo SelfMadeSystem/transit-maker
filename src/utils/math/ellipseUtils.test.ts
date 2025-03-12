@@ -1,3 +1,4 @@
+import { Vector2 } from '../vec';
 import {
   arcLength,
   centerOfArc,
@@ -8,7 +9,6 @@ import {
   pointAtAngle,
   radiiOfArc,
 } from './ellipseUtils';
-import { Vector2 } from './vec';
 import { describe, expect, it } from 'vitest';
 
 function randFloat() {

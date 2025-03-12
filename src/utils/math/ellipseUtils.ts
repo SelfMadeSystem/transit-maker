@@ -1,6 +1,6 @@
+import { EPSILON } from '../mathUtils';
+import { Vector2 } from '../vec';
 import { ellipticE, ellipticEinv } from './integrals';
-import { EPSILON } from './mathUtils';
-import { Vector2 } from './vec';
 
 /**
  * Given two points a and b, as well as radius r, calculates the center point
