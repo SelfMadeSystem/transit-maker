@@ -437,7 +437,8 @@ export function ellipticEinv(
     throw 'The parameter `m` must be in the range [0, 1].';
   }
   if (x < 0) {
-    throw 'The value `x` must be nonnegative.';
+    // ellipticE is an odd function
+    return -ellipticEinv(-x, m, err);
   }
   let result: number = x;
 
