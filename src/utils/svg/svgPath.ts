@@ -1,4 +1,9 @@
 import {
+  bezierLength,
+  bezierPointAtLength,
+  splitBezierAtLength,
+} from '../math/bezier';
+import {
   EllipseArc,
   ellipseArcProperties,
   findEndAngle,
@@ -12,9 +17,7 @@ import {
   NormalSegment,
   PathArray,
   QSegment,
-  cubicTools,
   normalizePath,
-  quadTools,
 } from 'svg-path-commander';
 
 abstract class BaseMoveCommand {
@@ -82,47 +85,24 @@ export class CCommand extends BaseMoveCommand {
   }
 
   get length(): number {
-    return cubicTools.getCubicLength(
-      ...this.from.a,
-      ...this.control1.a,
-      ...this.control2.a,
-      ...this.to.a,
-    );
+    return bezierLength([this.from, this.control1, this.control2, this.to]);
   }
 
   getPointAtLength(length: number): Vector2 {
-    const t = length / this.length;
-    return new Vector2(
-      cubicTools.getPointAtCubicLength(
-        ...this.from.a,
-        ...this.control1.a,
-        ...this.control2.a,
-        ...this.to.a,
-        t,
-      ),
+    return bezierPointAtLength(
+      [this.from, this.control1, this.control2, this.to],
+      length,
     );
   }
 
-  splitAtT(t: number): [CCommand, CCommand] {
-    // cubic bezier
-    // See https://pomax.github.io/bezierinfo/#splitting
-    const p0 = this.from;
-    const p1 = this.control1;
-    const p2 = this.control2;
-    const p3 = this.to;
-
-    const p01 = p0.lerp(p1, t);
-    const p12 = p1.lerp(p2, t);
-    const p23 = p2.lerp(p3, t);
-
-    const p012 = p01.lerp(p12, t);
-    const p123 = p12.lerp(p23, t);
-
-    const p0123 = p012.lerp(p123, t);
-
+  splitAtLength(length: number): [NormalCommand, NormalCommand] {
+    const [first, second] = splitBezierAtLength(
+      [this.from, this.control1, this.control2, this.to],
+      length,
+    );
     return [
-      new CCommand(p0, p01, p012, p0123),
-      new CCommand(p0123, p123, p23, p3),
+      new CCommand(first[0], first[1], first[2], first[3]),
+      new CCommand(second[0], second[1], second[2], second[3]),
     ];
   }
 
@@ -143,25 +123,22 @@ export class QCommand extends BaseMoveCommand {
   }
 
   get length(): number {
-    return quadTools.getQuadLength(
-      ...this.from.a,
-      ...this.control.a,
-      ...this.to.a,
-    );
+    return bezierLength([this.from, this.control, this.to]);
   }
 
   getPointAtLength(length: number): Vector2 {
-    return new Vector2(
-      quadTools.getPointAtQuadLength(
-        this.from.x,
-        this.from.y,
-        this.control.x,
-        this.control.y,
-        this.to.x,
-        this.to.y,
-        length,
-      ),
+    return bezierPointAtLength([this.from, this.control, this.to], length);
+  }
+
+  splitAtLength(length: number): [NormalCommand, NormalCommand] {
+    const [first, second] = splitBezierAtLength(
+      [this.from, this.control, this.to],
+      length,
     );
+    return [
+      new QCommand(first[0], first[1], first[2]),
+      new QCommand(second[0], second[1], second[2]),
+    ];
   }
 
   toString(): string {
