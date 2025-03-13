@@ -72,6 +72,35 @@ export class LCommand extends BaseMoveCommand {
   }
 }
 
+// functionally identical to LCommand
+export class ZCommand extends BaseMoveCommand {
+  public readonly type = 'Z';
+
+  constructor(
+    public readonly from: Vector2,
+    public readonly to: Vector2,
+  ) {
+    super();
+  }
+
+  get length(): number {
+    return this.from.dist(this.to);
+  }
+
+  getPointAtLength(length: number): Vector2 {
+    return this.from.lerp(this.to, length / this.length);
+  }
+
+  splitAtT(t: number): [LCommand, LCommand] {
+    const mid = this.from.lerp(this.to, t);
+    return [new LCommand(this.from, mid), new LCommand(mid, this.to)];
+  }
+
+  toString(): string {
+    return 'Z';
+  }
+}
+
 export class CCommand extends BaseMoveCommand {
   public readonly type = 'C';
 
@@ -235,19 +264,38 @@ export class ACommand extends BaseMoveCommand {
   }
 }
 
-export type NormalCommand = LCommand | CCommand | QCommand | ACommand;
+export type NormalCommand =
+  | LCommand
+  | ZCommand
+  | CCommand
+  | QCommand
+  | ACommand;
 
 export class SubPath {
   public start: Vector2;
   public current: Vector2;
   public commands: NormalCommand[];
   public closed: boolean;
+  private closingCommand: ZCommand | undefined;
 
   constructor(start: Vector2, commands: NormalCommand[] = []) {
     this.start = start;
     this.current = start;
     this.commands = commands;
     this.closed = false;
+  }
+
+  public close() {
+    this.closed = true;
+    if (
+      this.closingCommand ||
+      this.commands.length === 0 ||
+      this.start.equals(this.current)
+    ) {
+      return;
+    }
+    this.closingCommand = new ZCommand(this.current, this.start);
+    this.commands.push(this.closingCommand);
   }
 
   addCommand(command: NormalCommand) {
@@ -420,7 +468,7 @@ export class SvgPath {
   private closePath() {
     const path = this.currentPath;
     if (path) {
-      path.closed = true;
+      path.close();
     }
   }
 
