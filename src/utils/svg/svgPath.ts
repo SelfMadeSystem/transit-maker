@@ -239,13 +239,20 @@ export type NormalCommand = LCommand | CCommand | QCommand | ACommand;
 
 export class SubPath {
   public start: Vector2;
+  public current: Vector2;
   public commands: NormalCommand[];
   public closed: boolean;
 
   constructor(start: Vector2, commands: NormalCommand[] = []) {
     this.start = start;
+    this.current = start;
     this.commands = commands;
     this.closed = false;
+  }
+
+  addCommand(command: NormalCommand) {
+    this.commands.push(command);
+    this.current = command.to;
   }
 
   getLength(): number {
@@ -296,10 +303,14 @@ export class SubPath {
     const [first, second] = command.splitAtLength(remaining);
     const firstCommands = this.commands.slice(0, index);
     const secondCommands = this.commands.slice(index + 1);
-    return [
-      new SubPath(this.start, [...firstCommands, first]),
-      new SubPath(second.from, [second, ...secondCommands]),
-    ];
+    const firstPath = new SubPath(this.start, [...firstCommands, first]);
+    const secondPath = new SubPath(second.from, [second, ...secondCommands]);
+    if (index > 0) {
+      console.log('index', index);
+      console.log('first', firstPath.toString());
+      console.log('second', firstPath.toString());
+    }
+    return [firstPath, secondPath];
   }
 
   toString(): string {
@@ -358,8 +369,8 @@ export class SvgPath {
   private addLine(segment: LSegment) {
     const path = this.currentPath;
     if (path) {
-      path.commands.push(
-        new LCommand(path.start, new Vector2(segment[1], segment[2])),
+      path.addCommand(
+        new LCommand(path.current, new Vector2(segment[1], segment[2])),
       );
     }
   }
@@ -367,9 +378,9 @@ export class SvgPath {
   private addCubic(segment: CSegment) {
     const path = this.currentPath;
     if (path) {
-      path.commands.push(
+      path.addCommand(
         new CCommand(
-          path.start,
+          path.current,
           new Vector2(segment[1], segment[2]),
           new Vector2(segment[3], segment[4]),
           new Vector2(segment[5], segment[6]),
@@ -381,9 +392,9 @@ export class SvgPath {
   private addQuadratic(segment: QSegment) {
     const path = this.currentPath;
     if (path) {
-      path.commands.push(
+      path.addCommand(
         new QCommand(
-          path.start,
+          path.current,
           new Vector2(segment[1], segment[2]),
           new Vector2(segment[3], segment[4]),
         ),
@@ -394,9 +405,9 @@ export class SvgPath {
   private addArc(segment: ASegment) {
     const path = this.currentPath;
     if (path) {
-      path.commands.push(
+      path.addCommand(
         new ACommand(
-          path.start,
+          path.current,
           new Vector2(segment[1], segment[2]),
           segment[3],
           Boolean(segment[4]),
