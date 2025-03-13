@@ -41,6 +41,8 @@ abstract class BaseMoveCommand {
     return this.splitAtT(length / this.length);
   }
 
+  abstract reverse(): NormalCommand;
+
   abstract toString(): string;
 }
 
@@ -65,6 +67,10 @@ export class LCommand extends BaseMoveCommand {
   splitAtT(t: number): [LCommand, LCommand] {
     const mid = this.from.lerp(this.to, t);
     return [new LCommand(this.from, mid), new LCommand(mid, this.to)];
+  }
+
+  reverse(): LCommand {
+    return new LCommand(this.to, this.from);
   }
 
   toString(): string {
@@ -94,6 +100,10 @@ export class ZCommand extends BaseMoveCommand {
   splitAtT(t: number): [LCommand, LCommand] {
     const mid = this.from.lerp(this.to, t);
     return [new LCommand(this.from, mid), new LCommand(mid, this.to)];
+  }
+
+  reverse(): LCommand {
+    return new LCommand(this.to, this.from);
   }
 
   toString(): string {
@@ -135,6 +145,10 @@ export class CCommand extends BaseMoveCommand {
     ];
   }
 
+  reverse(): CCommand {
+    return new CCommand(this.to, this.control2, this.control1, this.from);
+  }
+
   toString(): string {
     return `C${this.control1.s} ${this.control2.s} ${this.to.s}`;
   }
@@ -168,6 +182,10 @@ export class QCommand extends BaseMoveCommand {
       new QCommand(first[0], first[1], first[2]),
       new QCommand(second[0], second[1], second[2]),
     ];
+  }
+
+  reverse(): QCommand {
+    return new QCommand(this.to, this.control, this.from);
   }
 
   toString(): string {
@@ -255,6 +273,17 @@ export class ACommand extends BaseMoveCommand {
         this.to,
       ),
     ];
+  }
+
+  reverse(): ACommand {
+    return new ACommand(
+      this.to,
+      this.radii,
+      this.rotation,
+      this.large,
+      !this.sweep,
+      this.from,
+    );
   }
 
   toString(): string {
@@ -361,6 +390,15 @@ export class SubPath {
     return [firstPath, secondPath];
   }
 
+  canMerge(path: SubPath): boolean {
+    return (
+      !this.closed &&
+      !path.closed &&
+      (this.getCurrent().equals(path.start) ||
+        this.start.equals(path.getCurrent()))
+    );
+  }
+
   merge(path: SubPath): SubPath {
     if (this.closed || path.closed) {
       throw new Error('Cannot merge closed paths');
@@ -372,6 +410,19 @@ export class SubPath {
       throw new Error('Paths must be contiguous to merge');
     }
     return new SubPath(this.start, [...this.commands, ...path.commands]);
+  }
+
+  reverse(): SubPath {
+    const reversedCommands = this.commands.map(c => c.reverse()).reverse();
+    const newPath = new SubPath(this.getCurrent(), reversedCommands);
+    if (this.closed) {
+      if (this.closingCommand) {
+        reversedCommands.shift();
+      }
+      newPath.close();
+    }
+
+    return newPath;
   }
 
   toString(): string {
@@ -387,6 +438,10 @@ export class SvgPath {
   public paths: SubPath[] = [];
   public get currentPath(): SubPath | undefined {
     return this.paths[this.paths.length - 1];
+  }
+
+  constructor(paths: SubPath[] = []) {
+    this.paths = paths;
   }
 
   getLength(): number {
@@ -485,6 +540,10 @@ export class SvgPath {
     }
   }
 
+  reverse(): SvgPath {
+    return new SvgPath(this.paths.map(p => p.reverse()).reverse());
+  }
+
   toString(): string {
     return this.paths.map(p => p.toString()).join('');
   }
@@ -509,7 +568,7 @@ export class SvgPath {
  * @param dashArray the dash array
  * @returns the dashed path
  */
-export function dashPath(pathStr: string, dashArray: number[]): string {
+export function dashPath(pathStr: string, dashArray: number[]): SvgPath {
   // TODO: Support multiple subpaths
   let path = SvgPath.fromString(pathStr).currentPath!;
   let remainingLength = path.getLength();
@@ -521,15 +580,6 @@ export function dashPath(pathStr: string, dashArray: number[]): string {
     const dashIndex = i % dashArray.length;
     const dash = dashArray[dashIndex];
     const [first, second] = path.splitAtLength(dash);
-    if (i === 18) {
-      console.log(
-        '\n\t\t',
-        path.getLength(),
-        dash,
-        remainingLength,
-        first.getCurrent(),
-      );
-    }
     if (i % 2 === 0) {
       dashedPath.push(first);
     }
@@ -541,10 +591,6 @@ export function dashPath(pathStr: string, dashArray: number[]): string {
     i++;
   }
 
-  console.log(
-    dashedPath[0].start.a,
-    dashedPath[dashedPath.length - 1].getCurrent().a,
-  );
   if (
     dashedPath.length > 2 &&
     dashedPath[0].start.equals(dashedPath[dashedPath.length - 1].getCurrent())
@@ -553,7 +599,7 @@ export function dashPath(pathStr: string, dashArray: number[]): string {
     dashedPath.pop();
   }
 
-  return dashedPath.map(p => p.toString()).join('');
+  return new SvgPath(dashedPath);
 }
 
 /**
