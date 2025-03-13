@@ -273,14 +273,16 @@ export type NormalCommand =
 
 export class SubPath {
   public start: Vector2;
-  public current: Vector2;
   public commands: NormalCommand[];
   public closed: boolean;
   private closingCommand: ZCommand | undefined;
 
+  public getCurrent(): Vector2 {
+    return this.commands[this.commands.length - 1]?.to ?? this.start;
+  }
+
   constructor(start: Vector2, commands: NormalCommand[] = []) {
     this.start = start;
-    this.current = start;
     this.commands = commands;
     this.closed = false;
   }
@@ -290,17 +292,16 @@ export class SubPath {
     if (
       this.closingCommand ||
       this.commands.length === 0 ||
-      this.start.equals(this.current)
+      this.start.equals(this.getCurrent())
     ) {
       return;
     }
-    this.closingCommand = new ZCommand(this.current, this.start);
+    this.closingCommand = new ZCommand(this.getCurrent(), this.start);
     this.commands.push(this.closingCommand);
   }
 
   addCommand(command: NormalCommand) {
     this.commands.push(command);
-    this.current = command.to;
   }
 
   getLength(): number {
@@ -313,7 +314,6 @@ export class SubPath {
     at: number;
     remaining: number;
   } {
-    // TODO: Handle closed paths
     let remaining = length;
     let at = 0;
     for (let i = 0; i < this.commands.length - 1; i++) {
@@ -359,6 +359,19 @@ export class SubPath {
       console.log('second', firstPath.toString());
     }
     return [firstPath, secondPath];
+  }
+
+  merge(path: SubPath): SubPath {
+    if (this.closed || path.closed) {
+      throw new Error('Cannot merge closed paths');
+    }
+    if (path.getCurrent().equals(this.start)) {
+      return path.merge(this);
+    }
+    if (!this.getCurrent().equals(path.start)) {
+      throw new Error('Paths must be contiguous to merge');
+    }
+    return new SubPath(this.start, [...this.commands, ...path.commands]);
   }
 
   toString(): string {
@@ -422,7 +435,7 @@ export class SvgPath {
   }
 
   public getCurrentPoint(): Vector2 {
-    return this.currentPath?.current ?? new Vector2(0, 0);
+    return this.currentPath?.getCurrent() ?? new Vector2(0, 0);
   }
 
   private addLine(segment: LSegment) {
@@ -508,6 +521,15 @@ export function dashPath(pathStr: string, dashArray: number[]): string {
     const dashIndex = i % dashArray.length;
     const dash = dashArray[dashIndex];
     const [first, second] = path.splitAtLength(dash);
+    if (i === 18) {
+      console.log(
+        '\n\t\t',
+        path.getLength(),
+        dash,
+        remainingLength,
+        first.getCurrent(),
+      );
+    }
     if (i % 2 === 0) {
       dashedPath.push(first);
     }
@@ -517,6 +539,18 @@ export function dashPath(pathStr: string, dashArray: number[]): string {
     remainingLength -= dash;
     path = second;
     i++;
+  }
+
+  console.log(
+    dashedPath[0].start.a,
+    dashedPath[dashedPath.length - 1].getCurrent().a,
+  );
+  if (
+    dashedPath.length > 2 &&
+    dashedPath[0].start.equals(dashedPath[dashedPath.length - 1].getCurrent())
+  ) {
+    dashedPath[0] = dashedPath[0].merge(dashedPath[dashedPath.length - 1]);
+    dashedPath.pop();
   }
 
   return dashedPath.map(p => p.toString()).join('');
