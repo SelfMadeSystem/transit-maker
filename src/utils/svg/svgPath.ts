@@ -366,56 +366,55 @@ export class SvgPath {
     }
   }
 
-  private addLine(segment: LSegment) {
+  public addCommand(command: NormalCommand) {
     const path = this.currentPath;
     if (path) {
-      path.addCommand(
-        new LCommand(path.current, new Vector2(segment[1], segment[2])),
-      );
+      path.addCommand(command);
     }
+  }
+
+  public getCurrentPoint(): Vector2 {
+    return this.currentPath?.current ?? new Vector2(0, 0);
+  }
+
+  private addLine(segment: LSegment) {
+    this.addCommand(
+      new LCommand(this.getCurrentPoint(), new Vector2(segment[1], segment[2])),
+    );
   }
 
   private addCubic(segment: CSegment) {
-    const path = this.currentPath;
-    if (path) {
-      path.addCommand(
-        new CCommand(
-          path.current,
-          new Vector2(segment[1], segment[2]),
-          new Vector2(segment[3], segment[4]),
-          new Vector2(segment[5], segment[6]),
-        ),
-      );
-    }
+    this.addCommand(
+      new CCommand(
+        this.getCurrentPoint(),
+        new Vector2(segment[1], segment[2]),
+        new Vector2(segment[3], segment[4]),
+        new Vector2(segment[5], segment[6]),
+      ),
+    );
   }
 
   private addQuadratic(segment: QSegment) {
-    const path = this.currentPath;
-    if (path) {
-      path.addCommand(
-        new QCommand(
-          path.current,
-          new Vector2(segment[1], segment[2]),
-          new Vector2(segment[3], segment[4]),
-        ),
-      );
-    }
+    this.addCommand(
+      new QCommand(
+        this.getCurrentPoint(),
+        new Vector2(segment[1], segment[2]),
+        new Vector2(segment[3], segment[4]),
+      ),
+    );
   }
 
   private addArc(segment: ASegment) {
-    const path = this.currentPath;
-    if (path) {
-      path.addCommand(
-        new ACommand(
-          path.current,
-          new Vector2(segment[1], segment[2]),
-          segment[3],
-          Boolean(segment[4]),
-          Boolean(segment[5]),
-          new Vector2(segment[6], segment[7]),
-        ),
-      );
-    }
+    this.addCommand(
+      new ACommand(
+        this.getCurrentPoint(),
+        new Vector2(segment[1], segment[2]),
+        segment[3],
+        Boolean(segment[4]),
+        Boolean(segment[5]),
+        new Vector2(segment[6], segment[7]),
+      ),
+    );
   }
 
   private closePath() {
