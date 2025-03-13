@@ -402,3 +402,141 @@ export function findEndAngle(radii: Vector2, t: number, len: number): number {
   }
   return result;
 }
+
+/**
+ * Determines the position of a point relative to an ellipse.
+ *
+ * @param radii - The radii of the ellipse.
+ * @param point - The point to be checked.
+ * @returns -1 if the point is inside the ellipse, 0 if the point is on the
+ * ellipse, and 1 if the point is outside the ellipse.
+ */
+export function pointOnEllipse(radii: Vector2, point: Vector2): -1 | 0 | 1 {
+  const normalizedX = point.x / radii.x;
+  const normalizedY = point.y / radii.y;
+  const distance = Math.sqrt(normalizedX ** 2 + normalizedY ** 2);
+  const diff = distance - 1;
+  if (Math.abs(diff) < EPSILON) {
+    return 0;
+  }
+  return Math.sign(diff) as -1 | 1;
+}
+
+/**
+ * Finds the parametric angle on a standard ellipse given the radii and a
+ * point. Uses numerical approximation to find the parametric angle and then
+ * calculates the closest point.
+ *
+ * @param radii - The radii of the ellipse as a Vector2 object.
+ * @param point - The point to find the closest point to.
+ * @returns The parametric angle in radians.
+ */
+export function findParametricAngle(
+  radii: Vector2,
+  point: Vector2,
+  iterationCallback?: (t: number, i: number) => void,
+): number {
+  if (radii.x === radii.y) {
+    return point.angle();
+  }
+  // Solve for t:
+  //   a*x sin(t) − b*y cos(t) + (0.5 b^2 − 0.5 a^2) sin(2t) = 0
+  // Derivative:
+  //   a*x cos(t) + b*y sin(t) + (b^2 − a'2) cos(2t) = 0
+
+  const poe = pointOnEllipse(radii, point);
+  if (poe === 0) {
+    return parametricAngle(new Vector2(0, 0), point, radii);
+  }
+  if (poe === -1) {
+    return findInsideParametricAngle(radii, point, iterationCallback);
+  }
+
+  // Initial guess
+  let t = point.div(radii).angle();
+
+  let t2 = t;
+  let i = 0;
+  if (iterationCallback) {
+    iterationCallback(t2, i);
+  }
+
+  const a = radii.x;
+  const b = radii.y;
+  const x = point.x;
+  const y = point.y;
+
+  // Newton's method
+  do {
+    t = t2;
+    const cos = Math.cos(t);
+    const sin = Math.sin(t);
+    const cos2 = Math.cos(2 * t);
+    const sin2 = Math.sin(2 * t);
+    const f = a * x * sin - b * y * cos + 0.5 * (b ** 2 - a ** 2) * sin2;
+    const df = a * x * cos + b * y * sin + (b ** 2 - a ** 2) * cos2;
+    t2 = t - f / df;
+
+    i++;
+    if (iterationCallback) {
+      iterationCallback(t2, i);
+    }
+  } while (Math.abs(t2 - t) > EPSILON && i < 100);
+
+  if (i === 100) {
+    console.error('findParametricAngle: max iterations reached');
+  }
+
+  return t2;
+}
+
+/**
+ * Fallback function for finding the parametric angle when the point is inside
+ * the ellipse. Uses a naïve numerical approximation to find the parametric
+ * angle.
+ *
+ * @param radii - The radii of the ellipse as a Vector2 object.
+ * @param point - The point to find the closest point to.
+ * @returns The parametric angle in radians.
+ */
+function findInsideParametricAngle(
+  radii: Vector2,
+  point: Vector2,
+  iterationCallback?: (t: number, i: number) => void,
+): number {
+  const a = radii.x;
+  const b = radii.y;
+  const x = point.x;
+  const y = point.y;
+
+  // TODO: Find better initial guess
+  let t1 = 0;
+  let t2 = 2 * Math.PI;
+  let t = (t1 + t2) / 2;
+  let i = 0;
+
+  while (Math.abs(t2 - t1) > EPSILON && i < 100) {
+    t = (t1 + t2) / 2;
+    const cos = Math.cos(t);
+    const sin = Math.sin(t);
+    const f =
+      a * x * sin - b * y * cos + 0.5 * (b ** 2 - a ** 2) * Math.sin(2 * t);
+
+    if (f > 0) {
+      t2 = t;
+    } else {
+      t1 = t;
+    }
+
+    i++;
+    if (iterationCallback) {
+      iterationCallback(t, i);
+    }
+  }
+
+  if (i === 100) {
+    console.error('findInsideParametricAngle: max iterations reached');
+  }
+
+  return t;
+}
