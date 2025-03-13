@@ -9,6 +9,7 @@ import {
   findEndAngle,
   pointAtAngle,
 } from '../math/ellipseUtils';
+import { EPSILON } from '../mathUtils';
 import { Vector2 } from '../vec';
 import {
   ASegment,
@@ -382,11 +383,6 @@ export class SubPath {
     const secondCommands = this.commands.slice(index + 1);
     const firstPath = new SubPath(this.start, [...firstCommands, first]);
     const secondPath = new SubPath(second.from, [second, ...secondCommands]);
-    if (index > 0) {
-      console.log('index', index);
-      console.log('first', firstPath.toString());
-      console.log('second', firstPath.toString());
-    }
     return [firstPath, secondPath];
   }
 
@@ -544,6 +540,62 @@ export class SvgPath {
     return new SvgPath(this.paths.map(p => p.reverse()).reverse());
   }
 
+  dashPath(dashArray: number[]): SvgPath {
+    let path = this.paths[0];
+    let pathIndex = 0;
+    let remainingLength = this.getLength();
+    let dash = dashArray[0];
+
+    const dashedPath: SubPath[] = [];
+
+    let i = 0;
+    while (remainingLength > 0) {
+      const [first, second] = path.splitAtLength(dash);
+      if (i % 2 === 0) {
+        dashedPath.push(first);
+      }
+      if (second) {
+        path = second;
+      } else {
+        if (pathIndex === this.paths.length - 1) {
+          break;
+        }
+
+        if (
+          dashedPath.length > 2 &&
+          dashedPath[0].start.equals(
+            dashedPath[dashedPath.length - 1].getCurrent(),
+          )
+        ) {
+          dashedPath[0] = dashedPath[0].merge(
+            dashedPath[dashedPath.length - 1],
+          );
+          dashedPath.pop();
+        }
+
+        path = this.paths[++pathIndex];
+        dash = 0; // on browsers, it resets when going to the next path
+        i = -1;
+      }
+      const length = first.getLength();
+      dash -= length;
+      if (dash <= EPSILON) {
+        dash = dashArray[++i % dashArray.length];
+      }
+      remainingLength -= length;
+    }
+
+    if (
+      dashedPath.length > 2 &&
+      dashedPath[0].start.equals(dashedPath[dashedPath.length - 1].getCurrent())
+    ) {
+      dashedPath[0] = dashedPath[0].merge(dashedPath[dashedPath.length - 1]);
+      dashedPath.pop();
+    }
+
+    return new SvgPath(dashedPath);
+  }
+
   toString(): string {
     return this.paths.map(p => p.toString()).join('');
   }
@@ -560,46 +612,6 @@ export class SvgPath {
   static fromString(path: string): SvgPath {
     return SvgPath.fromPathArray(normalizePath(path));
   }
-}
-
-/**
- * Create a dashed path from a path
- * @param pathStr the path to dash
- * @param dashArray the dash array
- * @returns the dashed path
- */
-export function dashPath(pathStr: string, dashArray: number[]): SvgPath {
-  // TODO: Support multiple subpaths
-  let path = SvgPath.fromString(pathStr).currentPath!;
-  let remainingLength = path.getLength();
-
-  const dashedPath: SubPath[] = [];
-
-  let i = 0;
-  while (remainingLength > 0) {
-    const dashIndex = i % dashArray.length;
-    const dash = dashArray[dashIndex];
-    const [first, second] = path.splitAtLength(dash);
-    if (i % 2 === 0) {
-      dashedPath.push(first);
-    }
-    if (!second) {
-      break;
-    }
-    remainingLength -= dash;
-    path = second;
-    i++;
-  }
-
-  if (
-    dashedPath.length > 2 &&
-    dashedPath[0].start.equals(dashedPath[dashedPath.length - 1].getCurrent())
-  ) {
-    dashedPath[0] = dashedPath[0].merge(dashedPath[dashedPath.length - 1]);
-    dashedPath.pop();
-  }
-
-  return new SvgPath(dashedPath);
 }
 
 /**
