@@ -431,11 +431,7 @@ export function pointOnEllipse(radii: Vector2, point: Vector2): -1 | 0 | 1 {
  * @param point - The point to find the closest point to.
  * @returns The parametric angle in radians.
  */
-export function findParametricAngle(
-  radii: Vector2,
-  point: Vector2,
-  iterationCallback?: (t: number, i: number) => void,
-): number {
+export function findParametricAngle(radii: Vector2, point: Vector2): number {
   if (radii.x === radii.y) {
     return point.angle();
   }
@@ -449,7 +445,7 @@ export function findParametricAngle(
     return parametricAngle(new Vector2(0, 0), point, radii);
   }
   if (poe === -1) {
-    return findInsideParametricAngle(radii, point, iterationCallback);
+    return findEllipseAngleBisect(radii, point);
   }
 
   // Initial guess
@@ -457,9 +453,6 @@ export function findParametricAngle(
 
   let t2 = t;
   let i = 0;
-  if (iterationCallback) {
-    iterationCallback(t2, i);
-  }
 
   const a = radii.x;
   const b = radii.y;
@@ -478,9 +471,6 @@ export function findParametricAngle(
     t2 = t - f / df;
 
     i++;
-    if (iterationCallback) {
-      iterationCallback(t2, i);
-    }
   } while (Math.abs(t2 - t) > EPSILON && i < 100);
 
   if (i === 100) {
@@ -491,27 +481,36 @@ export function findParametricAngle(
 }
 
 /**
- * Fallback function for finding the parametric angle when the point is inside
- * the ellipse. Uses a naïve numerical approximation to find the parametric
- * angle.
+ * Finds the parametric angle on an ellipse given the radii and a point. Uses
+ * bisection to find the parametric angle and then calculates the closest point.
  *
  * @param radii - The radii of the ellipse as a Vector2 object.
  * @param point - The point to find the closest point to.
+ * @param startAngle - The start parametric angle in radians.
+ * @param endAngle - The end parametric angle in radians.
  * @returns The parametric angle in radians.
  */
-function findInsideParametricAngle(
+export function findEllipseAngleBisect(
   radii: Vector2,
   point: Vector2,
-  iterationCallback?: (t: number, i: number) => void,
+  startAngle = 0,
+  endAngle = 2 * Math.PI,
 ): number {
   const a = radii.x;
   const b = radii.y;
   const x = point.x;
   const y = point.y;
 
-  // TODO: Find better initial guess
-  let t1 = 0;
-  let t2 = 2 * Math.PI;
+  const ogT1 = Math.min(startAngle, endAngle);
+  const ogT2 = Math.max(startAngle, endAngle);
+  let t1 = ogT1;
+  let t2 = ogT2;
+
+  const startPoint = pointAtAngle(new Vector2(0, 0), radii, t1);
+  const endPoint = pointAtAngle(new Vector2(0, 0), radii, t2);
+  const startDist = startPoint.dist(point);
+  const endDist = endPoint.dist(point);
+
   let t = (t1 + t2) / 2;
   let i = 0;
 
@@ -529,14 +528,47 @@ function findInsideParametricAngle(
     }
 
     i++;
-    if (iterationCallback) {
-      iterationCallback(t, i);
-    }
   }
 
   if (i === 100) {
     console.error('findInsideParametricAngle: max iterations reached');
   }
 
+  const newPoint = pointAtAngle(new Vector2(0, 0), radii, t);
+  const newDist = newPoint.dist(point);
+  if (newDist > startDist || newDist > endDist) {
+    if (startDist < endDist) {
+      return ogT1;
+    }
+    return ogT2;
+  }
+
   return t;
+}
+
+/**
+ * Finds the closest point on an elliptical arc to a given point using a bisect
+ * search.
+ *
+ * @param center - The center of the ellipse.
+ * @param radii - The radii of the ellipse as a Vector2 object.
+ * @param point - The point to find the closest point to.
+ * @param startAngle - The start parametric angle of the arc in radians.
+ * @param endAngle - The end parametric angle of the arc in radians.
+ * @param xAxisRotation - The x-axis rotation of the ellipse in radians.
+ * @returns The closest point on the arc as a Vector2 object.
+ */
+export function findClosestPointOnArc(
+  center: Vector2,
+  radii: Vector2,
+  point: Vector2,
+  startAngle: number,
+  endAngle: number,
+  xAxisRotation: number = 0,
+): Vector2 {
+  const xRotRad = (xAxisRotation * Math.PI) / 180;
+  point = point.sub(center);
+  point = point.rotateBy(-xRotRad);
+  const t = findEllipseAngleBisect(radii, point, startAngle, endAngle);
+  return pointAtAngle(center, radii, t, xAxisRotation);
 }

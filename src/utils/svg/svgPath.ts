@@ -1,11 +1,13 @@
 import {
   bezierLength,
   bezierPointAtLength,
+  closestPointOnBezier,
   splitBezierAtLength,
 } from '../math/bezier';
 import {
   EllipseArc,
   ellipseArcProperties,
+  findClosestPointOnArc,
   findEndAngle,
   pointAtAngle,
 } from '../math/ellipseUtils';
@@ -44,6 +46,12 @@ abstract class BaseMoveCommand {
 
   abstract reverse(): NormalCommand;
 
+  abstract getClosestPoint(point: Vector2): Vector2;
+
+  getDistance(point: Vector2): number {
+    return this.getClosestPoint(point).dist(point);
+  }
+
   abstract toString(): string;
 }
 
@@ -72,6 +80,19 @@ export class LCommand extends BaseMoveCommand {
 
   reverse(): LCommand {
     return new LCommand(this.to, this.from);
+  }
+
+  getClosestPoint(point: Vector2): Vector2 {
+    const line = this.to.sub(this.from);
+    const pointLine = point.sub(this.from);
+    const t = pointLine.dot(line) / line.dot(line);
+    if (t < 0) {
+      return this.from;
+    }
+    if (t > 1) {
+      return this.to;
+    }
+    return this.from.lerp(this.to, t);
   }
 
   toString(): string {
@@ -105,6 +126,19 @@ export class ZCommand extends BaseMoveCommand {
 
   reverse(): LCommand {
     return new LCommand(this.to, this.from);
+  }
+
+  getClosestPoint(point: Vector2): Vector2 {
+    const line = this.to.sub(this.from);
+    const pointLine = point.sub(this.from);
+    const t = pointLine.dot(line) / line.dot(line);
+    if (t < 0) {
+      return this.from;
+    }
+    if (t > 1) {
+      return this.to;
+    }
+    return this.from.lerp(this.to, t);
   }
 
   toString(): string {
@@ -150,6 +184,13 @@ export class CCommand extends BaseMoveCommand {
     return new CCommand(this.to, this.control2, this.control1, this.from);
   }
 
+  getClosestPoint(point: Vector2): Vector2 {
+    return closestPointOnBezier(
+      [this.from, this.control1, this.control2, this.to],
+      point,
+    );
+  }
+
   toString(): string {
     return `C${this.control1.s} ${this.control2.s} ${this.to.s}`;
   }
@@ -187,6 +228,10 @@ export class QCommand extends BaseMoveCommand {
 
   reverse(): QCommand {
     return new QCommand(this.to, this.control, this.from);
+  }
+
+  getClosestPoint(point: Vector2): Vector2 {
+    return closestPointOnBezier([this.from, this.control, this.to], point);
   }
 
   toString(): string {
@@ -284,6 +329,20 @@ export class ACommand extends BaseMoveCommand {
       this.large,
       !this.sweep,
       this.from,
+    );
+  }
+
+  getClosestPoint(point: Vector2): Vector2 {
+    const { center, radii, startParametric, endParametric } =
+      this.getArcProperties();
+
+    return findClosestPointOnArc(
+      center,
+      radii,
+      point,
+      startParametric,
+      endParametric,
+      this.rotation,
     );
   }
 
@@ -421,6 +480,31 @@ export class SubPath {
     return newPath;
   }
 
+  getClosestPoint(point: Vector2): Vector2 {
+    let closest = this.start;
+    let closestDist = this.start.dist(point);
+    for (const command of this.commands) {
+      const closestPoint = command.getClosestPoint(point);
+      const dist = closestPoint.dist(point);
+      if (dist < closestDist) {
+        closest = closestPoint;
+        closestDist = dist;
+      }
+    }
+    return closest;
+  }
+
+  isPointInStroke(point: Vector2, width: number): boolean {
+    for (const command of this.commands) {
+      const closestPoint = command.getClosestPoint(point);
+      const dist = closestPoint.dist(point);
+      if (dist <= width / 2) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   toString(): string {
     let str = `M${this.start.s}${this.commands.map(c => c.toString()).join('')}`;
     if (this.closed) {
@@ -453,6 +537,29 @@ export class SvgPath {
       remaining -= path.getLength();
     }
     return this.paths[this.paths.length - 1]?.start ?? new Vector2(0, 0);
+  }
+
+  getClosestPoint(point: Vector2): Vector2 {
+    let closest = this.paths[0].getClosestPoint(point);
+    let closestDist = closest.dist(point);
+    for (const path of this.paths) {
+      const closestPoint = path.getClosestPoint(point);
+      const dist = closestPoint.dist(point);
+      if (dist < closestDist) {
+        closest = closestPoint;
+        closestDist = dist;
+      }
+    }
+    return closest;
+  }
+
+  isPointInStroke(point: Vector2, width: number): boolean {
+    for (const path of this.paths) {
+      if (path.isPointInStroke(point, width)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public addSegment(segment: NormalSegment) {
@@ -598,6 +705,10 @@ export class SvgPath {
 
   toString(): string {
     return this.paths.map(p => p.toString()).join('');
+  }
+
+  toPath2D(): Path2D {
+    return new Path2D(this.toString());
   }
 
   static fromPathArray(path: PathArray): SvgPath {

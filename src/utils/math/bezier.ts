@@ -171,3 +171,31 @@ export function splitBezierAtLength(
   const t = bezierParameter(controlPoints, length);
   return splitBezier(controlPoints, t);
 }
+
+/**
+ * Gets the closest point on a Bezier curve to a given point.
+ *
+ * @param controlPoints - An array of control points defining the Bezier curve.
+ * @param point - The point to which to find the closest point on the curve.
+ * @returns The point on the Bezier curve closest to the given point.
+ */
+export function closestPointOnBezier(
+  controlPoints: Bezier,
+  point: Vector2,
+): Vector2 {
+  let minDistance = Infinity;
+  let closestPoint = controlPoints[0];
+
+  for (let i = 1; i <= SEGMENTS; i++) {
+    const t = i / SEGMENTS;
+    const curvePoint = bezierPoint(controlPoints, t);
+    const distance = curvePoint.sub(point).length();
+
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestPoint = curvePoint;
+    }
+  }
+
+  return closestPoint;
+}
