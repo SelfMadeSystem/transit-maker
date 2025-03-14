@@ -40,7 +40,7 @@ const EllipseDemo: React.FC = () => {
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDragging) return;
+    // if (!isDragging) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
@@ -68,9 +68,10 @@ const EllipseDemo: React.FC = () => {
     ctx.stroke(svgPath.toPath2D());
 
     // Draw point
+    const radius = point.dist(closestPoint);
     ctx.beginPath();
-    ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
-    ctx.fillStyle = 'red';
+    ctx.arc(point.x, point.y, 3, 0, 2 * Math.PI);
+    ctx.fillStyle = radius < 15 ? '#00f' : 'red';
     ctx.fill();
 
     // Draw closest point
@@ -80,7 +81,6 @@ const EllipseDemo: React.FC = () => {
     ctx.fill();
 
     // Draw circle from point to closest point
-    const radius = point.dist(closestPoint);
     ctx.beginPath();
     ctx.arc(point.x, point.y, radius, 0, 2 * Math.PI);
     ctx.strokeStyle = '#0f0';
