@@ -361,23 +361,35 @@ export type NormalCommand =
   | ACommand;
 
 export class SubPath {
-  public start: Vector2;
-  public commands: NormalCommand[];
-  public closed: boolean;
+  public readonly start: Vector2;
+  public readonly commands: readonly NormalCommand[];
+  private _closed: boolean;
+  public get closed(): boolean {
+    return this._closed;
+  }
   private closingCommand: ZCommand | undefined;
 
   public getCurrent(): Vector2 {
     return this.commands[this.commands.length - 1]?.to ?? this.start;
   }
 
-  constructor(start: Vector2, commands: NormalCommand[] = []) {
+  constructor(
+    start: Vector2,
+    commands: NormalCommand[],
+    closed: boolean = false,
+  ) {
     this.start = start;
     this.commands = commands;
-    this.closed = false;
+    this._closed = closed;
+
+    if (this._closed) {
+      this.__close();
+    }
   }
 
-  public close() {
-    this.closed = true;
+  /** Internal use only */
+  __close() {
+    this._closed = true;
     if (
       this.closingCommand ||
       this.commands.length === 0 ||
@@ -386,11 +398,7 @@ export class SubPath {
       return;
     }
     this.closingCommand = new ZCommand(this.getCurrent(), this.start);
-    this.commands.push(this.closingCommand);
-  }
-
-  addCommand(command: NormalCommand) {
-    this.commands.push(command);
+    (this.commands as NormalCommand[]).push(this.closingCommand);
   }
 
   getLength(): number {
@@ -445,37 +453,73 @@ export class SubPath {
     return [firstPath, secondPath];
   }
 
-  canMerge(path: SubPath): boolean {
+  canMerge(path: SubPath, canReverse: boolean = false): boolean {
     return (
       !this.closed &&
       !path.closed &&
       (this.getCurrent().equals(path.start) ||
-        this.start.equals(path.getCurrent()))
+        this.start.equals(path.getCurrent()) ||
+        (canReverse &&
+          (this.getCurrent().equals(path.getCurrent()) ||
+            this.start.equals(path.start))))
     );
   }
 
-  merge(path: SubPath): SubPath {
+  merge(path: SubPath, canReverse: boolean = false): SubPath {
     if (this.closed || path.closed) {
       throw new Error('Cannot merge closed paths');
     }
-    if (path.getCurrent().equals(this.start)) {
-      return path.merge(this);
+    const thisS = this.start;
+    const thisC = this.getCurrent();
+    const pathS = path.start;
+    const pathC = path.getCurrent();
+    let newPath: SubPath;
+
+    if (thisS.equals(pathC)) {
+      newPath = new SubPath(
+        pathS,
+        [...path.commands, ...this.commands],
+        thisC.equals(pathS),
+      );
+    } else if (thisC.equals(pathS)) {
+      newPath = new SubPath(
+        thisS,
+        [...this.commands, ...path.commands],
+        // thisS.equals(pathC), // guaranteed to be false
+      );
+    } else if (canReverse) {
+      if (thisC.equals(pathC)) {
+        newPath = new SubPath(
+          thisS,
+          [...this.commands, ...path.commands.map(c => c.reverse()).reverse()],
+          thisS.equals(pathS),
+        );
+      } else if (thisS.equals(pathS)) {
+        newPath = new SubPath(
+          thisC,
+          [...path.commands, ...this.commands.map(c => c.reverse()).reverse()],
+          // thisC.equals(pathC), // guaranteed to be false
+        );
+      } else {
+        throw new Error('Cannot merge paths');
+      }
+    } else {
+      throw new Error('Cannot merge paths');
     }
-    if (!this.getCurrent().equals(path.start)) {
-      throw new Error('Paths must be contiguous to merge');
-    }
-    return new SubPath(this.start, [...this.commands, ...path.commands]);
+
+    return newPath;
   }
 
   reverse(): SubPath {
     const reversedCommands = this.commands.map(c => c.reverse()).reverse();
-    const newPath = new SubPath(this.getCurrent(), reversedCommands);
-    if (this.closed) {
-      if (this.closingCommand) {
-        reversedCommands.shift();
-      }
-      newPath.close();
+    if (this.closed && this.closingCommand) {
+      reversedCommands.shift();
     }
+    const newPath = new SubPath(
+      this.getCurrent(),
+      reversedCommands,
+      this.closed,
+    );
 
     return newPath;
   }
@@ -515,12 +559,13 @@ export class SubPath {
 }
 
 export class SvgPath {
-  public paths: SubPath[] = [];
+  public readonly paths: readonly SubPath[] = [];
   public get currentPath(): SubPath | undefined {
     return this.paths[this.paths.length - 1];
   }
+  private currentCommands: NormalCommand[] = [];
 
-  constructor(paths: SubPath[] = []) {
+  constructor(paths: readonly SubPath[] = []) {
     this.paths = paths;
   }
 
@@ -562,10 +607,19 @@ export class SvgPath {
     return false;
   }
 
-  public addSegment(segment: NormalSegment) {
+  getCurrentPoint(): Vector2 {
+    return this.currentPath?.getCurrent() ?? new Vector2(0, 0);
+  }
+
+  private addSegment(segment: NormalSegment) {
     switch (segment[0]) {
       case 'M':
-        this.paths.push(new SubPath(new Vector2(segment[1], segment[2])));
+        (this.paths as SubPath[]).push(
+          new SubPath(
+            new Vector2(segment[1], segment[2]),
+            (this.currentCommands = []),
+          ),
+        );
         break;
       case 'L':
         this.addLine(segment);
@@ -585,15 +639,8 @@ export class SvgPath {
     }
   }
 
-  public addCommand(command: NormalCommand) {
-    const path = this.currentPath;
-    if (path) {
-      path.addCommand(command);
-    }
-  }
-
-  public getCurrentPoint(): Vector2 {
-    return this.currentPath?.getCurrent() ?? new Vector2(0, 0);
+  private addCommand(command: NormalCommand) {
+    this.currentCommands.push(command);
   }
 
   private addLine(segment: LSegment) {
@@ -639,8 +686,43 @@ export class SvgPath {
   private closePath() {
     const path = this.currentPath;
     if (path) {
-      path.close();
+      path.__close();
     }
+  }
+
+  tryMergePaths(canReverse = false): SvgPath {
+    if (this.paths.length < 2) {
+      return this;
+    }
+    const newPaths: Set<SubPath> = new Set(this.paths);
+
+    let merged = true;
+
+    while (merged) {
+      merged = false;
+      for (const path of newPaths) {
+        if (path.closed) {
+          continue;
+        }
+        for (const otherPath of newPaths) {
+          if (path === otherPath || otherPath.closed) {
+            continue;
+          }
+          if (path.canMerge(otherPath, canReverse)) {
+            newPaths.delete(path);
+            newPaths.delete(otherPath);
+            newPaths.add(path.merge(otherPath, canReverse));
+            merged = true;
+            break;
+          }
+        }
+        if (merged) {
+          break;
+        }
+      }
+    }
+
+    return new SvgPath([...newPaths]);
   }
 
   reverse(): SvgPath {
@@ -657,6 +739,10 @@ export class SvgPath {
 
     let i = 0;
     while (remainingLength > 0) {
+      if (dash <= EPSILON) {
+        dash = dashArray[++i % dashArray.length];
+        continue;
+      }
       const [first, second] = path.splitAtLength(dash);
       if (i % 2 === 0) {
         dashedPath.push(first);
