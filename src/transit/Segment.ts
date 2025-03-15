@@ -71,7 +71,7 @@ export class RouteSegment {
       {
         strokeType: 'solid',
         clear: false,
-        color: Color.BLACK,
+        color: Color.WHITE,
         id: 1,
         lineCap: 'round',
         width: 2,
@@ -167,11 +167,16 @@ export class RouteSegment {
     ctx.setStroke(color);
   }
 
-  /** Draws the segment */
-  *draw(ctx: DrawingContext): Generator<void> {
+  getPath(): Path2Dpp {
     const path = new Path2Dpp();
     path.moveTo(this.getStart());
     path.lineTo(this.getEnd());
+    return path;
+  }
+
+  /** Draws the segment */
+  *draw(ctx: DrawingContext): Generator<void> {
+    const path = this.getPath();
 
     for (const stroke of this.style.strokes) {
       ctx.save();
@@ -180,5 +185,24 @@ export class RouteSegment {
       ctx.restore();
       yield;
     }
+  }
+
+  drawSelected(ctx: DrawingContext) {
+    ctx.save();
+    const path = this.getPath();
+    ctx.setCtx('fg');
+
+    ctx.setStroke(Color.WHITE);
+    ctx.setStrokeWidth(this.style.strokes[0].width + 2);
+    ctx.setStrokeDash([2, 3]);
+    ctx.setStrokeDashOffset(performance.now() / 100);
+    ctx.strokePath(path, false);
+
+    ctx.setStroke(Color.TRANSPARENT);
+    ctx.setStrokeDash([]);
+    ctx.setStrokeWidth(this.style.strokes[0].width);
+    ctx.strokePath(path, true);
+
+    ctx.restore();
   }
 }

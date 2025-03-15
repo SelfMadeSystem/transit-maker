@@ -33,17 +33,18 @@ type Camera = {
 export function MapCanvas() {
   const bgCanvasRef = useRef<HTMLCanvasElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fgCanvasRef = useRef<HTMLCanvasElement>(null);
   const [map, setMap] = useState(createMap);
   const [camera, setCamera] = useState<Camera>({
     zoom: 1,
     offset: new Vector2(0, 0),
   });
-  const ctx = useCanvasDrawingContext(bgCanvasRef, canvasRef);
+  const ctx = useCanvasDrawingContext(bgCanvasRef, canvasRef, fgCanvasRef);
 
   const draw = useCallback(() => {
     if (!ctx) return;
 
-    ctx.setBackground(Color.WHITE);
+    ctx.setBackground(Color.BLACK);
 
     const { zoom, offset } = camera;
 
@@ -103,11 +104,13 @@ export function MapCanvas() {
   }, [draw]);
 
   useEffect(() => {
+    const bgCanvas = bgCanvasRef.current;
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const fgCanvas = fgCanvasRef.current;
+    if (!bgCanvas || !canvas || !fgCanvas) return;
     const handleResize = () => {
-      canvas.width = canvas.clientWidth;
-      canvas.height = canvas.clientHeight;
+      bgCanvas.width = canvas.width = fgCanvas.width = canvas.clientWidth;
+      bgCanvas.height = canvas.height = fgCanvas.height = canvas.clientHeight;
       draw();
     };
 
@@ -124,6 +127,10 @@ export function MapCanvas() {
     <div className="absolute h-full w-full">
       <canvas ref={bgCanvasRef} className="absolute h-full w-full" />
       <canvas ref={canvasRef} className="absolute h-full w-full" />
+      <canvas
+        ref={fgCanvasRef}
+        className="pointer-events-none absolute h-full w-full"
+      />
     </div>
   );
 }

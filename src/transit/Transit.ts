@@ -47,7 +47,7 @@ export class Stop {
   }
 
   draw(ctx: DrawingContext): void {
-    ctx.setFill(Color.BLACK);
+    ctx.setFill(Color.WHITE);
     ctx.fillPath(this.getPath());
   }
 }

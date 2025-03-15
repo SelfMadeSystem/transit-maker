@@ -6,9 +6,9 @@ export interface DrawingContext {
   /**
    * Set the current context to either the background or middle ground context.
    * Eventually, might add a foreground context if needed.
-   * @param which - 'bg' for background, 'mg' for middle ground
+   * @param which - 'bg' for background, 'mg' for middle ground, 'fg' for foreground
    */
-  setCtx(which: 'bg' | 'mg'): void;
+  setCtx(which: 'bg' | 'mg' | 'fg'): void;
   /**
    * Set the background color of the canvas.
    * @param color - The color to set the background to
@@ -170,12 +170,18 @@ export interface DrawingContext {
 export class CanvasDrawingContext implements DrawingContext {
   private bgCtx: CanvasRenderingContext2D;
   private ctx: CanvasRenderingContext2D;
+  private fgCtx: CanvasRenderingContext2D;
   private currentCtx: CanvasRenderingContext2D;
   private ctxHistory: CanvasRenderingContext2D[] = [];
 
-  constructor(bgCtx: CanvasRenderingContext2D, ctx: CanvasRenderingContext2D) {
+  constructor(
+    bgCtx: CanvasRenderingContext2D,
+    ctx: CanvasRenderingContext2D,
+    fgCtx: CanvasRenderingContext2D,
+  ) {
     this.bgCtx = bgCtx;
     this.ctx = ctx;
+    this.fgCtx = fgCtx;
     this.currentCtx = ctx;
   }
 
@@ -187,8 +193,34 @@ export class CanvasDrawingContext implements DrawingContext {
     return this.currentCtx;
   }
 
-  setCtx(which: 'bg' | 'mg') {
-    this.currentCtx = which === 'bg' ? this.bgCtx : this.ctx;
+  setCtx(which: 'bg' | 'mg' | 'fg') {
+    switch (which) {
+      case 'bg':
+        this.currentCtx = this.bgCtx;
+        break;
+      case 'mg':
+        this.currentCtx = this.ctx;
+        break;
+      case 'fg':
+        this.currentCtx = this.fgCtx;
+        break;
+    }
+  }
+
+  clear() {
+    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+    this.bgCtx.clearRect(
+      0,
+      0,
+      this.bgCtx.canvas.width,
+      this.bgCtx.canvas.height,
+    );
+    this.fgCtx.clearRect(
+      0,
+      0,
+      this.fgCtx.canvas.width,
+      this.fgCtx.canvas.height,
+    );
   }
 
   setBackground(color: Color) {
@@ -213,6 +245,7 @@ export class CanvasDrawingContext implements DrawingContext {
   }
 
   setStrokeDashOffset(offset: number) {
+    console.log(this.currentCtx, offset);
     this.currentCtx.lineDashOffset = offset;
   }
 
@@ -317,46 +350,53 @@ export class CanvasDrawingContext implements DrawingContext {
   }
 
   save() {
-    this.ctx.save();
     this.bgCtx.save();
+    this.ctx.save();
+    this.fgCtx.save();
     this.ctxHistory.push(this.currentCtx);
   }
 
   restore() {
-    this.ctx.restore();
     this.bgCtx.restore();
+    this.ctx.restore();
+    this.fgCtx.restore();
     this.currentCtx = this.ctxHistory.pop() ?? this.ctx;
   }
 
   translate(x: number, y: number) {
-    this.ctx.translate(x, y);
     this.bgCtx.translate(x, y);
+    this.ctx.translate(x, y);
+    this.fgCtx.translate(x, y);
   }
 
   rotate(angle: number) {
-    this.ctx.rotate(angle);
     this.bgCtx.rotate(angle);
+    this.ctx.rotate(angle);
+    this.fgCtx.rotate(angle);
   }
 
   scale(x: number, y: number) {
-    this.ctx.scale(x, y);
     this.bgCtx.scale(x, y);
+    this.ctx.scale(x, y);
+    this.fgCtx.scale(x, y);
   }
 }
 
 export function useCanvasDrawingContext(
   bgCanavas: RefObject<HTMLCanvasElement>,
   canvas: RefObject<HTMLCanvasElement>,
+  fgCanvas: RefObject<HTMLCanvasElement>,
 ): CanvasDrawingContext | null {
   const [ctx, setCtx] = useState<CanvasDrawingContext | null>(null);
 
   useEffect(() => {
     const bgCtx = bgCanavas.current?.getContext('2d');
     const ctx = canvas.current?.getContext('2d');
-    if (!bgCtx || !ctx) return;
+    const fgCtx = fgCanvas.current?.getContext('2d');
+    if (!bgCtx || !ctx || !fgCtx) return;
 
-    setCtx(new CanvasDrawingContext(bgCtx, ctx));
-  }, [bgCanavas, canvas]);
+    setCtx(new CanvasDrawingContext(bgCtx, ctx, fgCtx));
+  }, [bgCanavas, canvas, fgCanvas]);
 
   return ctx;
 }
@@ -391,7 +431,8 @@ export class SvgDrawingContext implements DrawingContext {
   private bg: Color;
   private svg: SVGSVGElement;
   private bgG: SVGGElement;
-  private g: SVGGElement;
+  private mgG: SVGGElement;
+  private fgG: SVGGElement;
   private currentG: SVGGElement;
   private state: SvgDrawingState[];
   private usedFonts: Set<string> = new Set();
@@ -400,12 +441,14 @@ export class SvgDrawingContext implements DrawingContext {
     this.svg = svg;
     this.bg = new Color(0, 0, 0, 0);
     this.bgG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    this.currentG = this.g = document.createElementNS(
+    this.currentG = this.mgG = document.createElementNS(
       'http://www.w3.org/2000/svg',
       'g',
     );
+    this.fgG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     this.svg.appendChild(this.bgG);
-    this.svg.appendChild(this.g);
+    this.svg.appendChild(this.mgG);
+    this.svg.appendChild(this.fgG);
     this.state = [
       {
         stroke: new Color(0, 0, 0, 0),
@@ -419,13 +462,23 @@ export class SvgDrawingContext implements DrawingContext {
         textAlign: 'start',
         textBaseline: 'alphabetic',
         transform: [],
-        context: this.g,
+        context: this.mgG,
       },
     ];
   }
 
-  setCtx(which: 'bg' | 'mg') {
-    this.currentG = which === 'bg' ? this.bgG : this.g;
+  setCtx(which: 'bg' | 'mg' | 'fg') {
+    switch (which) {
+      case 'bg':
+        this.currentG = this.bgG;
+        break;
+      case 'mg':
+        this.currentG = this.mgG;
+        break;
+      case 'fg':
+        this.currentG = this.fgG;
+        break;
+    }
   }
 
   setBackground(color: Color) {
