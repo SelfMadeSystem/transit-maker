@@ -117,7 +117,7 @@ function splitArc(
   const midPoint = from.add(to).div(2);
   const transformedPoint = from
     .sub(midPoint)
-    .rotateBy(xRotRad)
+    .rotate(xRotRad)
     .div(...radii.a);
 
   const radiiCheck = transformedPoint.lenSq();

@@ -1,5 +1,6 @@
 import { Color } from '../components/color/Color';
 import { Path2Dpp } from './Path2Dpp';
+import { RefObject, useEffect, useState } from 'react';
 
 export interface DrawingContext {
   /**
@@ -341,6 +342,23 @@ export class CanvasDrawingContext implements DrawingContext {
     this.ctx.scale(x, y);
     this.bgCtx.scale(x, y);
   }
+}
+
+export function useCanvasDrawingContext(
+  canvas: RefObject<HTMLCanvasElement>,
+): CanvasDrawingContext | null {
+  const [ctx, setCtx] = useState<CanvasDrawingContext | null>(null);
+
+  useEffect(() => {
+    if (!canvas.current) return;
+    const bgCtx = canvas.current.getContext('2d');
+    if (!bgCtx) return;
+    const ctx = canvas.current.getContext('2d');
+    if (!ctx) return;
+    setCtx(new CanvasDrawingContext(bgCtx, ctx));
+  }, [canvas]);
+
+  return ctx;
 }
 
 type SvgTransform =

@@ -82,7 +82,7 @@ export class Vector2 implements Clonable {
     return this.x * other.x + this.y * other.y;
   }
 
-  rotateBy(rotation: number): Vector2 {
+  rotate(rotation: number): Vector2 {
     const cos = Math.cos(rotation);
     const sin = Math.sin(rotation);
     return new Vector2(

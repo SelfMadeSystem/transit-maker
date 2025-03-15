@@ -6,6 +6,37 @@ const pi = Math.PI,
   epsilon = 1e-6,
   tauEpsilon = tau - epsilon;
 
+type Vector2OrNumber = Vector2 | unknown;
+
+type ExtractedTuple<T extends Vector2OrNumber[]> = {
+  [K in keyof T]: T[K] extends Vector2 ? [number, number] : T[K];
+};
+
+type Flatten<T extends (Vector2OrNumber | unknown)[]> = T extends [
+  infer First,
+  ...infer Rest,
+]
+  ? First extends Vector2OrNumber[]
+    ? [...First, ...Flatten<Rest>]
+    : [First, ...Flatten<Rest>]
+  : [];
+
+function extractArgs<T extends Vector2OrNumber[]>(
+  args: T,
+): Flatten<ExtractedTuple<T>> {
+  const flatten = (arr: Vector2OrNumber[]) =>
+    arr.reduce<unknown[]>((acc, val) => {
+      if (val instanceof Vector2) {
+        acc.push(val.x, val.y);
+      } else {
+        acc.push(val);
+      }
+      return acc;
+    }, []);
+
+  return flatten(args) as Flatten<ExtractedTuple<T>>;
+}
+
 export class Path2Dpp {
   public x0: number | null = null;
   public y0: number | null = null;
@@ -33,7 +64,10 @@ export class Path2Dpp {
    * Move to a new point (x, y)
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/moveTo}
    */
-  moveTo(x: number, y: number): void {
+  moveTo(vec: Vector2): void;
+  moveTo(x: number, y: number): void;
+  moveTo(...args: [Vector2] | [number, number]): void {
+    const [x, y] = extractArgs(args);
     this.svgPath = null;
     this.append`M${(this.x0 = this.x1 = +x)},${(this.y0 = this.y1 = +y)}`;
   }
@@ -54,7 +88,10 @@ export class Path2Dpp {
    * Draw a line to a new point (x, y)
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineTo}
    */
-  lineTo(x: number, y: number): void {
+  lineTo(vec: Vector2): void;
+  lineTo(x: number, y: number): void;
+  lineTo(...args: [Vector2] | [number, number]): void {
+    const [x, y] = extractArgs(args);
     this.svgPath = null;
     this.append`L${(this.x1 = +x)},${(this.y1 = +y)}`;
   }
@@ -63,7 +100,12 @@ export class Path2Dpp {
    * Draw a quadratic curve to a new point (x, y) with control point (cpx, cpy)
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/quadraticCurveTo}
    */
-  quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void {
+  quadraticCurveTo(cp: Vector2, x: Vector2): void;
+  quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void;
+  quadraticCurveTo(
+    ...args: [Vector2, Vector2] | [number, number, number, number]
+  ): void {
+    const [cpx, cpy, x, y] = extractArgs(args);
     this.svgPath = null;
     this.append`Q${+cpx},${+cpy},${(this.x1 = +x)},${(this.y1 = +y)}`;
   }
@@ -72,6 +114,7 @@ export class Path2Dpp {
    * Draw a bezier curve to a new point (x, y) with control points (cpx1, cpy1) and (cpx2, cpy2)
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/bezierCurveTo}
    */
+  bezierCurveTo(cp1: Vector2, cp2: Vector2, x: Vector2): void;
   bezierCurveTo(
     cpx1: number,
     cpy1: number,
@@ -79,7 +122,13 @@ export class Path2Dpp {
     cpy2: number,
     x: number,
     y: number,
+  ): void;
+  bezierCurveTo(
+    ...args:
+      | [Vector2, Vector2, Vector2]
+      | [number, number, number, number, number, number]
   ): void {
+    const [cpx1, cpy1, cpx2, cpy2, x, y] = extractArgs(args);
     this.svgPath = null;
     this
       .append`C${+cpx1},${+cpy1},${+cpx2},${+cpy2},${(this.x1 = +x)},${(this.y1 = +y)}`;
@@ -89,13 +138,15 @@ export class Path2Dpp {
    * Draw an arc to a new point (x2, y2) with radius
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/arcTo}
    */
-  arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void {
+  arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void;
+  arcTo(p1: Vector2, p2: Vector2, radius: number): void;
+  arcTo(
+    ...args:
+      | [Vector2, Vector2, number]
+      | [number, number, number, number, number]
+  ): void {
+    const [x1, y1, x2, y2, radius] = extractArgs(args);
     this.svgPath = null;
-    x1 = +x1;
-    y1 = +y1;
-    x2 = +x2;
-    y2 = +y2;
-    radius = +radius;
 
     if (radius < 0) throw new Error(`negative radius: ${radius}`);
 
@@ -144,6 +195,14 @@ export class Path2Dpp {
    * Draw an arc with center (x, y), radius, startAngle, endAngle, and optional anticlockwise direction
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/arc}
    */
+  //@ts-expect-error - TypeScript is stupid; the signatures *should* match
+  arc(
+    center: Vector2,
+    radius: number,
+    startAngle: number,
+    endAngle: number,
+    anticlockwise?: boolean,
+  ): void;
   arc(
     x: number,
     y: number,
@@ -151,9 +210,16 @@ export class Path2Dpp {
     startAngle: number,
     endAngle: number,
     anticlockwise?: boolean,
+  ): void;
+  arc(
+    ...args:
+      | [Vector2, number, number, number, boolean | undefined]
+      | [number, number, number, number, number, boolean | undefined]
   ): void {
+    const res = extractArgs(args);
+    const [x, y, radius, startAngle, endAngle] = res;
+    const anticlockwise = !!res[5];
     this.svgPath = null;
-    anticlockwise = !!anticlockwise;
 
     if (radius < 0) throw new Error(`negative radius: ${radius}`);
 
@@ -190,10 +256,13 @@ export class Path2Dpp {
    * Draw a rectangle with top-left corner (x, y), width w, and height h
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/rect}
    */
-  rect(x: number, y: number, w: number, h: number): void {
+  rect(corner: Vector2, size: Vector2): void;
+  rect(x: number, y: number, w: number, h: number): void;
+  rect(...args: [Vector2, Vector2] | [number, number, number, number]): void {
+    const [x, y, w, h] = extractArgs(args);
     this.svgPath = null;
     this
-      .append`M${(this.x0 = this.x1 = +x)},${(this.y0 = this.y1 = +y)}h${(w = +w)}v${+h}h${-w}Z`;
+      .append`M${(this.x0 = this.x1 = +x)},${(this.y0 = this.y1 = +y)}h${+w}v${+h}h${-+w}Z`;
   }
 
   /**

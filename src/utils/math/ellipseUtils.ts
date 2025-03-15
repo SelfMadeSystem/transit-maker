@@ -103,7 +103,7 @@ export function parametricAngle(
   xAxisRotation = 0,
 ): number {
   const xRotRad = (xAxisRotation * Math.PI) / 180;
-  const transformedPoint = point.sub(center).rotateBy(-xRotRad);
+  const transformedPoint = point.sub(center).rotate(-xRotRad);
   return Math.atan2(transformedPoint.y / r.y, transformedPoint.x / r.x);
 }
 
@@ -124,7 +124,7 @@ export function pointAtAngle(
 ): Vector2 {
   const xRotRad = (xAxisRotation * Math.PI) / 180;
   const point = new Vector2(r.x * Math.cos(angle), r.y * Math.sin(angle));
-  return point.rotateBy(xRotRad).add(center);
+  return point.rotate(xRotRad).add(center);
 }
 
 /**
@@ -147,7 +147,7 @@ export function radiiOfArc(
   const transformedPoint = from
     .sub(to)
     .div(2)
-    .rotateBy(-xRotRad)
+    .rotate(-xRotRad)
     .div(...radii.a);
 
   const radiiCheck = transformedPoint.lenSq();
@@ -195,8 +195,8 @@ export function centerOfArc(
     return findCircleCenter(from, to, radii.x, factor);
   }
 
-  from = from.rotateBy(-xRotRad);
-  to = to.rotateBy(-xRotRad);
+  from = from.rotate(-xRotRad);
+  to = to.rotate(-xRotRad);
 
   if (from.y > to.y) {
     [from, to] = [to, from];
@@ -207,7 +207,7 @@ export function centerOfArc(
 
   const result = findEllipseCenter(from, to, radii, factor);
 
-  return result.rotateBy(xRotRad);
+  return result.rotate(xRotRad);
 }
 
 /**
@@ -568,7 +568,7 @@ export function findClosestPointOnArc(
 ): Vector2 {
   const xRotRad = (xAxisRotation * Math.PI) / 180;
   point = point.sub(center);
-  point = point.rotateBy(-xRotRad);
+  point = point.rotate(-xRotRad);
   const t = findEllipseAngleBisect(radii, point, startAngle, endAngle);
   return pointAtAngle(center, radii, t, xAxisRotation);
 }
