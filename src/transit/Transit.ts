@@ -1,3 +1,4 @@
+import { Color } from '../components/color/Color';
 import { Path2Dpp } from '../utils/Path2Dpp';
 import { DrawingContext } from '../utils/drawingContext';
 import { Vector2 } from '../utils/vec';
@@ -44,10 +45,13 @@ export class RouteSegment {
 
   /** Gets the point at a given position along the segment */
   getPoint(position: number, offset: number): Vector2 {
-    const normal = this.getEnd().sub(this.getStart()).normalize();
+    const start = this.getStart();
+    const end = this.getEnd();
+    const pos = start.lerp(end, position);
+    const normal = end.sub(start).normalize();
     const offsetVector = normal.rotate(Math.PI / 2).mult(offset);
-    const point = this.getStart().add(normal.mult(position)).add(offsetVector);
-    return point;
+
+    return pos.add(offsetVector);
   }
 
   /**
@@ -74,6 +78,7 @@ export class RouteSegment {
     const path = new Path2Dpp();
     path.moveTo(this.getStart());
     path.lineTo(this.getEnd());
+    ctx.setStroke(Color.BLACK);
     ctx.strokePath(path);
   }
 }
