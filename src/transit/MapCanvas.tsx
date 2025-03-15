@@ -25,18 +25,82 @@ function createMap(): TransitMap {
   return new TransitMap([route1, route2], []);
 }
 
+type Camera = {
+  zoom: number;
+  offset: Vector2;
+};
+
 export function MapCanvas() {
   const bgCanvasRef = useRef<HTMLCanvasElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [map, setMap] = useState(createMap);
+  const [camera, setCamera] = useState<Camera>({
+    zoom: 1,
+    offset: new Vector2(0, 0),
+  });
   const ctx = useCanvasDrawingContext(bgCanvasRef, canvasRef);
 
   const draw = useCallback(() => {
     if (!ctx) return;
 
     ctx.setBackground(Color.WHITE);
+
+    const { zoom, offset } = camera;
+
+    ctx.save();
+    ctx.translate(...offset.a);
+    ctx.scale(zoom, zoom);
     map.draw(ctx);
-  }, [ctx, map]);
+    ctx.restore();
+  }, [camera, ctx, map]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+      }
+      setCamera(({ zoom, offset }) => {
+        const mouse = new Vector2(e.clientX, e.clientY);
+        const deltaY = e.deltaY;
+        const delta = 1 + deltaY / 1000;
+        const newZoom = Math.max(0.1, zoom * delta);
+        const newOffset = mouse.sub(mouse.sub(offset).mult(delta));
+        return { zoom: newZoom, offset: newOffset };
+      });
+    };
+
+    const handleDrag = (e: MouseEvent) => {
+      let prevMouse = new Vector2(e.clientX, e.clientY);
+
+      const handleMove = (e: MouseEvent) => {
+        const currentMouse = new Vector2(e.clientX, e.clientY);
+        const delta = currentMouse.sub(prevMouse);
+        setCamera(({ zoom, offset }) => ({
+          zoom,
+          offset: offset.add(delta),
+        }));
+        prevMouse = currentMouse;
+      };
+
+      const handleUp = () => {
+        window.removeEventListener('mousemove', handleMove);
+        window.removeEventListener('mouseup', handleUp);
+      };
+
+      window.addEventListener('mousemove', handleMove);
+      window.addEventListener('mouseup', handleUp);
+    };
+
+    canvas.addEventListener('wheel', handleWheel, { passive: false });
+    canvas.addEventListener('mousedown', handleDrag);
+
+    return () => {
+      canvas.removeEventListener('wheel', handleWheel);
+      canvas.removeEventListener('mousedown', handleDrag);
+    };
+  }, [draw]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
