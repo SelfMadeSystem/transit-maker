@@ -345,18 +345,18 @@ export class CanvasDrawingContext implements DrawingContext {
 }
 
 export function useCanvasDrawingContext(
+  bgCanavas: RefObject<HTMLCanvasElement>,
   canvas: RefObject<HTMLCanvasElement>,
 ): CanvasDrawingContext | null {
   const [ctx, setCtx] = useState<CanvasDrawingContext | null>(null);
 
   useEffect(() => {
-    if (!canvas.current) return;
-    const bgCtx = canvas.current.getContext('2d');
-    if (!bgCtx) return;
-    const ctx = canvas.current.getContext('2d');
-    if (!ctx) return;
+    const bgCtx = bgCanavas.current?.getContext('2d');
+    const ctx = canvas.current?.getContext('2d');
+    if (!bgCtx || !ctx) return;
+
     setCtx(new CanvasDrawingContext(bgCtx, ctx));
-  }, [canvas]);
+  }, [bgCanavas, canvas]);
 
   return ctx;
 }

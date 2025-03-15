@@ -66,7 +66,7 @@ export class RouteSegment {
         color: Color.TRANSPARENT,
         id: 0,
         lineCap: 'butt',
-        width: 4,
+        width: 6,
       },
       {
         strokeType: 'solid',
@@ -74,7 +74,7 @@ export class RouteSegment {
         color: Color.BLACK,
         id: 1,
         lineCap: 'round',
-        width: 3,
+        width: 2,
       },
     ],
   };
