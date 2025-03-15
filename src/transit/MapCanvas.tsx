@@ -1,8 +1,9 @@
 import { Color } from '../components/color/Color';
 import { useCanvasDrawingContext } from '../utils/drawingContext';
 import { Vector2 } from '../utils/vec';
-import { Route, RouteSegment } from './Transit';
-import { useEffect, useRef, useState } from 'react';
+import { RouteSegment } from './Segment';
+import { Route } from './Transit';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 function createRoute(): Route {
   const segment1 = new RouteSegment(
@@ -21,12 +22,30 @@ export function MapCanvas() {
   const [route, setRoute] = useState(createRoute);
   const ctx = useCanvasDrawingContext(canvasRef);
 
-  useEffect(() => {
+  const draw = useCallback(() => {
     if (!ctx) return;
 
     ctx.setBackground(Color.WHITE);
     route.draw(ctx);
-  });
+  }, [ctx, route]);
 
-  return <canvas ref={canvasRef} />;
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const handleResize = () => {
+      canvas.width = canvas.clientWidth;
+      canvas.height = canvas.clientHeight;
+      draw();
+    };
+
+    const observer = new ResizeObserver(handleResize);
+    observer.observe(canvas);
+    handleResize();
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [draw]);
+
+  return <canvas ref={canvasRef} className="h-full w-full" />;
 }
