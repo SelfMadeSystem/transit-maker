@@ -5,7 +5,7 @@ import { Vector2 } from '../utils/vec';
 import { Route } from './Route';
 import { SegmentPosition } from './SegmentPosition';
 import { TransitMap } from './TransitMap';
-import { Actionable, LayeredDrawable } from './types';
+import { Actionable, ClickInfo, DragInfo, LayeredDrawable } from './types';
 
 export type SegmentStrokeType = 'solid' | 'dotted' | 'dashed';
 
@@ -82,6 +82,9 @@ export class Segment implements Actionable, LayeredDrawable {
     ],
   };
   public specificStyle: SpecificSegmentStyle = { ...DEFALUT_SEGMENT_STYLE };
+  private dragInfo: {
+    which: 'start' | 'end' | 'segment';
+  } | null = null;
   constructor(
     public readonly map: TransitMap,
     public route: Route,
@@ -101,6 +104,44 @@ export class Segment implements Actionable, LayeredDrawable {
   isOver(pos: Vector2, _: CanvasDrawingContext): boolean {
     const path = this.getPath();
     return path.isPointClose(pos, this.getWidth());
+  }
+
+  onClick(a: ClickInfo): void {
+    switch (a.button) {
+      case 'left': {
+        const start = this.start.getPoint();
+        const end = this.end.getPoint();
+        const startDist = start.dist(a.pos);
+        const endDist = end.dist(a.pos);
+        const width = this.getWidth();
+        if (startDist < endDist && startDist < width) {
+          this.dragInfo = { which: 'start' };
+        } else if (endDist < startDist && endDist < width) {
+          this.dragInfo = { which: 'end' };
+        } else {
+          this.dragInfo = { which: 'segment' };
+        }
+        break;
+      }
+      case 'right':
+        break;
+    }
+  }
+
+  onDrag(a: DragInfo): void {
+    if (!this.dragInfo) return;
+    const { end, delta } = a;
+    switch (this.dragInfo.which) {
+      case 'start':
+        this.start.moveTo(end);
+        break;
+      case 'end':
+        this.end.moveTo(end);
+        break;
+      case 'segment':
+        this.start.moveBy(delta, this.end);
+        break;
+    }
   }
 
   /** Gets the width of the segment */

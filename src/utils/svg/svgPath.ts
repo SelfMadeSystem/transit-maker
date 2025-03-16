@@ -1,6 +1,7 @@
 import {
   bezierLength,
   bezierPointAtLength,
+  closestLengthOnBezier,
   closestPointOnBezier,
   splitBezierAtLength,
 } from '../math/bezier';
@@ -47,6 +48,8 @@ abstract class BaseMoveCommand {
   abstract reverse(): NormalCommand;
 
   abstract getClosestPoint(point: Vector2): Vector2;
+
+  abstract getLengthAtPoint(point: Vector2): number;
 
   getDistance(point: Vector2): number {
     return this.getClosestPoint(point).dist(point);
@@ -95,6 +98,11 @@ export class LCommand extends BaseMoveCommand {
     return this.from.lerp(this.to, t);
   }
 
+  getLengthAtPoint(point: Vector2): number {
+    const closest = this.getClosestPoint(point);
+    return this.from.dist(closest);
+  }
+
   toString(): string {
     return this.to.L;
   }
@@ -139,6 +147,11 @@ export class ZCommand extends BaseMoveCommand {
       return this.to;
     }
     return this.from.lerp(this.to, t);
+  }
+
+  getLengthAtPoint(point: Vector2): number {
+    const closest = this.getClosestPoint(point);
+    return this.from.dist(closest);
   }
 
   toString(): string {
@@ -191,6 +204,13 @@ export class CCommand extends BaseMoveCommand {
     );
   }
 
+  getLengthAtPoint(point: Vector2): number {
+    return closestLengthOnBezier(
+      [this.from, this.control1, this.control2, this.to],
+      point,
+    );
+  }
+
   toString(): string {
     return `C${this.control1.s} ${this.control2.s} ${this.to.s}`;
   }
@@ -232,6 +252,10 @@ export class QCommand extends BaseMoveCommand {
 
   getClosestPoint(point: Vector2): Vector2 {
     return closestPointOnBezier([this.from, this.control, this.to], point);
+  }
+
+  getLengthAtPoint(point: Vector2): number {
+    return closestLengthOnBezier([this.from, this.control, this.to], point);
   }
 
   toString(): string {
@@ -346,6 +370,10 @@ export class ACommand extends BaseMoveCommand {
     );
   }
 
+  getLengthAtPoint(_point: Vector2): number {
+    throw new Error('Method not implemented.');
+  }
+
   toString(): string {
     return `A${this.radii.s} ${this.rotation} ${
       this.large ? 1 : 0
@@ -451,6 +479,24 @@ export class SubPath {
     const firstPath = new SubPath(this.start, [...firstCommands, first]);
     const secondPath = new SubPath(second.from, [second, ...secondCommands]);
     return [firstPath, secondPath];
+  }
+
+  getLengthAtPoint(point: Vector2): number {
+    let length = 0;
+    let closestLength = 0;
+    let closestDist = Infinity;
+
+    for (const command of this.commands) {
+      const dist = command.getDistance(point);
+      if (dist < closestDist) {
+        closestDist = dist;
+        const t = command.getLengthAtPoint(point);
+        closestLength = length + t;
+      }
+      length += command.length;
+    }
+
+    return closestLength;
   }
 
   canMerge(path: SubPath, canReverse: boolean = false): boolean {
@@ -596,6 +642,23 @@ export class SvgPath {
       }
     }
     return closest;
+  }
+
+  getLengthAtPoint(point: Vector2): number {
+    let length = 0;
+    let closestLength = 0;
+    let closestDist = Infinity;
+
+    for (const path of this.paths) {
+      const dist = path.getClosestPoint(point).dist(point);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestLength = length + path.getLengthAtPoint(point);
+      }
+      length += path.getLength();
+    }
+
+    return closestLength;
   }
 
   isPointInStroke(point: Vector2, width: number): boolean {

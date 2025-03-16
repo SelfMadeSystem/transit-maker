@@ -199,3 +199,31 @@ export function closestPointOnBezier(
 
   return closestPoint;
 }
+
+/**
+ * Gets the closest length on a Bezier curve to a given point.
+ *
+ * @param controlPoints - An array of control points defining the Bezier curve.
+ * @param point - The point to which to find the closest length on the curve.
+ * @returns The arc length on the Bezier curve closest to the given point.
+ */
+export function closestLengthOnBezier(
+  controlPoints: Bezier,
+  point: Vector2,
+): number {
+  let minDistance = Infinity;
+  let minLength = 0;
+
+  for (let i = 1; i <= SEGMENTS; i++) {
+    const t = i / SEGMENTS;
+    const curvePoint = bezierPoint(controlPoints, t);
+    const distance = curvePoint.sub(point).length();
+
+    if (distance < minDistance) {
+      minDistance = distance;
+      minLength = bezierLength(controlPoints.slice(0, i));
+    }
+  }
+
+  return minLength;
+}

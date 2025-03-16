@@ -330,6 +330,13 @@ export class Path2Dpp {
   }
 
   /**
+   * Gets the length of the path up to the closest point on the path to a given point
+   */
+  getLengthAtPoint(point: Vector2): number {
+    return this.getSvgPath().getLengthAtPoint(point);
+  }
+
+  /**
    * Determines if a point is close to the path
    */
   isPointClose(point: Vector2, threshold: number): boolean {

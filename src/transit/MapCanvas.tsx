@@ -20,17 +20,17 @@ function createMap(): TransitMap {
     SegmentPosition.vec(new Vector2(50, 50)),
     SegmentPosition.vec(new Vector2(100, 100)),
   );
-  new Segment(
+  const segment2 = new Segment(
     map,
     route1,
-    SegmentPosition.snap(segment1, 1, 0),
+    segment1.end,
     SegmentPosition.vec(new Vector2(200, 25)),
   );
 
   new Segment(
     map,
     route2,
-    SegmentPosition.vec(new Vector2(50, 150)),
+    SegmentPosition.snap(segment2, 0.5, 0),
     SegmentPosition.vec(new Vector2(100, 0)),
   );
   return map;
@@ -121,7 +121,7 @@ export function MapCanvas() {
         const currentMouse = new Vector2(e.clientX, e.clientY);
         const currentPos = pointToMap(currentMouse);
         if (newSelected) {
-          const delta = currentMouse.sub(prevMouse);
+          const delta = currentPos.sub(prevPos);
           newSelected.onDrag?.(eventToDragInfo(e, startPos, currentPos, delta));
           draw();
         } else {

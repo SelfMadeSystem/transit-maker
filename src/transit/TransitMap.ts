@@ -11,7 +11,10 @@ export class TransitMap {
   constructor() {}
 
   getSelectedAt(pos: Vector2, ctx: CanvasDrawingContext): Actionable | null {
-    for (const segment of this.segments) {
+    if (this.selected && this.selected.isOver(pos, ctx)) {
+      return this.selected;
+    }
+    for (const segment of this.segmentsByZIndex().flat().reverse()) {
       if (segment.isOver(pos, ctx)) {
         return segment;
       }
