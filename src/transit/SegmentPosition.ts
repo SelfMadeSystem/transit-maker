@@ -10,6 +10,16 @@ export class SegmentPosition {
     public offset?: number,
   ) {}
 
+  unsnap() {
+    if (this.type === 'snap') {
+      this.pos = this.getPoint();
+      this.type = 'vec';
+      this.segment = undefined;
+      this.position = undefined;
+      this.offset = undefined;
+    }
+  }
+
   getPoint(): Vector2 {
     if (this.type === 'vec' && this.pos) {
       return this.pos;
@@ -24,7 +34,7 @@ export class SegmentPosition {
     throw new Error('Invalid SegmentPosition');
   }
 
-  moveTo(to: Vector2) {
+  moveTo(to: Vector2, unsnap?: boolean) {
     if (this.type === 'vec' && this.pos) {
       this.pos = to;
     } else if (
@@ -36,6 +46,15 @@ export class SegmentPosition {
       const path = this.segment.getPath();
       const length = path.getLengthAtPoint(to);
       this.position = length / path.getTotalLength();
+      if (unsnap) {
+        const point = this.getPoint();
+        const dist = point.dist(to);
+        console.log(dist);
+        if (dist > 5) {
+          this.unsnap();
+          this.pos = to;
+        }
+      }
     }
   }
 
