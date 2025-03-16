@@ -154,6 +154,25 @@ export function MapCanvas() {
       window.addEventListener('mouseup', handleUp);
     };
 
+    const keyDown = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case 'Delete':
+        case 'Backspace':
+          if (map.selected) {
+            map.selected.remove();
+            map.selected = null;
+            draw();
+          }
+          break;
+        case 'Escape':
+          if (map.selected) {
+            map.selected = null;
+            draw();
+          }
+          break;
+      }
+    };
+
     const preventDefault = (e: Event) => {
       e.preventDefault();
     };
@@ -161,11 +180,13 @@ export function MapCanvas() {
     canvas.addEventListener('wheel', handleWheel, { passive: false });
     canvas.addEventListener('mousedown', handleDrag);
     canvas.addEventListener('contextmenu', preventDefault);
+    window.addEventListener('keydown', keyDown);
 
     return () => {
       canvas.removeEventListener('wheel', handleWheel);
       canvas.removeEventListener('mousedown', handleDrag);
       canvas.removeEventListener('contextmenu', preventDefault);
+      window.removeEventListener('keydown', keyDown);
     };
   }, [ctx, draw, map, pointToMap]);
 

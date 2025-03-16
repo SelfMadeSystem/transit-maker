@@ -12,6 +12,23 @@ export class SegmentPosition {
     public offset?: number,
   ) {}
 
+  setVec(pos: Vector2) {
+    if (this.type === 'snap') {
+      this.unsnap();
+    }
+    this.pos = pos;
+  }
+
+  setSnap(segment: Segment, position: number, offset: number) {
+    if (this.type === 'snap') {
+      this.unsnap();
+    }
+    this.segment = segment;
+    this.position = position;
+    this.offset = offset;
+    this.type = 'snap';
+  }
+
   unsnap() {
     if (this.type === 'snap') {
       this.pos = this.getPoint();
@@ -23,6 +40,9 @@ export class SegmentPosition {
   }
 
   trySnap(thisSegment: Segment, segment: Segment, pos: Vector2): boolean {
+    if (segment.end === this || segment.start === this) {
+      return false;
+    }
     if (this.type === 'vec') {
       const path = segment.getPath();
       const length = path.getLengthAtPoint(pos);
@@ -30,6 +50,7 @@ export class SegmentPosition {
       const dist = newPoint.dist(pos);
       if (dist < 5) {
         if (segment.createsLoop(thisSegment)) {
+          this.pos = newPoint;
           return false;
         }
         this.segment = segment;
