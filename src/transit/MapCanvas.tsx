@@ -102,6 +102,7 @@ export function MapCanvas() {
     };
 
     const handleDrag = (e: MouseEvent) => {
+      e.preventDefault();
       let prevMouse = new Vector2(e.clientX, e.clientY);
       let prevPos = pointToMap(prevMouse);
       const startPos = prevPos;
@@ -153,12 +154,18 @@ export function MapCanvas() {
       window.addEventListener('mouseup', handleUp);
     };
 
+    const preventDefault = (e: Event) => {
+      e.preventDefault();
+    };
+
     canvas.addEventListener('wheel', handleWheel, { passive: false });
     canvas.addEventListener('mousedown', handleDrag);
+    canvas.addEventListener('contextmenu', preventDefault);
 
     return () => {
       canvas.removeEventListener('wheel', handleWheel);
       canvas.removeEventListener('mousedown', handleDrag);
+      canvas.removeEventListener('contextmenu', preventDefault);
     };
   }, [ctx, draw, map, pointToMap]);
 

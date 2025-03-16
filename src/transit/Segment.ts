@@ -107,33 +107,76 @@ export class Segment implements Actionable, LayeredDrawable {
     return path.isPointClose(pos, this.getWidth());
   }
 
+  getWhich(pos: Vector2): 'start' | 'end' | 'segment' | null {
+    const start = this.getStart();
+    const end = this.getEnd();
+    const startDist = start.dist(pos);
+    const endDist = end.dist(pos);
+    const width = this.getWidth();
+    if (startDist < endDist && startDist < width) {
+      return 'start';
+    } else if (endDist < startDist && endDist < width) {
+      return 'end';
+    }
+    const path = this.getPath();
+    if (path.isPointClose(pos, width)) {
+      return 'segment';
+    }
+    return null;
+  }
+
   onClick(a: ClickInfo): void {
+    const which = this.getWhich(a.pos);
+
     switch (a.button) {
       case 'left': {
-        const start = this.start.getPoint();
-        const end = this.end.getPoint();
-        const startDist = start.dist(a.pos);
-        const endDist = end.dist(a.pos);
-        const width = this.getWidth();
-        if (startDist < endDist && startDist < width) {
-          this.dragInfo = { which: 'start' };
-          if (a.clickType === 'double') {
-            this.start = this.start.clone();
-            this.start.unsnap();
-          }
-        } else if (endDist < startDist && endDist < width) {
-          this.dragInfo = { which: 'end' };
-          if (a.clickType === 'double') {
-            this.end = this.end.clone();
-            this.end.unsnap();
-          }
-        } else {
-          this.dragInfo = { which: 'segment' };
+        switch (which) {
+          case 'start':
+            this.dragInfo = { which: 'start' };
+            if (a.clickType === 'double') {
+              this.start = this.start.clone();
+              this.start.unsnap();
+            }
+            break;
+          case 'end':
+            this.dragInfo = { which: 'end' };
+            if (a.clickType === 'double') {
+              this.end = this.end.clone();
+              this.end.unsnap();
+            }
+            break;
+          case 'segment':
+            this.dragInfo = { which: 'segment' };
+            break;
         }
         break;
       }
-      case 'right':
+      case 'right': {
+        const direction = this.start.getPoint().sub(this.end.getPoint());
+
+        let newStart: SegmentPosition = this.start;
+        let newEnd: SegmentPosition = this.end;
+        if (which === 'start') {
+          newEnd = SegmentPosition.vec(this.start.getPoint().add(direction));
+        } else if (which === 'end') {
+          newStart = SegmentPosition.vec(this.end.getPoint().sub(direction));
+        } else if (which === 'segment') {
+          const path = this.getPath();
+          const length = path.getLengthAtPoint(a.pos);
+          const position = length / path.getTotalLength();
+          const point = path.getPointAtLength(length);
+          const normal = direction.rotate(Math.PI / 2).normalize();
+
+          newStart = SegmentPosition.snap(this, position, 0);
+          newEnd = SegmentPosition.vec(
+            point.add(normal.mult(direction.length())),
+          );
+        }
+        const newSegment = new Segment(this.map, this.route, newStart, newEnd);
+        newSegment.style = this.style;
+        newSegment.specificStyle = this.specificStyle;
         break;
+      }
     }
   }
 
@@ -168,7 +211,6 @@ export class Segment implements Actionable, LayeredDrawable {
   }
 
   onDragEnd(_: DragInfo): void {
-    console.log(this.start, this.end);
     if (this.start.type === 'snap') {
       if (this.start.position === 0) {
         this.start = this.start.segment!.start;

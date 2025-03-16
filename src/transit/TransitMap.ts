@@ -8,7 +8,12 @@ export class TransitMap {
   public routes: Route[] = [];
   public segments: Set<Segment> = new Set();
   public selected: Actionable | null = null;
-  constructor() {}
+  public defaultRoute: Route;
+  public selectedRoute: Route;
+  constructor() {
+    this.defaultRoute = new Route(this);
+    this.selectedRoute = this.defaultRoute;
+  }
 
   getSelectedAt(pos: Vector2, ctx: CanvasDrawingContext): Actionable | null {
     if (this.selected && this.selected.isOver(pos, ctx)) {
