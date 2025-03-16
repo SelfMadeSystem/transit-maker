@@ -1,11 +1,23 @@
-import { DrawingContext } from '../utils/drawingContext';
+import { CanvasDrawingContext, DrawingContext } from '../utils/drawingContext';
+import { Vector2 } from '../utils/vec';
 import { Route } from './Route';
 import { Segment } from './Segment';
+import { Actionable } from './types';
 
 export class TransitMap {
   public routes: Route[] = [];
   public segments: Segment[] = [];
+  public selected: Actionable | null = null;
   constructor() {}
+
+  getSelectedAt(pos: Vector2, ctx: CanvasDrawingContext): Actionable | null {
+    for (const segment of this.segments) {
+      if (segment.isOver(pos, ctx)) {
+        return segment;
+      }
+    }
+    return null;
+  }
 
   segmentsByZIndex(): Segment[][] {
     return this.segments

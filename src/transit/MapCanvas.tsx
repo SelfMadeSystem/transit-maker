@@ -5,6 +5,7 @@ import { Route } from './Route';
 import { Segment } from './Segment';
 import { SegmentPosition } from './SegmentPosition';
 import { TransitMap } from './TransitMap';
+import { eventToDragInfo, eventToPosWithKeys } from './types';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 function createMap(): TransitMap {
@@ -62,6 +63,7 @@ export function MapCanvas() {
   const draw = useCallback(() => {
     if (!ctx) return;
 
+    ctx.clear();
     ctx.setBackground(Color.BLACK);
 
     const { zoom, offset } = camera;
@@ -70,13 +72,13 @@ export function MapCanvas() {
     ctx.translate(...offset.a);
     ctx.scale(zoom, zoom);
     map.draw(ctx);
-    map.segments[0].drawSelected(ctx);
+    map.selected?.drawSelected(ctx);
     ctx.restore();
   }, [camera, ctx, map]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || !ctx) return;
     const handleWheel = (e: WheelEvent) => {
       if (e.ctrlKey) {
         e.preventDefault();
@@ -93,18 +95,46 @@ export function MapCanvas() {
 
     const handleDrag = (e: MouseEvent) => {
       let prevMouse = new Vector2(e.clientX, e.clientY);
+      let prevPos = pointToMap(prevMouse);
+      const startPos = prevPos;
+
+      const newSelected = map.getSelectedAt(prevPos, ctx);
+
+      if (newSelected) {
+        map.selected = newSelected;
+        newSelected.onClick?.(eventToPosWithKeys(e, prevPos));
+        draw();
+      } else if (map.selected) {
+        map.selected = null;
+        draw();
+      }
 
       const handleMove = (e: MouseEvent) => {
         const currentMouse = new Vector2(e.clientX, e.clientY);
-        const delta = currentMouse.sub(prevMouse);
-        setCamera(({ zoom, offset }) => ({
-          zoom,
-          offset: offset.add(delta),
-        }));
+        const currentPos = pointToMap(currentMouse);
+        if (newSelected) {
+          const delta = currentMouse.sub(prevMouse);
+          newSelected.onDrag?.(eventToDragInfo(e, startPos, currentPos, delta));
+          draw();
+        } else {
+          const delta = currentMouse.sub(prevMouse);
+          setCamera(({ zoom, offset }) => ({
+            zoom,
+            offset: offset.add(delta),
+          }));
+        }
         prevMouse = currentMouse;
+        prevPos = currentPos;
       };
 
-      const handleUp = () => {
+      const handleUp = (e: MouseEvent) => {
+        if (newSelected) {
+          const currentMouse = new Vector2(e.clientX, e.clientY);
+          const currentPos = pointToMap(currentMouse);
+          const delta = currentMouse.sub(prevMouse);
+          newSelected.onDrag?.(eventToDragInfo(e, startPos, currentPos, delta));
+          draw();
+        }
         window.removeEventListener('mousemove', handleMove);
         window.removeEventListener('mouseup', handleUp);
       };
@@ -120,7 +150,7 @@ export function MapCanvas() {
       canvas.removeEventListener('wheel', handleWheel);
       canvas.removeEventListener('mousedown', handleDrag);
     };
-  }, [draw]);
+  }, [ctx, draw, map, pointToMap]);
 
   useEffect(() => {
     const bgCanvas = bgCanvasRef.current;

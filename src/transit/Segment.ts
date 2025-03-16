@@ -1,10 +1,11 @@
 import { Color } from '../components/color/Color';
 import { Path2Dpp } from '../utils/Path2Dpp';
-import { DrawingContext } from '../utils/drawingContext';
+import { CanvasDrawingContext, DrawingContext } from '../utils/drawingContext';
 import { Vector2 } from '../utils/vec';
 import { Route } from './Route';
 import { SegmentPosition } from './SegmentPosition';
 import { TransitMap } from './TransitMap';
+import { Actionable, LayeredDrawable } from './types';
 
 export type SegmentStrokeType = 'solid' | 'dotted' | 'dashed';
 
@@ -59,7 +60,7 @@ export const DEFALUT_SEGMENT_STYLE: SpecificSegmentStyle = {
   zIndex: 0,
 };
 
-export class Segment {
+export class Segment implements Actionable, LayeredDrawable {
   public style: SegmentStyle = {
     strokes: [
       {
@@ -88,6 +89,23 @@ export class Segment {
     public end: SegmentPosition,
   ) {
     map.segments.push(this);
+  }
+
+  remove(): void {
+    const index = this.map.segments.indexOf(this);
+    if (index !== -1) {
+      this.map.segments.splice(index, 1);
+    }
+  }
+
+  isOver(pos: Vector2, _: CanvasDrawingContext): boolean {
+    const path = this.getPath();
+    return path.isPointClose(pos, this.getWidth());
+  }
+
+  /** Gets the width of the segment */
+  getWidth(): number {
+    return this.style.strokes[0].width;
   }
 
   /** Gets the z index of the segment */
@@ -203,14 +221,14 @@ export class Segment {
     ctx.setCtx('fg');
 
     ctx.setStroke(Color.WHITE);
-    ctx.setStrokeWidth(this.style.strokes[0].width + 2);
+    ctx.setStrokeWidth(this.getWidth() + 2);
     ctx.setStrokeDash([2, 3]);
     ctx.setStrokeDashOffset(performance.now() / 100);
     ctx.strokePath(path, false);
 
     ctx.setStroke(Color.TRANSPARENT);
     ctx.setStrokeDash([]);
-    ctx.setStrokeWidth(this.style.strokes[0].width);
+    ctx.setStrokeWidth(this.getWidth());
     ctx.strokePath(path, true);
 
     ctx.setStroke(Color.WHITE);
