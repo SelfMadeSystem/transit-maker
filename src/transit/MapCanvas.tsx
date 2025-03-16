@@ -45,7 +45,7 @@ export function MapCanvas() {
   const bgCanvasRef = useRef<HTMLCanvasElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fgCanvasRef = useRef<HTMLCanvasElement>(null);
-  const [map, setMap] = useState(createMap);
+  const [map, _setMap] = useState(createMap);
   const [camera, setCamera] = useState<Camera>({
     zoom: 1,
     offset: new Vector2(0, 0),
