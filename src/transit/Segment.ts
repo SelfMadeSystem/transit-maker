@@ -2,7 +2,9 @@ import { Color } from '../components/color/Color';
 import { Path2Dpp } from '../utils/Path2Dpp';
 import { DrawingContext } from '../utils/drawingContext';
 import { Vector2 } from '../utils/vec';
-import { Route, SegmentPosition, TransitMap } from './Transit';
+import { Route } from './Route';
+import { SegmentPosition } from './SegmentPosition';
+import { TransitMap } from './TransitMap';
 
 export type SegmentStrokeType = 'solid' | 'dotted' | 'dashed';
 

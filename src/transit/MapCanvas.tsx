@@ -1,8 +1,10 @@
 import { Color } from '../components/color/Color';
 import { useCanvasDrawingContext } from '../utils/drawingContext';
 import { Vector2 } from '../utils/vec';
+import { Route } from './Route';
 import { Segment } from './Segment';
-import { Route, SegmentPosition, TransitMap } from './Transit';
+import { SegmentPosition } from './SegmentPosition';
+import { TransitMap } from './TransitMap';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 function createMap(): TransitMap {
