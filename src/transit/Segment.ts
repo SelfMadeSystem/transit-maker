@@ -117,8 +117,16 @@ export class Segment implements Actionable, LayeredDrawable {
         const width = this.getWidth();
         if (startDist < endDist && startDist < width) {
           this.dragInfo = { which: 'start' };
+          if (a.clickType === 'double') {
+            this.start = this.start.clone();
+            this.start.unsnap();
+          }
         } else if (endDist < startDist && endDist < width) {
           this.dragInfo = { which: 'end' };
+          if (a.clickType === 'double') {
+            this.end = this.end.clone();
+            this.end.unsnap();
+          }
         } else {
           this.dragInfo = { which: 'segment' };
         }
@@ -156,6 +164,25 @@ export class Segment implements Actionable, LayeredDrawable {
       case 'segment':
         this.start.moveBy(delta, this.end);
         break;
+    }
+  }
+
+  onDragEnd(_: DragInfo): void {
+    console.log(this.start, this.end);
+    if (this.start.type === 'snap') {
+      if (this.start.position === 0) {
+        this.start = this.start.segment!.start;
+      } else if (this.start.position === 1) {
+        this.start = this.start.segment!.end;
+      }
+    }
+
+    if (this.end.type === 'snap') {
+      if (this.end.position === 0) {
+        this.end = this.end.segment!.start;
+      } else if (this.end.position === 1) {
+        this.end = this.end.segment!.end;
+      }
     }
   }
 

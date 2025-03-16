@@ -23,7 +23,7 @@ function createMap(): TransitMap {
   const segment2 = new Segment(
     map,
     route1,
-    SegmentPosition.vec(new Vector2(100, 100)),
+    segment1.end,
     SegmentPosition.vec(new Vector2(200, 25)),
   );
 
@@ -140,7 +140,9 @@ export function MapCanvas() {
           const currentMouse = new Vector2(e.clientX, e.clientY);
           const currentPos = pointToMap(currentMouse);
           const delta = currentMouse.sub(prevMouse);
-          newSelected.onDrag?.(eventToDragInfo(e, startPos, currentPos, delta));
+          newSelected.onDragEnd?.(
+            eventToDragInfo(e, startPos, currentPos, delta),
+          );
           draw();
         }
         window.removeEventListener('mousemove', handleMove);

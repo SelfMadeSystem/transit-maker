@@ -73,7 +73,7 @@ export class SegmentPosition {
       if (unsnap) {
         const point = this.getPoint();
         const dist = point.dist(to);
-        if (dist > 5) {
+        if (dist > 25) {
           this.unsnap();
           this.pos = to;
         }
@@ -99,6 +99,16 @@ export class SegmentPosition {
       return;
     }
     this.moveTo(this.getPoint().add(delta));
+  }
+
+  clone(): SegmentPosition {
+    return new SegmentPosition(
+      this.type,
+      this.pos,
+      this.segment,
+      this.position,
+      this.offset,
+    );
   }
 
   static vec(pos: Vector2): SegmentPosition {
