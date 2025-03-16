@@ -22,8 +22,11 @@ export class TransitMap {
     return null;
   }
 
-  segmentsByZIndex(): Segment[][] {
-    return this.segments
+  segmentsByZIndex(
+    callback?: (segment: Segment, zIndex: number) => boolean | void,
+    reverse?: boolean,
+  ): Segment[][] {
+    const segmentsByZIndex = this.segments
       .sort((a, b) => a.getZIndex() - b.getZIndex())
       .reduce(
         (acc, segment) => {
@@ -40,6 +43,28 @@ export class TransitMap {
         },
         [[]] as Segment[][],
       );
+
+    if (callback) {
+      if (reverse) {
+        for (const layer of segmentsByZIndex.slice().reverse()) {
+          for (const segment of layer.slice().reverse()) {
+            if (callback(segment, segment.getZIndex())) {
+              return segmentsByZIndex;
+            }
+          }
+        }
+      } else {
+        for (const layer of segmentsByZIndex) {
+          for (const segment of layer) {
+            if (callback(segment, segment.getZIndex())) {
+              return segmentsByZIndex;
+            }
+          }
+        }
+      }
+    }
+
+    return segmentsByZIndex;
   }
 
   draw(ctx: DrawingContext): void {
