@@ -6,7 +6,7 @@ import { Actionable } from './types';
 
 export class TransitMap {
   public routes: Route[] = [];
-  public segments: Segment[] = [];
+  public segments: Set<Segment> = new Set();
   public selected: Actionable | null = null;
   constructor() {}
 
@@ -26,7 +26,7 @@ export class TransitMap {
     callback?: (segment: Segment, zIndex: number) => boolean | void,
     reverse?: boolean,
   ): Segment[][] {
-    const segmentsByZIndex = this.segments
+    const segmentsByZIndex = [...this.segments]
       .sort((a, b) => a.getZIndex() - b.getZIndex())
       .reduce(
         (acc, segment) => {

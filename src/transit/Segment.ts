@@ -91,14 +91,15 @@ export class Segment implements Actionable, LayeredDrawable {
     public start: SegmentPosition,
     public end: SegmentPosition,
   ) {
-    map.segments.push(this);
+    map.segments.add(this);
+    this.start.segments.add(this);
+    this.end.segments.add(this);
   }
 
   remove(): void {
-    const index = this.map.segments.indexOf(this);
-    if (index !== -1) {
-      this.map.segments.splice(index, 1);
-    }
+    this.map.segments.delete(this);
+    this.start.segments.delete(this);
+    this.end.segments.delete(this);
   }
 
   isOver(pos: Vector2, _: CanvasDrawingContext): boolean {
@@ -137,9 +138,9 @@ export class Segment implements Actionable, LayeredDrawable {
         if (shiftKey) {
           this.map.segmentsByZIndex(segment => {
             if (segment !== this) {
-              return this.start.trySnap(segment, end);
+              return this.start.trySnap(this, segment, end);
             }
-          });
+          }, true);
         }
         break;
       case 'end':
@@ -147,9 +148,9 @@ export class Segment implements Actionable, LayeredDrawable {
         if (shiftKey) {
           this.map.segmentsByZIndex(segment => {
             if (segment !== this) {
-              return this.end.trySnap(segment, end);
+              return this.end.trySnap(this, segment, end);
             }
-          });
+          }, true);
         }
         break;
       case 'segment':

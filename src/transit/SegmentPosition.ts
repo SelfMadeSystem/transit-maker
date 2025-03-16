@@ -2,6 +2,8 @@ import { Vector2 } from '../utils/vec';
 import { Segment } from './Segment';
 
 export class SegmentPosition {
+  public segments: Set<Segment> = new Set();
+
   constructor(
     public type: 'vec' | 'snap',
     public pos?: Vector2,
@@ -20,14 +22,16 @@ export class SegmentPosition {
     }
   }
 
-  trySnap(segment: Segment, pos: Vector2): boolean {
+  trySnap(thisSegment: Segment, segment: Segment, pos: Vector2): boolean {
     if (this.type === 'vec') {
       const path = segment.getPath();
       const length = path.getLengthAtPoint(pos);
       const newPoint = path.getPointAtLength(length);
       const dist = newPoint.dist(pos);
-      console.log(dist);
       if (dist < 5) {
+        if (segment.createsLoop(thisSegment)) {
+          return false;
+        }
         this.segment = segment;
         this.position = length / path.getTotalLength();
         this.offset = 0;

@@ -23,7 +23,7 @@ function createMap(): TransitMap {
   const segment2 = new Segment(
     map,
     route1,
-    segment1.end,
+    SegmentPosition.vec(new Vector2(100, 100)),
     SegmentPosition.vec(new Vector2(200, 25)),
   );
 
