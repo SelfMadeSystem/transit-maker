@@ -130,13 +130,13 @@ export class Segment implements Actionable, LayeredDrawable {
 
   onDrag(a: DragInfo): void {
     if (!this.dragInfo) return;
-    const { end, delta } = a;
+    const { delta } = a;
     switch (this.dragInfo.which) {
       case 'start':
-        this.start.moveTo(end);
+        this.start.moveBy(delta);
         break;
       case 'end':
-        this.end.moveTo(end);
+        this.end.moveBy(delta);
         break;
       case 'segment':
         this.start.moveBy(delta, this.end);
