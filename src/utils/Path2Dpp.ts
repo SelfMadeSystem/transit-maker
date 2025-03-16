@@ -398,5 +398,20 @@ export class Path2Dpp {
     p.arc(center, radius, 0, tau);
     return p;
   }
+
+  /**
+   * Create a new circle path with an x in the center
+   */
+  static circleX(center: Vector2, radius: number): Path2Dpp {
+    const p = new Path2Dpp();
+    const sqrt2r = (radius * Math.SQRT2) / 2;
+    p.moveTo(center.x - sqrt2r, center.y - sqrt2r);
+    p.lineTo(center.x + sqrt2r, center.y + sqrt2r);
+    p.moveTo(center.x + sqrt2r, center.y - sqrt2r);
+    p.lineTo(center.x - sqrt2r, center.y + sqrt2r);
+    p.moveTo(center.x + radius, center.y);
+    p.arc(center, radius, 0, tau);
+    return p;
+  }
   //#endregion
 }

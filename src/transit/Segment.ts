@@ -273,9 +273,13 @@ export class Segment implements Actionable, LayeredDrawable {
     ctx.strokePath(path, true);
 
     ctx.setStroke(Color.WHITE);
-    ctx.setStrokeWidth(2);
-    ctx.strokePath(Path2Dpp.circle(start, 5));
-    ctx.strokePath(Path2Dpp.circle(end, 5));
+    ctx.setStrokeWidth(1);
+    ctx.strokePath(
+      Path2Dpp[this.start.type === 'vec' ? 'circle' : 'circleX'](start, 5),
+    );
+    ctx.strokePath(
+      Path2Dpp[this.end.type === 'vec' ? 'circle' : 'circleX'](end, 5),
+    );
 
     ctx.restore();
   }
