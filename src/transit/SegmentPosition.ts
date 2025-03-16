@@ -39,14 +39,40 @@ export class SegmentPosition {
     }
   }
 
-  trySnap(thisSegment: Segment, segment: Segment, pos: Vector2): boolean {
+  trySnap(
+    thisSegment: Segment,
+    segment: Segment,
+    pos: Vector2,
+    offset = 10,
+  ): boolean {
+    if (this.trySnapImpl(thisSegment, segment, pos, 0)) {
+      return true;
+    }
+    if (this.trySnapImpl(thisSegment, segment, pos, offset)) {
+      return true;
+    }
+    if (this.trySnapImpl(thisSegment, segment, pos, -offset)) {
+      return true;
+    }
+    return false;
+  }
+
+  trySnapImpl(
+    thisSegment: Segment,
+    segment: Segment,
+    pos: Vector2,
+    offset = 10,
+  ): boolean {
     if (segment.end === this || segment.start === this) {
       return false;
     }
     if (this.type === 'vec') {
       const path = segment.getPath();
       const length = path.getLengthAtPoint(pos);
-      const newPoint = path.getPointAtLength(length);
+      let newPoint = path.getPointAtLength(length);
+      if (offset !== 0) {
+        newPoint = newPoint.add(path.getNormalAtLength(length).mult(offset));
+      }
       const dist = newPoint.dist(pos);
       if (dist < 5) {
         if (segment.createsLoop(thisSegment)) {
@@ -55,7 +81,7 @@ export class SegmentPosition {
         }
         this.segment = segment;
         this.position = length / path.getTotalLength();
-        this.offset = 0;
+        this.offset = offset;
         this.type = 'snap';
         this.pos = undefined;
         return true;

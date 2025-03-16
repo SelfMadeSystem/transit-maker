@@ -211,7 +211,7 @@ export class Segment implements Actionable, LayeredDrawable {
   }
 
   onDragEnd(_: DragInfo): void {
-    if (this.start.type === 'snap') {
+    if (this.start.type === 'snap' && this.start.offset === 0) {
       if (this.start.position === 0) {
         this.start = this.start.segment!.start;
       } else if (this.start.position === 1) {
@@ -219,7 +219,7 @@ export class Segment implements Actionable, LayeredDrawable {
       }
     }
 
-    if (this.end.type === 'snap') {
+    if (this.end.type === 'snap' && this.end.offset === 0) {
       if (this.end.position === 0) {
         this.end = this.end.segment!.start;
       } else if (this.end.position === 1) {
@@ -256,7 +256,7 @@ export class Segment implements Actionable, LayeredDrawable {
     const end = this.getEnd();
     const pos = start.lerp(end, position);
     const normal = end.sub(start).normalize();
-    const offsetVector = normal.rotate(Math.PI / 2).mult(offset);
+    const offsetVector = normal.cw90().mult(offset);
 
     return pos.add(offsetVector);
   }

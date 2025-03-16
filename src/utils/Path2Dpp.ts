@@ -360,6 +360,13 @@ export class Path2Dpp {
     const { x: x0, y: y0 } = this.getSvgPath().getPointAtLength(length);
     return new Vector2(x - x0, y - y0).normalize();
   }
+
+  /**
+   * Gets the normal vector at a specific length along the path
+   */
+  getNormalAtLength(length: number): Vector2 {
+    return this.getTangentAtLength(length).cw90();
+  }
   //#endregion
 
   //#region Extra methods
