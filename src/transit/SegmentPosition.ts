@@ -48,10 +48,10 @@ export class SegmentPosition {
     if (this.trySnapImpl(thisSegment, segment, pos, 0)) {
       return true;
     }
-    if (this.trySnapImpl(thisSegment, segment, pos, offset)) {
+    if (offset !== 0 && this.trySnapImpl(thisSegment, segment, pos, offset)) {
       return true;
     }
-    if (this.trySnapImpl(thisSegment, segment, pos, -offset)) {
+    if (offset !== 0 && this.trySnapImpl(thisSegment, segment, pos, -offset)) {
       return true;
     }
     return false;
