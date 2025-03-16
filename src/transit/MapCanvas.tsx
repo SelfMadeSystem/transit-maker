@@ -51,6 +51,7 @@ export function MapCanvas() {
     offset: new Vector2(0, 0),
   });
   const ctx = useCanvasDrawingContext(bgCanvasRef, canvasRef, fgCanvasRef);
+  const frameRef = useRef<number | null>(null);
 
   const pointToMap = useCallback(
     (point: Vector2) => {
@@ -62,6 +63,9 @@ export function MapCanvas() {
 
   const draw = useCallback(() => {
     if (!ctx) return;
+    if (frameRef.current) {
+      cancelAnimationFrame(frameRef.current);
+    }
 
     ctx.clear();
     ctx.setBackground(Color.BLACK);
@@ -74,6 +78,10 @@ export function MapCanvas() {
     map.draw(ctx);
     map.selected?.drawSelected(ctx);
     ctx.restore();
+
+    if (map.selected) {
+      frameRef.current = requestAnimationFrame(draw);
+    }
   }, [camera, ctx, map]);
 
   useEffect(() => {

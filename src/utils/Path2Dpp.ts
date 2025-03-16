@@ -333,7 +333,9 @@ export class Path2Dpp {
    * Determines if a point is close to the path
    */
   isPointClose(point: Vector2, threshold: number): boolean {
-    return this.getSvgPath().getClosestPoint(point).dist(point) <= threshold;
+    return (
+      this.getSvgPath().getClosestPoint(point).dist(point) <= threshold / 2
+    );
   }
 
   /**
