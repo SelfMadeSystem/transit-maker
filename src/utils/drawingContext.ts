@@ -245,7 +245,6 @@ export class CanvasDrawingContext implements DrawingContext {
   }
 
   setStrokeDashOffset(offset: number) {
-    console.log(this.currentCtx, offset);
     this.currentCtx.lineDashOffset = offset;
   }
 

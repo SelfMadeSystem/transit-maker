@@ -1,43 +1,58 @@
 import { Color } from '../components/color/Color';
-import { Path2Dpp } from '../utils/Path2Dpp';
 import { DrawingContext } from '../utils/drawingContext';
 import { Vector2 } from '../utils/vec';
-import { RouteSegment } from './Segment';
+import { Segment } from './Segment';
 
-export type SegmentPosition =
-  | {
-      type: 'vec';
-      pos: Vector2;
+export class SegmentPosition {
+  constructor(
+    public type: 'vec' | 'snap',
+    public pos?: Vector2,
+    public segment?: Segment,
+    public position?: number,
+    public offset?: number,
+  ) {}
+
+  getPoint(): Vector2 {
+    if (this.type === 'vec' && this.pos) {
+      return this.pos;
+    } else if (
+      this.type === 'snap' &&
+      this.segment &&
+      this.position !== undefined &&
+      this.offset !== undefined
+    ) {
+      return this.segment.getPoint(this.position, this.offset);
     }
-  | {
-      type: 'snap';
-      segment: RouteSegment;
-      position: number;
-      offset: number;
-    };
+    throw new Error('Invalid SegmentPosition');
+  }
 
-export class Route {
-  constructor(public segments: RouteSegment[]) {}
+  static vec(pos: Vector2): SegmentPosition {
+    return new SegmentPosition('vec', pos);
+  }
 
-  draw(ctx: DrawingContext): void {
-    const gens = new Set(this.segments.map(seg => seg.draw(ctx)));
-
-    while (gens.size) {
-      for (const gen of gens) {
-        const { done } = gen.next();
-        if (done) gens.delete(gen);
-      }
-    }
+  static snap(
+    segment: Segment,
+    position: number,
+    offset: number,
+  ): SegmentPosition {
+    return new SegmentPosition('snap', undefined, segment, position, offset);
   }
 }
 
-export class Stop {
+export class Route {
+  public color: Color = Color.WHITE;
+  public readonly index: number;
+  constructor(public readonly map: TransitMap) {
+    this.index = map.routes.length;
+    map.routes.push(this);
+  }
+}
+
+/* export class Stop {
   constructor(public pos: SegmentPosition) {}
 
   getPoint(): Vector2 {
-    return this.pos.type === 'vec'
-      ? this.pos.pos
-      : this.pos.segment.getPoint(this.pos.position, this.pos.offset);
+    return this.pos.getPoint();
   }
 
   getPath(): Path2Dpp {
@@ -50,20 +65,46 @@ export class Stop {
     ctx.setFill(Color.WHITE);
     ctx.fillPath(this.getPath());
   }
-}
+} */
 
 export class TransitMap {
-  constructor(
-    public routes: Route[],
-    public stops: Stop[],
-  ) {}
+  public routes: Route[] = [];
+  public segments: Segment[] = [];
+  constructor() {}
+
+  segmentsByZIndex(): Segment[][] {
+    return this.segments
+      .sort((a, b) => a.getZIndex() - b.getZIndex())
+      .reduce(
+        (acc, segment) => {
+          const last = acc[acc.length - 1];
+          if (
+            last.length === 0 ||
+            last[0].getZIndex() === segment.getZIndex()
+          ) {
+            last.push(segment);
+          } else {
+            acc.push([segment]);
+          }
+          return acc;
+        },
+        [[]] as Segment[][],
+      );
+  }
 
   draw(ctx: DrawingContext): void {
-    for (const route of this.routes) {
-      route.draw(ctx);
-    }
-    for (const stop of this.stops) {
-      stop.draw(ctx);
+    const segments = this.segmentsByZIndex();
+    for (const layer of segments) {
+      const gens = layer.map(segment => segment.draw(ctx));
+      let done = false;
+      while (!done) {
+        done = true;
+        for (const gen of gens) {
+          if (!gen.next().done) {
+            done = false;
+          }
+        }
+      }
     }
   }
 }

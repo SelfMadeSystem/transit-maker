@@ -1,5 +1,7 @@
 import { Clonable } from '../../utils/clone';
+import { clamp } from '../../utils/mathUtils';
 import ColorJS from 'colorjs.io';
+import colors from 'tailwindcss/colors';
 
 export function hsvToRgb(h: number, s: number, v: number) {
   const c = v * s;
@@ -54,10 +56,12 @@ export class Color implements Clonable {
   }
 
   static fromColorJS(color: ColorJS) {
+    const [r, g, b] = color.srgb;
+
     return new Color(
-      color.r * 255,
-      color.g * 255,
-      color.b * 255,
+      clamp(r * 255, 0, 255),
+      clamp(g * 255, 0, 255),
+      clamp(b * 255, 0, 255),
       color.a,
       color.h,
     );
@@ -166,4 +170,32 @@ export class Color implements Clonable {
   static TRANSPARENT = new Color(0, 0, 0, 0);
   static WHITE = new Color(255, 255, 255);
   static BLACK = new Color(0, 0, 0);
+  static RED = new Color(255, 0, 0);
+  static GREEN = new Color(0, 255, 0);
+  static BLUE = new Color(0, 0, 255);
+  static YELLOW = new Color(255, 255, 0);
+  static CYAN = new Color(0, 255, 255);
+  static MAGENTA = new Color(255, 0, 255);
+
+  static TW = Object.fromEntries(
+    Object.entries(colors).map(([colorName, shades]) => [
+      colorName,
+      shades === 'inherit' || shades === 'currentColor'
+        ? undefined
+        : typeof shades === 'string'
+          ? Color.fromColorJS(new ColorJS(shades))
+          : Object.fromEntries(
+              Object.entries(shades).map(([shade, css]) => [
+                shade,
+                Color.fromColorJS(new ColorJS(css)),
+              ]),
+            ),
+    ]),
+  ) as {
+    [colorName in keyof typeof colors]: (typeof colors)[colorName] extends string
+      ? Color
+      : {
+          [shade in keyof (typeof colors)[colorName]]: Color;
+        };
+  };
 }

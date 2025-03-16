@@ -1,9 +1,5 @@
-import { DrawingContext } from '../utils/drawingContext';
+import { CanvasDrawingContext, DrawingContext } from '../utils/drawingContext';
 import { Vector2 } from '../utils/vec';
-import { DecorationImage } from './DecorationImage';
-import { Label } from './Label';
-import { TransitConnection } from './TransitConnection';
-import { TransitStop } from './TransitStop';
 
 export type PosWithKeys = {
   pos: Vector2;
@@ -13,8 +9,7 @@ export type PosWithKeys = {
 };
 
 export type ClickInfo = PosWithKeys & {
-  selected: ActionableItem | null;
-  setSelected: (selected: ActionableItem | null) => void;
+  button: number;
 };
 
 export interface Movable extends Actionable {
@@ -36,21 +31,13 @@ export interface Transformable extends Movable {
 
 export interface Actionable {
   remove(): void;
-  reAdd(): void;
-  isOver(x: number, y: number, ctx: CanvasRenderingContext2D): boolean;
-  drawSelected(ctx: CanvasRenderingContext2D): void;
+  // ctx is just used for getting text size
+  isOver(pos: Vector2, ctx: CanvasDrawingContext): boolean;
+  drawSelected(ctx: CanvasDrawingContext): void;
   doubleClick?(a: ClickInfo): void;
-  rightClick?(a: ClickInfo): void;
+  singleClick?(a: ClickInfo): void;
 }
 
 export interface LayeredDrawable {
   draw(ctx: DrawingContext): Generator<void>;
 }
-
-export type ActionableItem =
-  | Label
-  | TransitStop
-  | TransitConnection
-  | DecorationImage;
-
-export type LayeredDrawableItem = TransitStop | TransitConnection;

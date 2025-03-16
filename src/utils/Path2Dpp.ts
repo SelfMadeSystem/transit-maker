@@ -1,5 +1,5 @@
+import { SvgPath } from './svg/svgPath';
 import { Vector2 } from './vec';
-import SVGPathCommander from 'svg-path-commander';
 
 const pi = Math.PI,
   tau = 2 * pi,
@@ -43,7 +43,7 @@ export class Path2Dpp {
   public x1: number | null = null;
   public y1: number | null = null;
   private path: string = '';
-  private svgPath: SVGPathCommander | null = null;
+  private svgPath: SvgPath | null = null;
 
   constructor() {}
 
@@ -68,7 +68,7 @@ export class Path2Dpp {
   moveTo(x: number, y: number): void;
   moveTo(...args: [Vector2] | [number, number]): void {
     const [x, y] = extractArgs(args);
-    this.svgPath = null;
+
     this.append`M${(this.x0 = this.x1 = +x)},${(this.y0 = this.y1 = +y)}`;
   }
 
@@ -92,7 +92,7 @@ export class Path2Dpp {
   lineTo(x: number, y: number): void;
   lineTo(...args: [Vector2] | [number, number]): void {
     const [x, y] = extractArgs(args);
-    this.svgPath = null;
+
     this.append`L${(this.x1 = +x)},${(this.y1 = +y)}`;
   }
 
@@ -106,7 +106,7 @@ export class Path2Dpp {
     ...args: [Vector2, Vector2] | [number, number, number, number]
   ): void {
     const [cpx, cpy, x, y] = extractArgs(args);
-    this.svgPath = null;
+
     this.append`Q${+cpx},${+cpy},${(this.x1 = +x)},${(this.y1 = +y)}`;
   }
 
@@ -129,7 +129,7 @@ export class Path2Dpp {
       | [number, number, number, number, number, number]
   ): void {
     const [cpx1, cpy1, cpx2, cpy2, x, y] = extractArgs(args);
-    this.svgPath = null;
+
     this
       .append`C${+cpx1},${+cpy1},${+cpx2},${+cpy2},${(this.x1 = +x)},${(this.y1 = +y)}`;
   }
@@ -146,7 +146,6 @@ export class Path2Dpp {
       | [number, number, number, number, number]
   ): void {
     const [x1, y1, x2, y2, radius] = extractArgs(args);
-    this.svgPath = null;
 
     if (radius < 0) throw new Error(`negative radius: ${radius}`);
 
@@ -219,7 +218,6 @@ export class Path2Dpp {
     const res = extractArgs(args);
     const [x, y, radius, startAngle, endAngle] = res;
     const anticlockwise = !!res[5];
-    this.svgPath = null;
 
     if (radius < 0) throw new Error(`negative radius: ${radius}`);
 
@@ -260,7 +258,7 @@ export class Path2Dpp {
   rect(x: number, y: number, w: number, h: number): void;
   rect(...args: [Vector2, Vector2] | [number, number, number, number]): void {
     const [x, y, w, h] = extractArgs(args);
-    this.svgPath = null;
+
     this
       .append`M${(this.x0 = this.x1 = +x)},${(this.y0 = this.y1 = +y)}h${+w}v${+h}h${-+w}Z`;
   }
@@ -273,14 +271,14 @@ export class Path2Dpp {
   }
   //#endregion
 
-  //#region SVGPathCommander methods
+  //#region SvgPath methods
   /**
-   * Get the SVGPathCommander instance
+   * Get the SvgPath instance
    */
-  getSVGPath(): SVGPathCommander {
+  getSvgPath(): SvgPath {
     if (this.svgPath === null) {
       try {
-        this.svgPath = new SVGPathCommander(this.toString());
+        this.svgPath = SvgPath.fromString(this.toString());
       } catch (e) {
         console.log(this.toString());
         throw e;
@@ -289,30 +287,30 @@ export class Path2Dpp {
     return this.svgPath;
   }
 
-  /**
-   * Get the bounding box of the path
-   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/SVGPathElement/getBBox}
-   */
-  getBBox(): {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    x2: number;
-    y2: number;
-    cx: number;
-    cy: number;
-    cz: number;
-  } {
-    return this.getSVGPath().getBBox();
-  }
+  // /**
+  //  * Get the bounding box of the path
+  //  * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/SVGPathElement/getBBox}
+  //  */
+  // getBBox(): {
+  //   x: number;
+  //   y: number;
+  //   width: number;
+  //   height: number;
+  //   x2: number;
+  //   y2: number;
+  //   cx: number;
+  //   cy: number;
+  //   cz: number;
+  // } {
+  //   return this.getSVGPath().getBBox();
+  // }
 
   /**
    * Get the total length of the path
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/SVGPathElement/getTotalLength}
    */
   getTotalLength(): number {
-    return this.getSVGPath().getTotalLength();
+    return this.getSvgPath().getLength();
   }
 
   /**
@@ -320,8 +318,22 @@ export class Path2Dpp {
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/SVGPathElement/getPointAtLength}
    */
   getPointAtLength(length: number): Vector2 {
-    const { x, y } = this.getSVGPath().getPointAtLength(length);
+    const { x, y } = this.getSvgPath().getPointAtLength(length);
     return new Vector2(x, y);
+  }
+
+  /**
+   * Gets the closest point on the path to a given point
+   */
+  getClosestPoint(point: Vector2): Vector2 {
+    return this.getSvgPath().getClosestPoint(point);
+  }
+
+  /**
+   * Determines if a point is close to the path
+   */
+  isPointClose(point: Vector2, threshold: number): boolean {
+    return this.getSvgPath().getClosestPoint(point).dist(point) <= threshold;
   }
 
   /**
@@ -335,8 +347,8 @@ export class Path2Dpp {
       length = len - epsilon;
     }
 
-    const { x, y } = this.getSVGPath().getPointAtLength(length + epsilon);
-    const { x: x0, y: y0 } = this.getSVGPath().getPointAtLength(length);
+    const { x, y } = this.getSvgPath().getPointAtLength(length + epsilon);
+    const { x: x0, y: y0 } = this.getSvgPath().getPointAtLength(length);
     return new Vector2(x - x0, y - y0).normalize();
   }
   //#endregion
@@ -356,6 +368,26 @@ export class Path2Dpp {
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', this.toString());
     return path;
+  }
+  //#endregion
+
+  //#region Static methods
+  /**
+   * Create a new path from a string
+   */
+  static fromString(path: string): Path2Dpp {
+    const p = new Path2Dpp();
+    p.path = path;
+    return p;
+  }
+
+  /**
+   * Create a new circle path
+   */
+  static circle(center: Vector2, radius: number): Path2Dpp {
+    const p = new Path2Dpp();
+    p.arc(center, radius, 0, tau);
+    return p;
   }
   //#endregion
 }

@@ -1,28 +1,36 @@
 import { Color } from '../components/color/Color';
 import { useCanvasDrawingContext } from '../utils/drawingContext';
 import { Vector2 } from '../utils/vec';
-import { RouteSegment } from './Segment';
-import { Route, TransitMap } from './Transit';
+import { Segment } from './Segment';
+import { Route, SegmentPosition, TransitMap } from './Transit';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 function createMap(): TransitMap {
-  const segment1 = new RouteSegment(
-    { type: 'vec', pos: new Vector2(50, 50) },
-    { type: 'vec', pos: new Vector2(100, 100) },
+  const map = new TransitMap();
+  const route1 = new Route(map);
+  route1.color = Color.TW.sky[400];
+  const route2 = new Route(map);
+  route2.color = Color.TW.lime[400];
+  const segment1 = new Segment(
+    map,
+    route1,
+    SegmentPosition.vec(new Vector2(50, 50)),
+    SegmentPosition.vec(new Vector2(100, 100)),
   );
-  const segment2 = new RouteSegment(
-    { type: 'snap', segment: segment1, position: 0.5, offset: 0 },
-    { type: 'vec', pos: new Vector2(200, 25) },
+  new Segment(
+    map,
+    route1,
+    SegmentPosition.snap(segment1, 1, 0),
+    SegmentPosition.vec(new Vector2(200, 25)),
   );
-  const route1 = new Route([segment1, segment2]);
 
-  const segment3 = new RouteSegment(
-    { type: 'vec', pos: new Vector2(50, 150) },
-    { type: 'vec', pos: new Vector2(100, 0) },
+  new Segment(
+    map,
+    route2,
+    SegmentPosition.vec(new Vector2(50, 150)),
+    SegmentPosition.vec(new Vector2(100, 0)),
   );
-  const route2 = new Route([segment3]);
-
-  return new TransitMap([route1, route2], []);
+  return map;
 }
 
 type Camera = {
@@ -41,6 +49,14 @@ export function MapCanvas() {
   });
   const ctx = useCanvasDrawingContext(bgCanvasRef, canvasRef, fgCanvasRef);
 
+  const pointToMap = useCallback(
+    (point: Vector2) => {
+      const { zoom, offset } = camera;
+      return point.sub(offset).div(zoom);
+    },
+    [camera],
+  );
+
   const draw = useCallback(() => {
     if (!ctx) return;
 
@@ -52,6 +68,7 @@ export function MapCanvas() {
     ctx.translate(...offset.a);
     ctx.scale(zoom, zoom);
     map.draw(ctx);
+    map.segments[0].drawSelected(ctx);
     ctx.restore();
   }, [camera, ctx, map]);
 

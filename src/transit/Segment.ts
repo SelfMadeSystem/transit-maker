@@ -2,13 +2,13 @@ import { Color } from '../components/color/Color';
 import { Path2Dpp } from '../utils/Path2Dpp';
 import { DrawingContext } from '../utils/drawingContext';
 import { Vector2 } from '../utils/vec';
-import { SegmentPosition } from './Transit';
+import { Route, SegmentPosition, TransitMap } from './Transit';
 
 export type SegmentStrokeType = 'solid' | 'dotted' | 'dashed';
 
 type BaseSegmentStroke = {
   id: number;
-  color: Color;
+  color: Color | null;
   width: number;
   clear: boolean;
   strokeType: SegmentStrokeType;
@@ -57,7 +57,7 @@ export const DEFALUT_SEGMENT_STYLE: SpecificSegmentStyle = {
   zIndex: 0,
 };
 
-export class RouteSegment {
+export class Segment {
   public style: SegmentStyle = {
     strokes: [
       {
@@ -71,7 +71,7 @@ export class RouteSegment {
       {
         strokeType: 'solid',
         clear: false,
-        color: Color.WHITE,
+        color: null,
         id: 1,
         lineCap: 'round',
         width: 2,
@@ -80,22 +80,29 @@ export class RouteSegment {
   };
   public specificStyle: SpecificSegmentStyle = { ...DEFALUT_SEGMENT_STYLE };
   constructor(
+    public readonly map: TransitMap,
+    public route: Route,
     public start: SegmentPosition,
     public end: SegmentPosition,
-  ) {}
+  ) {
+    map.segments.push(this);
+  }
+
+  /** Gets the z index of the segment */
+  getZIndex(): number {
+    return (
+      this.specificStyle.zIndex + this.route.index / this.map.routes.length
+    );
+  }
 
   /** Gets the start position of the segment */
   getStart(): Vector2 {
-    return this.start.type === 'vec'
-      ? this.start.pos
-      : this.start.segment.getPoint(this.start.position, this.start.offset);
+    return this.start.getPoint();
   }
 
   /** Gets the end position of the segment */
   getEnd(): Vector2 {
-    return this.end.type === 'vec'
-      ? this.end.pos
-      : this.end.segment.getPoint(this.end.position, this.end.offset);
+    return this.end.getPoint();
   }
 
   /** Gets the point at a given position along the segment */
@@ -115,16 +122,15 @@ export class RouteSegment {
    * to find the positions of the segments since they reference each other.
    */
   createsLoop(
-    segment: RouteSegment,
-    visited = new Set<RouteSegment>([segment]),
+    segment: Segment,
+    visited = new Set<Segment>([segment]),
   ): boolean {
     if (visited.has(this)) return true;
     visited.add(this);
     return (
-      (this.end.type === 'snap' &&
-        this.end.segment.createsLoop(segment, visited)) ||
-      (this.start.type === 'snap' &&
-        this.start.segment.createsLoop(segment, visited))
+      (this.end.segment?.createsLoop(segment, visited) ||
+        this.start.segment?.createsLoop(segment, visited)) ??
+      false
     );
   }
 
@@ -164,7 +170,7 @@ export class RouteSegment {
 
     ctx.setStrokeWidth(width);
 
-    ctx.setStroke(color);
+    ctx.setStroke(color ?? this.route.color);
   }
 
   getPath(): Path2Dpp {
@@ -190,6 +196,8 @@ export class RouteSegment {
   drawSelected(ctx: DrawingContext) {
     ctx.save();
     const path = this.getPath();
+    const start = this.getStart();
+    const end = this.getEnd();
     ctx.setCtx('fg');
 
     ctx.setStroke(Color.WHITE);
@@ -202,6 +210,11 @@ export class RouteSegment {
     ctx.setStrokeDash([]);
     ctx.setStrokeWidth(this.style.strokes[0].width);
     ctx.strokePath(path, true);
+
+    ctx.setStroke(Color.WHITE);
+    ctx.setStrokeWidth(2);
+    ctx.strokePath(Path2Dpp.circle(start, 5));
+    ctx.strokePath(Path2Dpp.circle(end, 5));
 
     ctx.restore();
   }
