@@ -138,14 +138,18 @@ export class Segment implements Actionable, LayeredDrawable {
           case 'start':
             this.dragInfo = { which: 'start' };
             if (a.clickType === 'double') {
+              this.start.segments.delete(this);
               this.start = this.start.clone();
+              this.start.segments.add(this);
               this.start.unsnap();
             }
             break;
           case 'end':
             this.dragInfo = { which: 'end' };
             if (a.clickType === 'double') {
+              this.end.segments.delete(this);
               this.end = this.end.clone();
+              this.end.segments.add(this);
               this.end.unsnap();
             }
             break;
@@ -254,12 +258,50 @@ export class Segment implements Actionable, LayeredDrawable {
     return this.end.getPoint();
   }
 
+  /**
+   * Gets the other position of the segment. The position given must be either
+   * this.start or this.end.
+   */
+  getOtherEnd(position: SegmentPosition): SegmentPosition {
+    if (position === this.start) {
+      return this.end;
+    } else if (position === this.end) {
+      return this.start;
+    } else {
+      throw new Error('Invalid position');
+    }
+  }
+
   /** Gets the point at a given position along the segment */
   getPoint(position: number, offset: number): Vector2 {
-    const start = this.getStart();
-    const end = this.getEnd();
-    const pos = start.lerp(end, position);
+    let start = this.getStart();
+    let end = this.getEnd();
+
     const normal = end.sub(start).normalize();
+    if (offset !== 0) {
+      const startAngle = this.start.getAngle();
+      const endAngle = this.end.getAngle();
+
+      if (startAngle !== undefined) {
+        start = start.add(
+          normal.mult(
+            Math.tan((Math.PI - Math.abs(startAngle)) / 2) *
+              offset *
+              Math.sign(startAngle),
+          ),
+        );
+      }
+      if (endAngle !== undefined) {
+        end = end.sub(
+          normal.mult(
+            Math.tan((Math.PI - Math.abs(endAngle)) / 2) *
+              offset *
+              Math.sign(endAngle),
+          ),
+        );
+      }
+    }
+    const pos = start.lerp(end, position);
     const offsetVector = normal.cw90().mult(offset);
 
     return pos.add(offsetVector);

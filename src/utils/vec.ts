@@ -53,8 +53,13 @@ export class Vector2 implements Clonable {
     return other.sub(this).normalize();
   }
 
-  angleBetween(other: Vector2) {
-    return Math.acos(this.dot(other) / (this.length() * other.length()));
+  angleBetween(other: Vector2, center?: Vector2): number {
+    if (center) {
+      return this.sub(center).angleBetween(other.sub(center));
+    }
+    const angle = Math.acos(this.dot(other) / (this.length() * other.length()));
+    const cross = this.cross(other);
+    return cross < 0 ? -angle : angle;
   }
 
   isNaN(): boolean {
