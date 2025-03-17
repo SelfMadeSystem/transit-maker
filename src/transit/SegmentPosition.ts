@@ -10,7 +10,11 @@ export class SegmentPosition {
     public segment?: Segment,
     public position?: number,
     public offset?: number,
-  ) {}
+  ) {
+    if (segment) {
+      segment.segmentPosDeps.add(this);
+    }
+  }
 
   setVec(pos: Vector2) {
     if (this.type === 'snap') {
@@ -24,6 +28,7 @@ export class SegmentPosition {
       this.unsnap();
     }
     this.segment = segment;
+    segment.segmentPosDeps.add(this);
     this.position = position;
     this.offset = offset;
     this.type = 'snap';
@@ -33,6 +38,9 @@ export class SegmentPosition {
     if (this.type === 'snap') {
       this.pos = this.getPoint();
       this.type = 'vec';
+      if (this.segment) {
+        this.segment.segmentPosDeps.delete(this);
+      }
       this.segment = undefined;
       this.position = undefined;
       this.offset = undefined;

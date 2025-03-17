@@ -85,6 +85,7 @@ export class Segment implements Actionable, LayeredDrawable {
   private dragInfo: {
     which: 'start' | 'end' | 'segment';
   } | null = null;
+  public segmentPosDeps: Set<SegmentPosition> = new Set();
   constructor(
     public readonly map: TransitMap,
     public route: Route,
@@ -100,6 +101,9 @@ export class Segment implements Actionable, LayeredDrawable {
     this.map.segments.delete(this);
     this.start.segments.delete(this);
     this.end.segments.delete(this);
+    for (const dep of this.segmentPosDeps) {
+      dep.unsnap();
+    }
   }
 
   isOver(pos: Vector2, _: CanvasDrawingContext): boolean {
