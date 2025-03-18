@@ -97,6 +97,17 @@ export class Segment implements Actionable, LayeredDrawable {
     this.end.segments.add(this);
   }
 
+  changeWhichEnd(old: SegmentPosition, newPos: SegmentPosition) {
+    if (this.start === old) {
+      this.start.segments.delete(this);
+      this.start = newPos;
+    } else if (this.end === old) {
+      this.end.segments.delete(this);
+      this.end = newPos;
+    }
+    newPos.segments.add(this);
+  }
+
   remove(): void {
     this.map.segments.delete(this);
     this.start.segments.delete(this);
@@ -221,16 +232,20 @@ export class Segment implements Actionable, LayeredDrawable {
   onDragEnd(_: DragInfo): void {
     if (this.start.type === 'snap' && this.start.offset === 0) {
       if (this.start.position === 0) {
+        this.start.mergeToSegment(this.start.segment!.start);
         this.start = this.start.segment!.start;
       } else if (this.start.position === 1) {
+        this.start.mergeToSegment(this.start.segment!.end);
         this.start = this.start.segment!.end;
       }
     }
 
     if (this.end.type === 'snap' && this.end.offset === 0) {
       if (this.end.position === 0) {
+        this.end.mergeToSegment(this.end.segment!.start);
         this.end = this.end.segment!.start;
       } else if (this.end.position === 1) {
+        this.end.mergeToSegment(this.end.segment!.end);
         this.end = this.end.segment!.end;
       }
     }
@@ -407,6 +422,7 @@ export class Segment implements Actionable, LayeredDrawable {
     ctx.strokePath(
       Path2Dpp[this.start.type === 'vec' ? 'circle' : 'circleX'](start, 5),
     );
+    ctx.setStroke(Color.RED);
     ctx.strokePath(
       Path2Dpp[this.end.type === 'vec' ? 'circle' : 'circleX'](end, 5),
     );

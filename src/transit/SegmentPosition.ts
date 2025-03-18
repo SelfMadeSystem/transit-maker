@@ -16,6 +16,11 @@ export class SegmentPosition {
     }
   }
 
+  mergeToSegment(newPos: SegmentPosition) {
+    if (!this.segment) return;
+    this.segments.forEach(s => s.changeWhichEnd(this, newPos));
+  }
+
   setVec(pos: Vector2) {
     if (this.type === 'snap') {
       this.unsnap();
