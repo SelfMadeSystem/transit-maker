@@ -1,5 +1,5 @@
 import { Clonable } from './clone';
-import { mod, round } from './mathUtils';
+import { clamp, mod, round } from './mathUtils';
 
 export class Vector2 implements Clonable {
   public readonly x: number;
@@ -57,7 +57,14 @@ export class Vector2 implements Clonable {
     if (center) {
       return this.sub(center).angleBetween(other.sub(center));
     }
-    const angle = Math.acos(this.dot(other) / (this.length() * other.length()));
+    // due to floating point errors, the dot product can sometimes be slightly
+    // outside the range of [-1, 1], so we clamp it
+    const dot = clamp(
+      this.dot(other) / (this.length() * other.length()),
+      -1,
+      1,
+    );
+    const angle = Math.acos(dot);
     const cross = this.cross(other);
     return cross < 0 ? -angle : angle;
   }
