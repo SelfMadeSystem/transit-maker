@@ -119,7 +119,7 @@ export class SegmentPosition {
   }
 
   /** If there's only two segments on this position, gets the angle between the two */
-  getAngle(): number | undefined {
+  getAngle(which?: Segment): number | undefined {
     if (this.segments.size !== 2) {
       return undefined;
     }
@@ -128,7 +128,9 @@ export class SegmentPosition {
     const p1 = s1.getOtherEnd(this).getPoint();
     const p2 = s2.getOtherEnd(this).getPoint();
     const a = p1.angleBetween(p2, p);
-    return a;
+
+    const sign = s1 === which ? -1 : 1;
+    return a * sign;
   }
 
   moveTo(to: Vector2, unsnap?: boolean) {

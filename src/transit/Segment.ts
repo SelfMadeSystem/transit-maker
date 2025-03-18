@@ -294,8 +294,8 @@ export class Segment implements Actionable, LayeredDrawable {
 
     const normal = end.sub(start).normalize();
     if (offset !== 0) {
-      const startAngle = this.start.getAngle();
-      const endAngle = this.end.getAngle();
+      const startAngle = this.start.getAngle(this);
+      const endAngle = this.end.getAngle(this);
 
       if (startAngle !== undefined) {
         start = start.add(
@@ -307,7 +307,7 @@ export class Segment implements Actionable, LayeredDrawable {
         );
       }
       if (endAngle !== undefined) {
-        end = end.sub(
+        end = end.add(
           normal.mult(
             Math.tan((Math.PI - Math.abs(endAngle)) / 2) *
               offset *
@@ -400,6 +400,7 @@ export class Segment implements Actionable, LayeredDrawable {
   }
 
   drawSelected(ctx: DrawingContext) {
+    this.getPoint(1, 1);
     ctx.save();
     const path = this.getPath();
     const start = this.getStart();
