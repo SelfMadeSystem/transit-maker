@@ -140,61 +140,61 @@ export class Segment implements Actionable, LayeredDrawable {
     return null;
   }
 
+  disconnect(which: 'start' | 'end'): void {
+    if (which === 'start') {
+      this.start.segments.delete(this);
+      this.start = this.start.clone();
+      this.start.segments.add(this);
+      this.start.unsnap();
+    } else if (which === 'end') {
+      this.end.segments.delete(this);
+      this.end = this.end.clone();
+      this.end.segments.add(this);
+      this.end.unsnap();
+    }
+  }
+
   onClick(a: ClickInfo): void {
     const which = this.getWhich(a.pos);
+    if (which) this.dragInfo = { which };
 
     switch (a.button) {
       case 'left': {
-        switch (which) {
-          case 'start':
-            this.dragInfo = { which: 'start' };
-            if (a.clickType === 'double') {
-              this.start.segments.delete(this);
-              this.start = this.start.clone();
-              this.start.segments.add(this);
-              this.start.unsnap();
-            }
-            break;
-          case 'end':
-            this.dragInfo = { which: 'end' };
-            if (a.clickType === 'double') {
-              this.end.segments.delete(this);
-              this.end = this.end.clone();
-              this.end.segments.add(this);
-              this.end.unsnap();
-            }
-            break;
-          case 'segment':
-            this.dragInfo = { which: 'segment' };
-            break;
+        if (a.clickType === 'double') {
+          let newStart: SegmentPosition = this.start;
+          let newEnd: SegmentPosition = this.end;
+          if (which === 'start') {
+            newEnd = SegmentPosition.vec(this.start.getPoint());
+          } else if (which === 'end') {
+            newStart = this.end;
+            newEnd = SegmentPosition.vec(this.end.getPoint());
+          } else if (which === 'segment') {
+            const path = this.getPath();
+            const length = path.getLengthAtPoint(a.pos);
+            const position = length / path.getTotalLength();
+            const point = path.getPointAtLength(length);
+
+            newStart = SegmentPosition.snap(this, position, 0);
+            newEnd = SegmentPosition.vec(point);
+          }
+          const newSegment = new Segment(
+            this.map,
+            this.route,
+            newStart,
+            newEnd,
+          );
+          newSegment.style = this.style;
+          newSegment.specificStyle = this.specificStyle;
+          newSegment.dragInfo = { which: 'end' };
+          this.map.selected = newSegment;
+          break;
         }
         break;
       }
       case 'right': {
-        const direction = this.start.getPoint().sub(this.end.getPoint());
-
-        let newStart: SegmentPosition = this.start;
-        let newEnd: SegmentPosition = this.end;
-        if (which === 'start') {
-          newEnd = SegmentPosition.vec(this.start.getPoint().add(direction));
-        } else if (which === 'end') {
-          newStart = SegmentPosition.vec(this.end.getPoint().sub(direction));
-        } else if (which === 'segment') {
-          const path = this.getPath();
-          const length = path.getLengthAtPoint(a.pos);
-          const position = length / path.getTotalLength();
-          const point = path.getPointAtLength(length);
-          const normal = direction.rotate(Math.PI / 2).normalize();
-
-          newStart = SegmentPosition.snap(this, position, 0);
-          newEnd = SegmentPosition.vec(
-            point.add(normal.mult(direction.length())),
-          );
+        if (which === 'start' || which === 'end') {
+          this.disconnect(which);
         }
-        const newSegment = new Segment(this.map, this.route, newStart, newEnd);
-        newSegment.style = this.style;
-        newSegment.specificStyle = this.specificStyle;
-        break;
       }
     }
   }
@@ -233,20 +233,16 @@ export class Segment implements Actionable, LayeredDrawable {
     if (this.start.type === 'snap' && this.start.offset === 0) {
       if (this.start.position === 0) {
         this.start.mergeToSegment(this.start.segment!.start);
-        this.start = this.start.segment!.start;
       } else if (this.start.position === 1) {
         this.start.mergeToSegment(this.start.segment!.end);
-        this.start = this.start.segment!.end;
       }
     }
 
-    if (this.end.type === 'snap' && this.end.offset === 0) {
+    if (this.end.type === 'snap' && this.end.offset === 0 && this.end.segment) {
       if (this.end.position === 0) {
-        this.end.mergeToSegment(this.end.segment!.start);
-        this.end = this.end.segment!.start;
+        this.end.mergeToSegment(this.end.segment.start);
       } else if (this.end.position === 1) {
-        this.end.mergeToSegment(this.end.segment!.end);
-        this.end = this.end.segment!.end;
+        this.end.mergeToSegment(this.end.segment.end);
       }
     }
   }

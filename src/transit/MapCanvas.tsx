@@ -121,9 +121,11 @@ export function MapCanvas() {
       const handleMove = (e: MouseEvent) => {
         const currentMouse = new Vector2(e.clientX, e.clientY);
         const currentPos = pointToMap(currentMouse);
-        if (newSelected) {
+        if (map.selected) {
           const delta = currentPos.sub(prevPos);
-          newSelected.onDrag?.(eventToDragInfo(e, startPos, currentPos, delta));
+          map.selected.onDrag?.(
+            eventToDragInfo(e, startPos, currentPos, delta),
+          );
           draw();
         } else {
           const delta = currentMouse.sub(prevMouse);
@@ -137,17 +139,17 @@ export function MapCanvas() {
       };
 
       const handleUp = (e: MouseEvent) => {
-        if (newSelected) {
+        window.removeEventListener('mousemove', handleMove);
+        window.removeEventListener('mouseup', handleUp);
+        if (map.selected) {
           const currentMouse = new Vector2(e.clientX, e.clientY);
           const currentPos = pointToMap(currentMouse);
           const delta = currentMouse.sub(prevMouse);
-          newSelected.onDragEnd?.(
+          map.selected.onDragEnd?.(
             eventToDragInfo(e, startPos, currentPos, delta),
           );
           draw();
         }
-        window.removeEventListener('mousemove', handleMove);
-        window.removeEventListener('mouseup', handleUp);
       };
 
       window.addEventListener('mousemove', handleMove);
