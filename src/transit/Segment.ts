@@ -1,6 +1,7 @@
 import { Color } from '../components/color/Color';
 import { Path2Dpp } from '../utils/Path2Dpp';
 import { CanvasDrawingContext, DrawingContext } from '../utils/drawingContext';
+import { EPSILON } from '../utils/mathUtils';
 import { Vector2 } from '../utils/vec';
 import { Route } from './Route';
 import { SegmentPosition } from './SegmentPosition';
@@ -99,22 +100,33 @@ export class Segment implements Actionable, LayeredDrawable {
 
   changeWhichEnd(old: SegmentPosition, newPos: SegmentPosition) {
     if (this.start === old) {
-      this.start.segments.delete(this);
+      this.start.removeSegment(this);
       this.start = newPos;
     } else if (this.end === old) {
-      this.end.segments.delete(this);
+      this.end.removeSegment(this);
       this.end = newPos;
     }
     newPos.segments.add(this);
   }
 
+  /** If 0, then this.start. If 1, then this.end. Otherwise, undefined. */
+  getWhichEnd(index: number): SegmentPosition | undefined {
+    if (index === 0) {
+      return this.start;
+    } else if (index === 1) {
+      return this.end;
+    } else {
+      return undefined;
+    }
+  }
+
   remove(): void {
-    this.map.segments.delete(this);
-    this.start.segments.delete(this);
-    this.end.segments.delete(this);
     for (const dep of this.segmentPosDeps) {
       dep.unsnap();
     }
+    this.map.segments.delete(this);
+    this.start.removeSegment(this);
+    this.end.removeSegment(this);
   }
 
   isOver(pos: Vector2, _: CanvasDrawingContext): boolean {
@@ -122,7 +134,7 @@ export class Segment implements Actionable, LayeredDrawable {
     return path.isPointClose(pos, this.getWidth());
   }
 
-  getWhich(pos: Vector2): 'start' | 'end' | 'segment' | null {
+  getMouseWhich(pos: Vector2): 'start' | 'end' | 'segment' | null {
     const start = this.getStart();
     const end = this.getEnd();
     const startDist = start.dist(pos);
@@ -142,12 +154,12 @@ export class Segment implements Actionable, LayeredDrawable {
 
   disconnect(which: 'start' | 'end'): void {
     if (which === 'start') {
-      this.start.segments.delete(this);
+      this.start.removeSegment(this);
       this.start = this.start.clone();
       this.start.segments.add(this);
       this.start.unsnap();
     } else if (which === 'end') {
-      this.end.segments.delete(this);
+      this.end.removeSegment(this);
       this.end = this.end.clone();
       this.end.segments.add(this);
       this.end.unsnap();
@@ -155,7 +167,7 @@ export class Segment implements Actionable, LayeredDrawable {
   }
 
   onClick(a: ClickInfo): void {
-    const which = this.getWhich(a.pos);
+    const which = this.getMouseWhich(a.pos);
     if (which) this.dragInfo = { which };
 
     switch (a.button) {
@@ -228,21 +240,43 @@ export class Segment implements Actionable, LayeredDrawable {
   }
 
   onDragEnd(_: DragInfo): void {
-    if (this.start.type === 'snap' && this.start.offset === 0) {
-      if (this.start.position === 0) {
-        this.start.mergeToSegment(this.start.segment!.start);
-      } else if (this.start.position === 1) {
-        this.start.mergeToSegment(this.start.segment!.end);
+    const handleMerge = (pos: SegmentPosition) => {
+      if (pos.type === 'vec') return;
+      const segment = pos.segment!;
+      const offset = pos.offset!;
+      const position = pos.position!;
+      if (offset === 0) {
+        const p = segment.getWhichEnd(position);
+        if (p) pos.mergeToSegment(p);
+      } else if (position === 0 || position === 1) {
+        const thisPoint = pos.getPoint();
+        const deps = [...segment.segmentPosDeps];
+        const p = segment.getWhichEnd(position);
+        if (p) {
+          const otherSegment = p.getOtherSegment(segment);
+          if (otherSegment) {
+            deps.push(...otherSegment.segmentPosDeps);
+          }
+        }
+        for (const otherPos of deps) {
+          if (otherPos === pos) continue;
+          const otherPoint = otherPos.getPoint();
+          if (
+            otherPos.type === 'snap' &&
+            Math.abs(otherPos.offset!) === Math.abs(offset) &&
+            (otherPos.position === 0 || otherPos.position === 1)
+          ) {
+            if (thisPoint.dist(otherPoint) < EPSILON) {
+              pos.mergeToSegment(otherPos);
+              break;
+            }
+          }
+        }
       }
-    }
+    };
 
-    if (this.end.type === 'snap' && this.end.offset === 0 && this.end.segment) {
-      if (this.end.position === 0) {
-        this.end.mergeToSegment(this.end.segment.start);
-      } else if (this.end.position === 1) {
-        this.end.mergeToSegment(this.end.segment.end);
-      }
-    }
+    handleMerge(this.start);
+    handleMerge(this.end);
   }
 
   /** Gets the width of the segment */
@@ -434,6 +468,23 @@ export class Segment implements Actionable, LayeredDrawable {
       Path2Dpp[this.end.type === 'vec' ? 'circle' : 'circleX'](end, 5),
     );
 
+    ctx.restore();
+  }
+
+  debugDraw(ctx: CanvasRenderingContext2D) {
+    ctx.save();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = Color.CYAN.hex();
+    const path = this.getPath();
+    ctx.stroke(path.toPath2D());
+    ctx.fillStyle = Color.MAGENTA.hex();
+    ctx.beginPath();
+    ctx.arc(...this.getStart().a, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = Color.YELLOW.hex();
+    ctx.beginPath();
+    ctx.arc(...this.getEnd().a, 5, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   }
 }

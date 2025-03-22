@@ -420,5 +420,12 @@ export class Path2Dpp {
     p.arc(center, radius, 0, tau);
     return p;
   }
+
+  static line(start: Vector2, end: Vector2): Path2Dpp {
+    const p = new Path2Dpp();
+    p.moveTo(start);
+    p.lineTo(end);
+    return p;
+  }
   //#endregion
 }

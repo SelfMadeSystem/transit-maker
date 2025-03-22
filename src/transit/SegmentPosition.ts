@@ -16,9 +16,23 @@ export class SegmentPosition {
     }
   }
 
+  removeSegment(segment: Segment) {
+    this.segments.delete(segment);
+    if (this.segments.size === 0) {
+      this.unsnap();
+    }
+  }
+
+  getOtherSegment(segment: Segment): Segment | undefined {
+    if (this.segments.size === 2) {
+      return [...this.segments].find(s => s !== segment);
+    }
+    return undefined;
+  }
+
   mergeToSegment(newPos: SegmentPosition) {
     if (!this.segment) return;
-    this.segments.forEach(s => s.changeWhichEnd(this, newPos));
+    [...this.segments].forEach(s => s.changeWhichEnd(this, newPos));
   }
 
   setVec(pos: Vector2) {
@@ -100,11 +114,7 @@ export class SegmentPosition {
           this.pos = newPoint;
           return false;
         }
-        this.segment = segment;
-        this.position = length / path.getTotalLength();
-        this.offset = offset;
-        this.type = 'snap';
-        this.pos = undefined;
+        this.setSnap(segment, length / path.getTotalLength(), offset);
         return true;
       }
       return false;
@@ -182,6 +192,22 @@ export class SegmentPosition {
       return;
     }
     this.moveTo(this.getPoint().add(delta));
+  }
+
+  debugDraw(ctx: CanvasRenderingContext2D) {
+    ctx.save();
+    ctx.fillStyle = 'red';
+    ctx.beginPath();
+    ctx.arc(this.getPoint().x, this.getPoint().y, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'white';
+    ctx.font = '12px Arial';
+    ctx.fillText(
+      this.type === 'vec' ? 'vec' : 'snap',
+      this.getPoint().x + 10,
+      this.getPoint().y + 10,
+    );
+    ctx.restore();
   }
 
   clone(): SegmentPosition {

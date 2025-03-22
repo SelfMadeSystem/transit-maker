@@ -41,10 +41,20 @@ type Camera = {
   offset: Vector2;
 };
 
+export type DebugDrawFn = (ctx: CanvasRenderingContext2D) => void;
+
+const debugQueue: DebugDrawFn[] = [];
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function debugDraw(fn: DebugDrawFn) {
+  debugQueue.push(fn);
+}
+
 export function MapCanvas() {
   const bgCanvasRef = useRef<HTMLCanvasElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fgCanvasRef = useRef<HTMLCanvasElement>(null);
+  const debugCanvasRef = useRef<HTMLCanvasElement>(null);
   const [map, _setMap] = useState(createMap);
   const [camera, setCamera] = useState<Camera>({
     zoom: 1,
@@ -78,6 +88,18 @@ export function MapCanvas() {
     map.draw(ctx);
     map.selected?.drawSelected(ctx);
     ctx.restore();
+
+    if (debugQueue.length > 0) {
+      const debugCanvas = debugCanvasRef.current!;
+      const debugCtx = debugCanvas.getContext('2d')!;
+      debugCtx.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
+      debugCtx.save();
+      debugCtx.translate(...offset.a);
+      debugCtx.scale(zoom, zoom);
+      debugQueue.forEach(fn => fn(debugCtx));
+      debugCtx.restore();
+      debugQueue.length = 0;
+    }
 
     if (map.selected) {
       frameRef.current = requestAnimationFrame(draw);
@@ -196,10 +218,26 @@ export function MapCanvas() {
     const bgCanvas = bgCanvasRef.current;
     const canvas = canvasRef.current;
     const fgCanvas = fgCanvasRef.current;
-    if (!bgCanvas || !canvas || !fgCanvas) return;
+    const debugCanvas = debugCanvasRef.current;
+    if (!bgCanvas || !canvas || !fgCanvas || !debugCanvas) return;
     const handleResize = () => {
-      bgCanvas.width = canvas.width = fgCanvas.width = canvas.clientWidth;
-      bgCanvas.height = canvas.height = fgCanvas.height = canvas.clientHeight;
+      if (
+        debugCanvas.width === canvas.clientWidth &&
+        debugCanvas.height === canvas.clientHeight
+      ) {
+        draw();
+        return;
+      }
+      bgCanvas.width =
+        canvas.width =
+        fgCanvas.width =
+        debugCanvas.width =
+          canvas.clientWidth;
+      bgCanvas.height =
+        canvas.height =
+        fgCanvas.height =
+        debugCanvas.height =
+          canvas.clientHeight;
       draw();
     };
 
@@ -218,6 +256,10 @@ export function MapCanvas() {
       <canvas ref={canvasRef} className="absolute h-full w-full" />
       <canvas
         ref={fgCanvasRef}
+        className="pointer-events-none absolute h-full w-full"
+      />
+      <canvas
+        ref={debugCanvasRef}
         className="pointer-events-none absolute h-full w-full"
       />
     </div>
