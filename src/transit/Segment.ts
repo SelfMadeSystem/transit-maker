@@ -206,21 +206,19 @@ export class Segment implements Actionable, LayeredDrawable {
       case 'start':
         this.start.moveTo(end, true);
         if (shiftKey) {
-          this.map.segmentsByZIndex(segment => {
-            if (segment !== this) {
-              return this.start.trySnap(this, segment, end);
-            }
-          }, true);
+          this.map.segmentsByZIndex(
+            segment => this.start.trySnap(this, segment, end),
+            true,
+          );
         }
         break;
       case 'end':
         this.end.moveTo(end, true);
         if (shiftKey) {
-          this.map.segmentsByZIndex(segment => {
-            if (segment !== this) {
-              return this.end.trySnap(this, segment, end);
-            }
-          }, true);
+          this.map.segmentsByZIndex(
+            segment => this.end.trySnap(this, segment, end),
+            true,
+          );
         }
         break;
       case 'segment':
@@ -333,6 +331,18 @@ export class Segment implements Actionable, LayeredDrawable {
       (this.end.segment?.createsLoop(segment, visited) ||
         this.start.segment?.createsLoop(segment, visited)) ??
       false
+    );
+  }
+
+  /**
+   * Determines if this segment and another segment share the same start or end.
+   */
+  sharesEnd(segment: Segment): boolean {
+    return (
+      this.start === segment.start ||
+      this.end === segment.end ||
+      this.start === segment.end ||
+      this.end === segment.start
     );
   }
 

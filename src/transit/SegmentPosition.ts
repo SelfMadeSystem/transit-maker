@@ -58,8 +58,14 @@ export class SegmentPosition {
     pos: Vector2,
     offset = 10,
   ): boolean {
+    if (thisSegment === segment) {
+      return false;
+    }
     if (this.trySnapImpl(thisSegment, segment, pos, 0)) {
       return true;
+    }
+    if (offset !== 0 && thisSegment.sharesEnd(segment)) {
+      return false;
     }
     if (offset !== 0 && this.trySnapImpl(thisSegment, segment, pos, offset)) {
       return true;
