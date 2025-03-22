@@ -95,6 +95,8 @@ export class SegmentPosition {
           segment.createsLoop(thisSegment) ||
           (offset !== 0 && thisSegment.sharesEnd(segment))
         ) {
+          // If the segment creates a loop, we don't want to snap but we can
+          // move the point to where it would be
           this.pos = newPoint;
           return false;
         }
