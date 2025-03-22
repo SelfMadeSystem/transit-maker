@@ -64,9 +64,6 @@ export class SegmentPosition {
     if (this.trySnapImpl(thisSegment, segment, pos, 0)) {
       return true;
     }
-    if (offset !== 0 && thisSegment.sharesEnd(segment)) {
-      return false;
-    }
     if (offset !== 0 && this.trySnapImpl(thisSegment, segment, pos, offset)) {
       return true;
     }
@@ -94,7 +91,10 @@ export class SegmentPosition {
       }
       const dist = newPoint.dist(pos);
       if (dist < 5) {
-        if (segment.createsLoop(thisSegment)) {
+        if (
+          segment.createsLoop(thisSegment) ||
+          (offset !== 0 && thisSegment.sharesEnd(segment))
+        ) {
           this.pos = newPoint;
           return false;
         }
