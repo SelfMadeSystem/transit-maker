@@ -371,6 +371,13 @@ export class Path2Dpp {
 
   //#region Extra methods
   /**
+   * Strokes this path on a canvas context
+   */
+  stroke(ctx: CanvasRenderingContext2D): void {
+    ctx.stroke(this.toPath2D());
+  }
+
+  /**
    * Converts to a Path2D object
    */
   toPath2D(): Path2D {

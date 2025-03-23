@@ -198,4 +198,14 @@ export class Color implements Clonable {
           [shade in keyof (typeof colors)[colorName]]: Color;
         };
   };
+
+  static random({
+    hue = Math.random() * 360,
+    saturation = Math.random(),
+    value = Math.random(),
+    alpha = 1,
+  }): Color {
+    const { r, g, b } = hsvToRgb(hue, saturation, value);
+    return new Color(r, g, b, alpha, hue);
+  }
 }
