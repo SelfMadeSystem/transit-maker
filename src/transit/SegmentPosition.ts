@@ -97,12 +97,9 @@ export class SegmentPosition {
       return false;
     }
     if (this.type === 'vec') {
-      const path = segment.getPath();
+      const path = segment.getPath(offset);
       const length = path.getLengthAtPoint(pos);
-      let newPoint = path.getPointAtLength(length);
-      if (offset !== 0) {
-        newPoint = newPoint.add(path.getNormalAtLength(length).mult(offset));
-      }
+      const newPoint = path.getPointAtLength(length);
       const dist = newPoint.dist(pos);
       if (dist < 5) {
         if (
@@ -160,7 +157,7 @@ export class SegmentPosition {
       this.position !== undefined &&
       this.offset !== undefined
     ) {
-      const path = this.segment.getPath();
+      const path = this.segment.getPath(this.offset);
       const length = path.getLengthAtPoint(to);
       this.position = length / path.getTotalLength();
       if (unsnap) {

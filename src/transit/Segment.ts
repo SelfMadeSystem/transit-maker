@@ -419,10 +419,14 @@ export class Segment implements Actionable, LayeredDrawable {
     ctx.setStroke(color ?? this.route.color);
   }
 
-  getPath(): Path2Dpp {
+  getPath(offset = 0): Path2Dpp {
+    const [start, end] =
+      offset === 0
+        ? [this.getStart(), this.getEnd()]
+        : [this.getPoint(0, offset), this.getPoint(1, offset)];
     const path = new Path2Dpp();
-    path.moveTo(this.getStart());
-    path.lineTo(this.getEnd());
+    path.moveTo(start);
+    path.lineTo(end);
     return path;
   }
 
