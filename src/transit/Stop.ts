@@ -47,7 +47,7 @@ export class Stop implements Actionable {
 
   getRoute(): Route {
     const candidates: Set<Route> = new Set();
-    if (this.pos.segment) {
+    if (this.pos.segment && this.pos.offset === 0) {
       candidates.add(this.pos.segment.route);
     }
     if (this.pos.deps.size > 1) {
