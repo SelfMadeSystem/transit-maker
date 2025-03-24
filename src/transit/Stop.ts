@@ -46,16 +46,17 @@ export class Stop implements Actionable {
   }
 
   getRoute(): Route {
+    const candidates: Set<Route> = new Set();
     if (this.pos.segment) {
-      return this.pos.segment.route;
+      candidates.add(this.pos.segment.route);
     }
     if (this.pos.deps.size > 1) {
-      const route = [...this.pos.deps].find(
-        dep => dep instanceof Segment,
-      )?.route;
-      if (route) {
-        return route;
-      }
+      [...this.pos.deps].forEach(
+        dep => dep instanceof Segment && candidates.add(dep.route),
+      );
+    }
+    if (candidates.size === 1) {
+      return candidates.values().next().value!;
     }
     return this.map.defaultRoute;
   }
