@@ -1,8 +1,11 @@
 import { Vector2 } from '../utils/vec';
 import { Segment } from './Segment';
+import { Stop } from './Stop';
+
+export type SegmentPositionDep = Segment | Stop;
 
 export class SegmentPosition {
-  public segments: Set<Segment> = new Set();
+  public deps: Set<SegmentPositionDep> = new Set();
 
   constructor(
     public type: 'vec' | 'snap',
@@ -16,23 +19,23 @@ export class SegmentPosition {
     }
   }
 
-  removeSegment(segment: Segment) {
-    this.segments.delete(segment);
-    if (this.segments.size === 0) {
+  removeDep(dep: SegmentPositionDep) {
+    this.deps.delete(dep);
+    if (this.deps.size === 0) {
       this.unsnap();
     }
   }
 
-  getOtherSegment(segment: Segment): Segment | undefined {
-    if (this.segments.size === 2) {
-      return [...this.segments].find(s => s !== segment);
+  getOtherDep(dep: SegmentPositionDep): SegmentPositionDep | undefined {
+    if (this.deps.size === 2) {
+      return [...this.deps].find(s => s !== dep);
     }
     return undefined;
   }
 
   mergeToSegment(newPos: SegmentPosition) {
     if (!this.segment) return;
-    [...this.segments].forEach(s => s.changeWhichEnd(this, newPos));
+    [...this.deps].forEach(s => s.changeWhichEnd(this, newPos));
   }
 
   setVec(pos: Vector2) {
@@ -67,28 +70,28 @@ export class SegmentPosition {
   }
 
   trySnap(
-    thisSegment: Segment,
+    thisDep: SegmentPositionDep,
     segment: Segment,
     pos: Vector2,
     offset = 10,
   ): boolean {
-    if (thisSegment === segment) {
+    if (thisDep === segment) {
       return false;
     }
-    if (this.trySnapImpl(thisSegment, segment, pos, 0)) {
+    if (this.trySnapImpl(thisDep, segment, pos, 0)) {
       return true;
     }
-    if (offset !== 0 && this.trySnapImpl(thisSegment, segment, pos, offset)) {
+    if (offset !== 0 && this.trySnapImpl(thisDep, segment, pos, offset)) {
       return true;
     }
-    if (offset !== 0 && this.trySnapImpl(thisSegment, segment, pos, -offset)) {
+    if (offset !== 0 && this.trySnapImpl(thisDep, segment, pos, -offset)) {
       return true;
     }
     return false;
   }
 
   trySnapImpl(
-    thisSegment: Segment,
+    thisDep: SegmentPositionDep,
     segment: Segment,
     pos: Vector2,
     offset = 10,
@@ -103,8 +106,9 @@ export class SegmentPosition {
       const dist = newPoint.dist(pos);
       if (dist < 5) {
         if (
-          segment.createsLoop(thisSegment) ||
-          (offset !== 0 && thisSegment.sharesEnd(segment))
+          thisDep instanceof Segment &&
+          (segment.createsLoop(thisDep) ||
+            (offset !== 0 && thisDep.sharesEnd(segment)))
         ) {
           // If the segment creates a loop, we don't want to snap but we can
           // move the point to where it would be
@@ -135,10 +139,13 @@ export class SegmentPosition {
 
   /** If there's only two segments on this position, gets the angle between the two */
   getAngle(which?: Segment): number | undefined {
-    if (this.segments.size !== 2) {
+    if (this.deps.size !== 2) {
       return undefined;
     }
-    const [s1, s2] = Array.from(this.segments);
+    const [s1, s2] = Array.from(this.deps);
+    if (!(s1 instanceof Segment) || !(s2 instanceof Segment)) {
+      return undefined;
+    }
     const p = this.getPoint();
     const p1 = s1.getOtherEnd(this).getPoint();
     const p2 = s2.getOtherEnd(this).getPoint();

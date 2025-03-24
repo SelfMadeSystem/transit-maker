@@ -2,11 +2,13 @@ import { CanvasDrawingContext, DrawingContext } from '../utils/drawingContext';
 import { Vector2 } from '../utils/vec';
 import { Route } from './Route';
 import { Segment } from './Segment';
+import { Stop } from './Stop';
 import { Actionable } from './types';
 
 export class TransitMap {
   public routes: Route[] = [];
   public segments: Set<Segment> = new Set();
+  public stops: Set<Stop> = new Set();
   public selected: Actionable | null = null;
   public defaultRoute: Route;
   public selectedRoute: Route;
@@ -19,7 +21,7 @@ export class TransitMap {
     if (this.selected && this.selected.isOver(pos, ctx)) {
       return this.selected;
     }
-    for (const segment of this.segmentsByZIndex().flat().reverse()) {
+    for (const segment of this.actionablesByZIndex().flat().reverse()) {
       if (segment.isOver(pos, ctx)) {
         return segment;
       }
@@ -27,11 +29,11 @@ export class TransitMap {
     return null;
   }
 
-  segmentsByZIndex(
-    callback?: (segment: Segment, zIndex: number) => boolean | void,
+  actionablesByZIndex(
+    callback?: (actionable: Actionable, zIndex: number) => boolean | void,
     reverse?: boolean,
-  ): Segment[][] {
-    const segmentsByZIndex = [...this.segments]
+  ): Actionable[][] {
+    const aByZIndex = [...this.segments, ...this.stops]
       .sort((a, b) => a.getZIndex() - b.getZIndex())
       .reduce(
         (acc, segment) => {
@@ -46,34 +48,34 @@ export class TransitMap {
           }
           return acc;
         },
-        [[]] as Segment[][],
+        [[]] as Actionable[][],
       );
 
     if (callback) {
       if (reverse) {
-        for (const layer of segmentsByZIndex.slice().reverse()) {
+        for (const layer of aByZIndex.slice().reverse()) {
           for (const segment of layer.slice().reverse()) {
             if (callback(segment, segment.getZIndex())) {
-              return segmentsByZIndex;
+              return aByZIndex;
             }
           }
         }
       } else {
-        for (const layer of segmentsByZIndex) {
+        for (const layer of aByZIndex) {
           for (const segment of layer) {
             if (callback(segment, segment.getZIndex())) {
-              return segmentsByZIndex;
+              return aByZIndex;
             }
           }
         }
       }
     }
 
-    return segmentsByZIndex;
+    return aByZIndex;
   }
 
   draw(ctx: DrawingContext): void {
-    const segments = this.segmentsByZIndex();
+    const segments = this.actionablesByZIndex();
     for (const layer of segments) {
       const gens = layer.map(segment => segment.draw(ctx));
       let done = false;

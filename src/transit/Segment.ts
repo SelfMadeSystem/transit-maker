@@ -5,8 +5,9 @@ import { EPSILON } from '../utils/mathUtils';
 import { Vector2 } from '../utils/vec';
 import { Route } from './Route';
 import { SegmentPosition } from './SegmentPosition';
+import { Stop } from './Stop';
 import { TransitMap } from './TransitMap';
-import { Actionable, ClickInfo, DragInfo, LayeredDrawable } from './types';
+import { Actionable, ClickInfo, DragInfo } from './types';
 
 export type SegmentStrokeType = 'solid' | 'dotted' | 'dashed';
 
@@ -61,7 +62,7 @@ export const DEFALUT_SEGMENT_STYLE: SpecificSegmentStyle = {
   zIndex: 0,
 };
 
-export class Segment implements Actionable, LayeredDrawable {
+export class Segment implements Actionable {
   public style: SegmentStyle = {
     strokes: [
       {
@@ -94,19 +95,19 @@ export class Segment implements Actionable, LayeredDrawable {
     public end: SegmentPosition,
   ) {
     map.segments.add(this);
-    this.start.segments.add(this);
-    this.end.segments.add(this);
+    this.start.deps.add(this);
+    this.end.deps.add(this);
   }
 
   changeWhichEnd(old: SegmentPosition, newPos: SegmentPosition) {
     if (this.start === old) {
-      this.start.removeSegment(this);
+      this.start.removeDep(this);
       this.start = newPos;
     } else if (this.end === old) {
-      this.end.removeSegment(this);
+      this.end.removeDep(this);
       this.end = newPos;
     }
-    newPos.segments.add(this);
+    newPos.deps.add(this);
   }
 
   /** If 0, then this.start. If 1, then this.end. Otherwise, undefined. */
@@ -125,8 +126,8 @@ export class Segment implements Actionable, LayeredDrawable {
       dep.unsnap();
     }
     this.map.segments.delete(this);
-    this.start.removeSegment(this);
-    this.end.removeSegment(this);
+    this.start.removeDep(this);
+    this.end.removeDep(this);
   }
 
   isOver(pos: Vector2, _: CanvasDrawingContext): boolean {
@@ -154,14 +155,14 @@ export class Segment implements Actionable, LayeredDrawable {
 
   disconnect(which: 'start' | 'end'): void {
     if (which === 'start') {
-      this.start.removeSegment(this);
+      this.start.removeDep(this);
       this.start = this.start.clone();
-      this.start.segments.add(this);
+      this.start.deps.add(this);
       this.start.unsnap();
     } else if (which === 'end') {
-      this.end.removeSegment(this);
+      this.end.removeDep(this);
       this.end = this.end.clone();
-      this.end.segments.add(this);
+      this.end.deps.add(this);
       this.end.unsnap();
     }
   }
@@ -218,8 +219,10 @@ export class Segment implements Actionable, LayeredDrawable {
       case 'start':
         this.start.moveTo(end, true);
         if (shiftKey) {
-          this.map.segmentsByZIndex(
-            segment => this.start.trySnap(this, segment, end),
+          this.map.actionablesByZIndex(
+            segment =>
+              segment instanceof Segment &&
+              this.start.trySnap(this, segment, end),
             true,
           );
         }
@@ -227,8 +230,10 @@ export class Segment implements Actionable, LayeredDrawable {
       case 'end':
         this.end.moveTo(end, true);
         if (shiftKey) {
-          this.map.segmentsByZIndex(
-            segment => this.end.trySnap(this, segment, end),
+          this.map.actionablesByZIndex(
+            segment =>
+              segment instanceof Segment &&
+              this.end.trySnap(this, segment, end),
             true,
           );
         }
@@ -240,6 +245,13 @@ export class Segment implements Actionable, LayeredDrawable {
   }
 
   onDragEnd(_: DragInfo): void {
+    if (this.getStart().equals(this.getEnd())) {
+      // convert to a stop
+      const stop = new Stop(this.map, this.start);
+      this.map.selected = stop;
+      this.remove();
+      return;
+    }
     const handleMerge = (pos: SegmentPosition) => {
       if (pos.type === 'vec') return;
       const segment = pos.segment!;
@@ -253,9 +265,9 @@ export class Segment implements Actionable, LayeredDrawable {
         const deps = [...segment.segmentPosDeps];
         const p = segment.getWhichEnd(position);
         if (p) {
-          const otherSegment = p.getOtherSegment(segment);
-          if (otherSegment) {
-            deps.push(...otherSegment.segmentPosDeps);
+          const otherDep = p.getOtherDep(segment);
+          if (otherDep && otherDep instanceof Segment) {
+            deps.push(...otherDep.segmentPosDeps);
           }
         }
         for (const otherPos of deps) {

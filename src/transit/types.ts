@@ -69,11 +69,9 @@ export interface Actionable {
   // ctx is just used for getting text size
   isOver(pos: Vector2, ctx: CanvasDrawingContext): boolean;
   drawSelected(ctx: CanvasDrawingContext): void;
+  getZIndex(): number;
   onClick?(a: ClickInfo): void;
   onDrag?(a: DragInfo): void;
   onDragEnd?(a: DragInfo): void;
-}
-
-export interface LayeredDrawable {
   draw(ctx: DrawingContext): Generator<void>;
 }
