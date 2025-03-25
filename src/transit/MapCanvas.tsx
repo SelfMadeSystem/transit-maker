@@ -30,8 +30,26 @@ function createMap(): TransitMap {
   new Segment(
     map,
     route2,
-    SegmentPosition.snap(segment2, 0.5, 0),
-    SegmentPosition.vec(new Vector2(100, 0)),
+    SegmentPosition.snap(segment1, 0, 10),
+    SegmentPosition.snap(segment1, 1, 10),
+  );
+  new Segment(
+    map,
+    route2,
+    SegmentPosition.snap(segment1, 0, -10),
+    SegmentPosition.snap(segment1, 1, -10),
+  );
+  new Segment(
+    map,
+    route2,
+    SegmentPosition.snap(segment2, 0, 10),
+    SegmentPosition.snap(segment2, 1, 10),
+  );
+  new Segment(
+    map,
+    route2,
+    SegmentPosition.snap(segment2, 0, -10),
+    SegmentPosition.snap(segment2, 1, -10),
   );
   return map;
 }

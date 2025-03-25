@@ -1,7 +1,6 @@
 import { Color } from '../components/color/Color';
 import { Path2Dpp } from '../utils/Path2Dpp';
 import { CanvasDrawingContext, DrawingContext } from '../utils/drawingContext';
-import { EPSILON } from '../utils/mathUtils';
 import { Vector2, midpointShortestArc } from '../utils/vec';
 import { Route } from './Route';
 import { SegmentPosition } from './SegmentPosition';
@@ -88,7 +87,7 @@ export class Segment implements Actionable {
         width: 2,
       },
     ],
-    rounding: 10,
+    rounding: 20,
   };
   public specificStyle: SpecificSegmentStyle = { ...DEFALUT_SEGMENT_STYLE };
   private dragInfo: SegDragInfo | null = null;
@@ -276,7 +275,7 @@ export class Segment implements Actionable {
       if (offset === 0) {
         const p = segment.getWhichEnd(position);
         if (p) pos.mergeToSegment(p);
-      } else if (position === 0 || position === 1) {
+      } /* else if (position === 0 || position === 1) {
         const thisPoint = pos.getPoint();
         const deps = [...segment.segmentPosDeps];
         const p = segment.getWhichEnd(position);
@@ -300,7 +299,7 @@ export class Segment implements Actionable {
             }
           }
         }
-      }
+      } */
     };
 
     handleMerge(this.start);
@@ -496,15 +495,16 @@ export class Segment implements Actionable {
       const midpoint = start.lerp(end, 0.5);
       const startDep = this.start.getOtherDep(this);
       if (startDep instanceof Segment) {
-        const depOtherEnd = startDep.getOtherEnd(this.start);
-        const depPos = depOtherEnd.getPoint();
-        const maxDist = Math.min(start.dist(end) / 2, depPos.dist(start) / 2);
+        const depPos = startDep.getOffsetPoint(
+          startDep.start === this.start ? 1 : 0,
+          offset * (startDep.start === this.start ? -1 : 1),
+        );
+        const startAngle = this.start.getAngle(this)!;
         const stuff = Path2Dpp.calculateArcTo(
           depPos,
           start,
           midpoint,
-          startRounding,
-          maxDist,
+          startRounding - offset * Math.sign(startAngle),
         );
         if (stuff) {
           const { start, end, center, sweepFlag, radius } = stuff;
@@ -537,15 +537,16 @@ export class Segment implements Actionable {
 
       const endDep = this.end.getOtherDep(this);
       if (endDep instanceof Segment) {
-        const depOtherEnd = endDep.getOtherEnd(this.end);
-        const depPos = depOtherEnd.getPoint();
-        const maxDist = Math.min(start.dist(end) / 2, depPos.dist(end) / 2);
+        const depPos = endDep.getOffsetPoint(
+          endDep.end === this.end ? 0 : 1,
+          offset * (endDep.end === this.end ? -1 : 1),
+        );
+        const endAngle = this.end.getAngle(this)!;
         const stuff = Path2Dpp.calculateArcTo(
           midpoint,
           end,
           depPos,
-          endRounding,
-          maxDist,
+          endRounding + offset * Math.sign(endAngle),
         );
         if (stuff) {
           const { start, end, center, sweepFlag, radius } = stuff;
