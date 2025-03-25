@@ -354,6 +354,10 @@ export class Segment implements Actionable {
     let start = this.getStart();
     let end = this.getEnd();
 
+    if (start.equals(end)) {
+      return start;
+    }
+
     const normal = end.sub(start).normalize();
     if (offset !== 0) {
       const startAngle = this.start.getAngle(this);
@@ -554,7 +558,6 @@ export class Segment implements Actionable {
   }
 
   drawSelected(ctx: DrawingContext) {
-    this.getPoint(1, 1);
     ctx.save();
     const path = this.getPath();
     const start = this.getStart();

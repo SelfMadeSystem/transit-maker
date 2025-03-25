@@ -296,7 +296,7 @@ export class Path2Dpp {
       try {
         this.svgPath = SvgPath.fromString(this.toString());
       } catch (e) {
-        console.log(this.toString());
+        console.error(this.toString());
         throw e;
       }
     }

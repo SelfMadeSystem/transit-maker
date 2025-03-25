@@ -373,6 +373,7 @@ export class ACommand extends BaseMoveCommand {
   }
 
   getLengthAtPoint(point: Vector2): number {
+    // FIXME: this is incorrect I think
     const { center, radii, startParametric, xAxisRotation, direction } =
       this.getArcProperties();
 
