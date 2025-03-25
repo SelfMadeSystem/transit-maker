@@ -345,6 +345,12 @@ export class Segment implements Actionable {
 
   /** Gets the point at a given position along the segment */
   getPoint(position: number, offset: number): Vector2 {
+    const path = this.getPath(offset);
+    const length = path.getTotalLength();
+    return path.getPointAtLength(length * position);
+  }
+
+  getOffsetPoint(position: number, offset: number): Vector2 {
     let start = this.getStart();
     let end = this.getEnd();
 
@@ -451,7 +457,7 @@ export class Segment implements Actionable {
     const [start, end] =
       offset === 0
         ? [this.getStart(), this.getEnd()]
-        : [this.getPoint(0, offset), this.getPoint(1, offset)];
+        : [this.getOffsetPoint(0, offset), this.getOffsetPoint(1, offset)];
     const rounding =
       typeof this.style.rounding === 'number'
         ? [this.style.rounding, this.style.rounding]
