@@ -469,10 +469,9 @@ export class Segment implements Actionable {
       const length = path.getTotalLength();
       const startLength = length * this.start.position!;
       const endLength = length * this.end.position!;
-      const [st, en] = [
-        Math.min(startLength, endLength),
-        Math.max(startLength, endLength),
-      ];
+      const st = Math.min(startLength, endLength);
+      const en = Math.max(startLength, endLength);
+
       const svg = path.getSvgPath();
       let newSvg = svg.dashPath([0, st, en - st], 1);
       if (startLength > endLength) {
