@@ -655,7 +655,7 @@ export class SvgPath {
       }
       remaining -= path.getLength();
     }
-    return this.paths[this.paths.length - 1]?.start ?? new Vector2(0, 0);
+    return this.paths[this.paths.length - 1]?.getCurrent() ?? new Vector2(0, 0);
   }
 
   getClosestPoint(point: Vector2): Vector2 {
