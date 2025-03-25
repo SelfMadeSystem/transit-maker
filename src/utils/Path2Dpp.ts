@@ -73,6 +73,7 @@ export class Path2Dpp {
     this
       .append`A${radii.x},${radii.y},${rotation},${+largeArcFlag},${+sweepFlag},${(this.x1 = end.x)},${(this.y1 = end.y)}`;
   }
+  //#endregion
 
   //#region Path methods
   /**
