@@ -390,14 +390,14 @@ export class Path2Dpp {
    * Gets the start point of the path
    */
   getStartPoint(): Vector2 {
-    return new Vector2(this.x0 ?? 0, this.y0 ?? 0);
+    return this.getSvgPath().paths[0]?.start ?? new Vector2(0);
   }
 
   /**
    * Gets the end point of the path
    */
   getEndPoint(): Vector2 {
-    return new Vector2(this.x1 ?? 0, this.y1 ?? 0);
+    return this.getSvgPath().currentPath?.getCurrent() ?? this.getStartPoint();
   }
 
   /**
@@ -581,6 +581,11 @@ export class Path2Dpp {
   static fromString(path: string): Path2Dpp {
     const p = new Path2Dpp();
     p.path = path;
+    const svg = p.getSvgPath();
+    p.x0 = svg.currentPath?.start.x ?? null;
+    p.y0 = svg.currentPath?.start.y ?? null;
+    p.x1 = svg.currentPath?.getCurrent().x ?? null;
+    p.y1 = svg.currentPath?.getCurrent().y ?? null;
     return p;
   }
 
@@ -613,6 +618,10 @@ export class Path2Dpp {
     p.moveTo(start);
     p.lineTo(end);
     return p;
+  }
+
+  static fromSvgPath(path: SvgPath): Path2Dpp {
+    return Path2Dpp.fromString(path.toString());
   }
   //#endregion
 }

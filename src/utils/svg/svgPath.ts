@@ -820,7 +820,7 @@ export class SvgPath {
     return new SvgPath(this.paths.map(p => p.reverse()).reverse());
   }
 
-  dashPath(dashArray: number[]): SvgPath {
+  dashPath(dashArray: number[], max?: number): SvgPath {
     let path = this.paths[0];
     let pathIndex = 0;
     let remainingLength = this.getLength();
@@ -830,6 +830,10 @@ export class SvgPath {
 
     let i = 0;
     while (remainingLength > 0) {
+      if (max && dashedPath.length >= max) {
+        break;
+      }
+
       if (dash <= EPSILON) {
         dash = dashArray[++i % dashArray.length];
         continue;

@@ -458,6 +458,28 @@ export class Segment implements Actionable {
   }
 
   getPath(offset = 0): Path2Dpp {
+    if (
+      this.start.type === 'snap' &&
+      this.end.type === 'snap' &&
+      this.start.segment &&
+      this.start.segment === this.end.segment &&
+      this.start.offset === this.end.offset
+    ) {
+      const path = this.start.segment.getPath(this.start.offset);
+      const length = path.getTotalLength();
+      const startLength = length * this.start.position!;
+      const endLength = length * this.end.position!;
+      const [st, en] = [
+        Math.min(startLength, endLength),
+        Math.max(startLength, endLength),
+      ];
+      const svg = path.getSvgPath();
+      let newSvg = svg.dashPath([0, st, en - st], 1);
+      if (startLength > endLength) {
+        newSvg = newSvg.reverse();
+      }
+      return Path2Dpp.fromSvgPath(newSvg);
+    }
     const [start, end] =
       offset === 0
         ? [this.getStart(), this.getEnd()]
