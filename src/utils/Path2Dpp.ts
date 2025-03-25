@@ -387,6 +387,20 @@ export class Path2Dpp {
 
   //#region Extra methods
   /**
+   * Gets the start point of the path
+   */
+  getStartPoint(): Vector2 {
+    return new Vector2(this.x0 ?? 0, this.y0 ?? 0);
+  }
+
+  /**
+   * Gets the end point of the path
+   */
+  getEndPoint(): Vector2 {
+    return new Vector2(this.x1 ?? 0, this.y1 ?? 0);
+  }
+
+  /**
    * Strokes this path on a canvas context
    */
   stroke(ctx: CanvasRenderingContext2D): void {

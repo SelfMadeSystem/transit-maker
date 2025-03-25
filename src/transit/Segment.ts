@@ -63,6 +63,11 @@ export const DEFALUT_SEGMENT_STYLE: SpecificSegmentStyle = {
   zIndex: 0,
 };
 
+type SegDragInfo = {
+  which: 'start' | 'end' | 'segment';
+  offset?: Vector2;
+};
+
 export class Segment implements Actionable {
   public style: SegmentStyle = {
     strokes: [
@@ -86,9 +91,7 @@ export class Segment implements Actionable {
     rounding: 10,
   };
   public specificStyle: SpecificSegmentStyle = { ...DEFALUT_SEGMENT_STYLE };
-  private dragInfo: {
-    which: 'start' | 'end' | 'segment';
-  } | null = null;
+  private dragInfo: SegDragInfo | null = null;
   public segmentPosDeps: Set<SegmentPosition> = new Set();
   constructor(
     public readonly map: TransitMap,
@@ -137,20 +140,26 @@ export class Segment implements Actionable {
     return path.isPointClose(pos, this.getWidth());
   }
 
-  getMouseWhich(pos: Vector2): 'start' | 'end' | 'segment' | null {
-    const start = this.getStart();
-    const end = this.getEnd();
+  getDragInfo(pos: Vector2): SegDragInfo | null {
+    const path = this.getPath();
+    const start = path.getStartPoint();
+    const end = path.getEndPoint();
     const startDist = start.dist(pos);
     const endDist = end.dist(pos);
     const width = this.getWidth();
     if (startDist < endDist && startDist < width) {
-      return 'start';
+      return {
+        which: 'start',
+        offset: pos.sub(this.getStart()),
+      };
     } else if (endDist < startDist && endDist < width) {
-      return 'end';
+      return {
+        which: 'end',
+        offset: pos.sub(this.getEnd()),
+      };
     }
-    const path = this.getPath();
     if (path.isPointClose(pos, width)) {
-      return 'segment';
+      return { which: 'segment' };
     }
     return null;
   }
@@ -170,8 +179,9 @@ export class Segment implements Actionable {
   }
 
   onClick(a: ClickInfo): void {
-    const which = this.getMouseWhich(a.pos);
-    if (which) this.dragInfo = { which };
+    const dragInfo = this.getDragInfo(a.pos);
+    if (dragInfo) this.dragInfo = dragInfo;
+    const which = this.dragInfo?.which;
 
     switch (a.button) {
       case 'left': {
@@ -216,7 +226,11 @@ export class Segment implements Actionable {
 
   onDrag(a: DragInfo): void {
     if (!this.dragInfo) return;
-    const { delta, end, shiftKey } = a;
+    const { delta, shiftKey } = a;
+    let end = a.end;
+    if (this.dragInfo.offset) {
+      end = end.sub(this.dragInfo.offset);
+    }
     switch (this.dragInfo.which) {
       case 'start':
         this.start.moveTo(end, true);
