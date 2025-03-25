@@ -5,7 +5,9 @@ export class Vector2 implements Clonable {
   public readonly x: number;
   public readonly y: number;
 
-  constructor(...args: [number, number] | [{ x: number; y: number }]) {
+  constructor(
+    ...args: [number] | [number, number] | [{ x: number; y: number }]
+  ) {
     if (args[0] instanceof Object) {
       this.x = args[0].x;
       this.y = args[0].y;
@@ -13,7 +15,7 @@ export class Vector2 implements Clonable {
     }
 
     this.x = args[0];
-    this.y = args[1]!; // ts is dumb
+    this.y = args[1] ?? args[0];
   }
 
   static fromAngle(angle: number, magnitude: number = 1): Vector2 {
@@ -347,4 +349,22 @@ export function simplifyAngle(angle: number) {
   }
 
   return angle;
+}
+
+/**
+ * Given two points along a circle with a center and radius, find the midpoint
+ * of the shortest arc between the two points
+ * @param a The first point
+ * @param b The second point
+ * @param center The center of the circle
+ * @param radius The radius of the circle
+ * @returns The midpoint of the shortest arc between the two points
+ */
+export function midpointShortestArc(
+  a: Vector2,
+  b: Vector2,
+  center: Vector2,
+  radius: number,
+): Vector2 {
+  return center.add(a.avg(b).sub(center).setMag(radius));
 }

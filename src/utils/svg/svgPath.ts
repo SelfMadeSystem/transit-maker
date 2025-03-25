@@ -370,8 +370,23 @@ export class ACommand extends BaseMoveCommand {
     );
   }
 
-  getLengthAtPoint(_point: Vector2): number {
-    throw new Error('Method not implemented.');
+  getLengthAtPoint(point: Vector2): number {
+    const { center, radii, startParametric, endParametric } =
+      this.getArcProperties();
+
+    const closest = findClosestPointOnArc(
+      center,
+      radii,
+      point,
+      startParametric,
+      endParametric,
+      this.rotation,
+    );
+
+    const angle = point
+      .directionTo(center)
+      .angleBetween(closest.directionTo(center));
+    return angle * radii.length();
   }
 
   toString(): string {

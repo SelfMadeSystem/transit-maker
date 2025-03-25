@@ -59,6 +59,21 @@ export class Path2Dpp {
     this.path += strings[i];
   }
 
+  //#region Custom path methods
+  /**
+   * Svg-style arc method
+   */
+  arcSvg(
+    radii: Vector2,
+    rotation: number,
+    largeArcFlag: boolean,
+    sweepFlag: boolean,
+    end: Vector2,
+  ): void {
+    this
+      .append`A${radii.x},${radii.y},${rotation},${+largeArcFlag},${+sweepFlag},${(this.x1 = end.x)},${(this.y1 = end.y)}`;
+  }
+
   //#region Path methods
   /**
    * Move to a new point (x, y)
@@ -395,6 +410,156 @@ export class Path2Dpp {
   //#endregion
 
   //#region Static methods
+  /**
+   * Helper function to calculate the necessary values for an arcTo operation
+   * without drawing the arc.
+   */
+  static calculateArcTo(
+    a: Vector2,
+    b: Vector2,
+    c: Vector2,
+    radius: number,
+    maxDist: number = 0,
+  ): {
+    start: Vector2;
+    end: Vector2;
+    center: Vector2;
+    radius: number;
+    largeArcFlag: boolean;
+    sweepFlag: boolean;
+  } | null {
+    const x0 = a.x,
+      y0 = a.y,
+      x1 = b.x,
+      y1 = b.y,
+      x2 = c.x,
+      y2 = c.y;
+    const x21 = x2 - x1,
+      y21 = y2 - y1,
+      x01 = x0 - x1,
+      y01 = y0 - y1,
+      l01_2 = x01 * x01 + y01 * y01;
+
+    if (!(l01_2 > epsilon)) {
+      // No arc needed
+      return null;
+    }
+
+    if (!(Math.abs(y01 * x21 - y21 * x01) > epsilon) || !radius) {
+      // Straight line
+      return null;
+    }
+
+    const x20 = x2 - x0,
+      y20 = y2 - y0,
+      l21_2 = x21 * x21 + y21 * y21,
+      l20_2 = x20 * x20 + y20 * y20,
+      l21 = Math.sqrt(l21_2),
+      l01 = Math.sqrt(l01_2),
+      l =
+        radius *
+        Math.tan(
+          (pi - Math.acos((l21_2 + l01_2 - l20_2) / (2 * l21 * l01))) / 2,
+        );
+    let t01 = l / l01,
+      t21 = l / l21;
+
+    let recalRadius = false;
+
+    if (maxDist > 0) {
+      // should be the same for both t01 and t21
+      const dist = Math.sqrt(t01 * x01 * t01 * x01 + t01 * y01 * t01 * y01);
+      if (dist > maxDist) {
+        t01 = maxDist / l01;
+        t21 = maxDist / l21;
+
+        // Recalculate the radius
+        recalRadius = true;
+      }
+    }
+
+    const startX = x1 + t01 * x01;
+    const startY = y1 + t01 * y01;
+    const endX = x1 + t21 * x21;
+    const endY = y1 + t21 * y21;
+
+    // The center of the circle
+    const midX = (startX + endX) / 2;
+    const midY = (startY + endY) / 2;
+
+    if (recalRadius) {
+      // Normal vector for a->b at start
+      const normalStartX = -y01 / l01;
+      const normalStartY = x01 / l01;
+
+      // Normal vector for b->c at end
+      const normalEndX = -y21 / l21;
+      const normalEndY = x21 / l21;
+
+      // Parametric equations for the lines
+      // Line 1: (startX, startY) + t1 * (normalStartX, normalStartY)
+      // Line 2: (endX, endY) + t2 * (normalEndX, normalEndY)
+
+      const det = normalStartX * normalEndY - normalStartY * normalEndX;
+
+      if (Math.abs(det) > epsilon) {
+        // Solve for t1 and t2 to find the intersection
+        const t1 =
+          ((endX - startX) * normalEndY - (endY - startY) * normalEndX) / det;
+
+        // Intersection point (new center)
+        const centerX = startX + t1 * normalStartX;
+        const centerY = startY + t1 * normalStartY;
+
+        // Recalculate the radius
+        radius = Math.sqrt(
+          (centerX - startX) * (centerX - startX) +
+            (centerY - startY) * (centerY - startY),
+        );
+      } else {
+        // If the lines are parallel, fallback to the midpoint as the center
+        radius = Math.sqrt(
+          (midX - startX) * (midX - startX) + (midY - startY) * (midY - startY),
+        );
+      }
+    }
+
+    const directionX = -(endY - startY); // Perpendicular direction
+    const directionY = endX - startX;
+
+    const dirLength = Math.sqrt(
+      directionX * directionX + directionY * directionY,
+    );
+
+    // Normalize the direction vector
+    let unitDirX = directionX / dirLength;
+    let unitDirY = directionY / dirLength;
+
+    // Ensure the direction points away from [x1, y1]
+    const dotProduct = unitDirX * (midX - x1) + unitDirY * (midY - y1);
+    if (dotProduct < 0) {
+      unitDirX = -unitDirX;
+      unitDirY = -unitDirY;
+    }
+
+    // Distance from the midpoint to the center
+    const halfChordLength = Math.sqrt(radius * radius - (dirLength / 2) ** 2);
+
+    const centerX = midX + unitDirX * halfChordLength;
+    const centerY = midY + unitDirY * halfChordLength;
+
+    const sweepFlag = y01 * x20 > x01 * y20;
+
+    return {
+      start: new Vector2(startX, startY),
+      end: new Vector2(endX, endY),
+      center: new Vector2(centerX, centerY),
+      radius,
+      largeArcFlag: false,
+      sweepFlag,
+    };
+  }
+
   /**
    * Create a new path from a string
    */

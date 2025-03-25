@@ -2,7 +2,7 @@ import { Color } from '../components/color/Color';
 import { Path2Dpp } from '../utils/Path2Dpp';
 import { CanvasDrawingContext, DrawingContext } from '../utils/drawingContext';
 import { EPSILON } from '../utils/mathUtils';
-import { Vector2 } from '../utils/vec';
+import { Vector2, midpointShortestArc } from '../utils/vec';
 import { Route } from './Route';
 import { SegmentPosition } from './SegmentPosition';
 import { Stop } from './Stop';
@@ -44,6 +44,7 @@ export type SegmentStroke =
 
 export type SegmentStyle = {
   strokes: SegmentStroke[];
+  rounding: [number, number] | number;
 };
 
 export type SpecificSegmentStyle = {
@@ -82,6 +83,7 @@ export class Segment implements Actionable {
         width: 2,
       },
     ],
+    rounding: 10,
   };
   public specificStyle: SpecificSegmentStyle = { ...DEFALUT_SEGMENT_STYLE };
   private dragInfo: {
@@ -436,9 +438,85 @@ export class Segment implements Actionable {
       offset === 0
         ? [this.getStart(), this.getEnd()]
         : [this.getPoint(0, offset), this.getPoint(1, offset)];
+    const rounding =
+      typeof this.style.rounding === 'number'
+        ? [this.style.rounding, this.style.rounding]
+        : this.style.rounding;
+    // FIXME: rounding must take into account the offset. I don't think adding
+    // the offset will work since we don't know the direction of the rounding.
+    const startRounding = rounding[0];
+    const endRounding = rounding[1];
     const path = new Path2Dpp();
-    path.moveTo(start);
-    path.lineTo(end);
+    if (rounding) {
+      const midpoint = start.lerp(end, 0.5);
+      const startDep = this.start.getOtherDep(this);
+      if (startDep instanceof Segment) {
+        const depOtherEnd = startDep.getOtherEnd(this.start);
+        const depPos = depOtherEnd.getPoint();
+        const maxDist = Math.min(start.dist(end) / 2, depPos.dist(start) / 2);
+        const stuff = Path2Dpp.calculateArcTo(
+          depPos,
+          start,
+          midpoint,
+          startRounding,
+          maxDist,
+        );
+        if (stuff) {
+          const { start, end, center, sweepFlag, radius } = stuff;
+          const midpoint = midpointShortestArc(start, end, center, radius);
+          path.moveTo(midpoint);
+          path.arcSvg(new Vector2(radius), 0, false, sweepFlag, end);
+          /* debugDraw(ctx => {
+            ctx.save();
+            ctx.strokeStyle = Color.RED.hex();
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.strokeStyle = Color.CYAN.hex();
+            ctx.beginPath();
+            ctx.arc(start.x, start.y, 4, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.strokeStyle = Color.YELLOW.hex();
+            ctx.beginPath();
+            ctx.arc(end.x, end.y, 4, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+          }); */
+        } else {
+          path.moveTo(start);
+        }
+      } else {
+        path.moveTo(start);
+      }
+
+      const endDep = this.end.getOtherDep(this);
+      if (endDep instanceof Segment) {
+        const depOtherEnd = endDep.getOtherEnd(this.end);
+        const depPos = depOtherEnd.getPoint();
+        const maxDist = Math.min(start.dist(end) / 2, depPos.dist(end) / 2);
+        const stuff = Path2Dpp.calculateArcTo(
+          midpoint,
+          end,
+          depPos,
+          endRounding,
+          maxDist,
+        );
+        if (stuff) {
+          const { start, end, center, sweepFlag, radius } = stuff;
+          const midpoint = midpointShortestArc(start, end, center, radius);
+          path.lineTo(start);
+          path.arcSvg(new Vector2(radius), 0, false, sweepFlag, midpoint);
+        } else {
+          path.lineTo(end);
+        }
+      } else {
+        path.lineTo(end);
+      }
+    } else {
+      path.moveTo(start);
+      path.lineTo(end);
+    }
     return path;
   }
 
