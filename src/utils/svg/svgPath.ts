@@ -7,9 +7,11 @@ import {
 } from '../math/bezier';
 import {
   EllipseArc,
+  arcLength,
   ellipseArcProperties,
   findClosestPointOnArc,
   findEndAngle,
+  parametricAngle,
   pointAtAngle,
 } from '../math/ellipseUtils';
 import { EPSILON } from '../mathUtils';
@@ -371,22 +373,32 @@ export class ACommand extends BaseMoveCommand {
   }
 
   getLengthAtPoint(point: Vector2): number {
-    const { center, radii, startParametric, endParametric } =
+    const { center, radii, startParametric, xAxisRotation, direction } =
       this.getArcProperties();
 
-    const closest = findClosestPointOnArc(
+    // Find the closest point on the arc
+    const closestPoint = findClosestPointOnArc(
       center,
       radii,
       point,
       startParametric,
-      endParametric,
-      this.rotation,
+      this.getArcProperties().endParametric,
+      xAxisRotation,
     );
 
-    const angle = point
-      .directionTo(center)
-      .angleBetween(closest.directionTo(center));
-    return angle * radii.length();
+    // Calculate the parametric angle of the closest point
+    const closestParametric = parametricAngle(
+      center,
+      closestPoint,
+      radii,
+      xAxisRotation,
+    );
+
+    // Compute the arc length from the start to the closest point
+    const length = arcLength(radii, startParametric, closestParametric);
+
+    // Adjust the length based on the arc's direction
+    return length * direction;
   }
 
   toString(): string {
