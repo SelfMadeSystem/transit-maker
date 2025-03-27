@@ -1,9 +1,32 @@
+import { showContextMenu } from '../components/context-menu';
 import { CanvasDrawingContext, DrawingContext } from '../utils/drawingContext';
 import { Vector2 } from '../utils/vec';
 import { Route } from './Route';
 import { Segment } from './Segment';
 import { Stop } from './Stop';
 import { Actionable } from './types';
+
+class ContextMenuHelper {
+  constructor(public map: TransitMap) {}
+
+  selectRoute(pos: Vector2): Promise<Route | null> {
+    return new Promise(resolve => {
+      const items = this.map.routes.map(route => ({
+        label: route.name,
+        onClick: () => {
+          resolve(route);
+        },
+      }));
+      showContextMenu({
+        pos,
+        items,
+        onClose: () => {
+          resolve(null);
+        },
+      });
+    });
+  }
+}
 
 export class TransitMap {
   public routes: Route[] = [];
@@ -12,8 +35,10 @@ export class TransitMap {
   public selected: Actionable | null = null;
   public defaultRoute: Route;
   public selectedRoute: Route;
+  public ctxMenu: ContextMenuHelper = new ContextMenuHelper(this);
   constructor() {
     this.defaultRoute = new Route(this);
+    this.defaultRoute.name = 'Default';
     this.selectedRoute = this.defaultRoute;
   }
 

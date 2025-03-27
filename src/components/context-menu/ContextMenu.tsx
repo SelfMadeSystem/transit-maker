@@ -1,18 +1,5 @@
-import { setContextMenuSetter } from '.';
+import { ContextMenu, setContextMenuSetter } from '.';
 import { useRef, useState } from 'react';
-
-export type ContextMenu = {
-  x: number;
-  y: number;
-  items: ContextMenuItem[];
-  onClose?: () => void;
-};
-
-export type ContextMenuItem = {
-  label: string;
-  children?: ContextMenuItem[];
-  onClick: () => void;
-};
 
 export const ContextMenuContainer = () => {
   const [menu, _setMenu] = useState<ContextMenu | null>(null);
@@ -68,8 +55,8 @@ export const ContextMenuContainer = () => {
         <div
           className="fixed"
           style={{
-            left: menu.x,
-            top: menu.y,
+            left: menu.pos.x,
+            top: menu.pos.y,
             pointerEvents: 'auto',
           }}
         >

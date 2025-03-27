@@ -1,4 +1,16 @@
-import { ContextMenu } from './ContextMenu';
+import { Vector2 } from '../../utils/vec';
+
+export type ContextMenu = {
+  pos: Vector2;
+  items: ContextMenuItem[];
+  onClose?: () => void;
+};
+
+export type ContextMenuItem = {
+  label: string;
+  children?: ContextMenuItem[];
+  onClick: () => void;
+};
 
 let setContextMenu: (menu: ContextMenu | null) => void = () => {};
 
@@ -18,8 +30,7 @@ export const hideContextMenu = () => {
 
 export const waitForInput = <T extends string>(
   items: T[],
-  x: number,
-  y: number,
+  pos: Vector2,
 ): Promise<T | undefined> => {
   return new Promise(resolve => {
     const onClick = (label: T) => {
@@ -27,8 +38,7 @@ export const waitForInput = <T extends string>(
       resolve(label);
     };
     showContextMenu({
-      x,
-      y,
+      pos,
       items: items.map(item => ({
         label: item,
         onClick: () => onClick(item),

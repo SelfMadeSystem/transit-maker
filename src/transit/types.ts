@@ -5,6 +5,7 @@ export type ClickType = 'single' | 'double';
 export type ClickButton = 'left' | 'middle' | 'right';
 
 export type PosWithKeys = {
+  screenPos: Vector2;
   pos: Vector2;
   shiftKey: boolean;
   ctrlKey: boolean;
@@ -17,6 +18,7 @@ export const eventToPosWithKeys = (
   e: MouseEvent,
   pos: Vector2,
 ): PosWithKeys => ({
+  screenPos: new Vector2(e.clientX, e.clientY),
   pos,
   shiftKey: e.shiftKey,
   ctrlKey: e.ctrlKey,

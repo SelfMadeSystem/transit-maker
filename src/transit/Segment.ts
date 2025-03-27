@@ -218,6 +218,15 @@ export class Segment implements Actionable {
       case 'right': {
         if (which === 'start' || which === 'end') {
           this.disconnect(which);
+        } else {
+          this.map.ctxMenu.selectRoute(a.screenPos).then(route => {
+            if (route) {
+              this.route = route;
+              this.map.selected = this;
+            } else {
+              this.map.selected = null;
+            }
+          });
         }
       }
     }
