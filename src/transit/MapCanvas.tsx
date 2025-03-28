@@ -27,28 +27,25 @@ function createMap(): TransitMap {
     SegmentPosition.vec(new Vector2(200, 25)),
   );
 
-  new Segment(
+  const segment3 = new Segment(
     map,
     route2,
-    SegmentPosition.snap(segment1, 0, 10),
-    SegmentPosition.snap(segment1, 1, 10),
+    SegmentPosition.snap(segment1, 0, 10, true),
+    SegmentPosition.snap(segment1, 1, 10, true),
   );
-  new Segment(
+  segment3.end.rounding = 10;
+  const segment4 = new Segment(
     map,
     route2,
-    SegmentPosition.snap(segment1, 0, -10),
-    SegmentPosition.snap(segment1, 1, -10),
+    SegmentPosition.snap(segment1, 0, -10, true),
+    SegmentPosition.snap(segment1, 1, -10, true),
   );
+  segment4.end.rounding = 30;
+  new Segment(map, route2, segment3.end, SegmentPosition.snap(segment2, 1, 10));
   new Segment(
     map,
     route2,
-    SegmentPosition.snap(segment2, 0, 10),
-    SegmentPosition.snap(segment2, 1, 10),
-  );
-  new Segment(
-    map,
-    route2,
-    SegmentPosition.snap(segment2, 0, -10),
+    segment4.end,
     SegmentPosition.snap(segment2, 1, -10),
   );
   return map;

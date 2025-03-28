@@ -3,6 +3,7 @@ import { Segment } from './Segment';
 
 export class SegmentPosition {
   public deps: Set<Segment> = new Set();
+  public rounding = 20;
 
   constructor(
     public type: 'vec', // no snapping kuz it's getting kinda (very) messy
@@ -24,6 +25,10 @@ export class SegmentPosition {
     [...this.deps].forEach(s => s.changeWhichEnd(this, newPos));
   }
 
+  hasRounding(): boolean {
+    return this.rounding !== 0 && this.deps.size === 2;
+  }
+
   trySnap(
     thisDep: Segment,
     segment: Segment,
@@ -35,7 +40,6 @@ export class SegmentPosition {
       return false;
     }
     if (this.trySnapImpl(thisDep, segment, pos, 0, merge)) {
-      console.log('snapped', merge);
       return true;
     }
     if (merge) return false; // never merge with offset
@@ -64,7 +68,8 @@ export class SegmentPosition {
     if (segment.end === this || segment.start === this) {
       return false;
     }
-    const path = segment.getPath(offset);
+    const doRound = this.hasRounding();
+    const path = segment.getPath(offset, doRound);
     const length = path.getLengthAtPoint(pos);
     const newPoint = path.getPointAtLength(length);
     const dist = newPoint.dist(pos);
@@ -72,9 +77,16 @@ export class SegmentPosition {
       this.pos = newPoint;
       if (merge) {
         const tot = path.getTotalLength();
-        const p = segment.getWhichEnd(length / tot);
-        console.log(length, tot, length / tot);
+        const t = length / tot;
+        const p = segment.getWhichEnd(t);
         if (p) this.mergeAll(p);
+      } else if (doRound) {
+        const tot = path.getTotalLength();
+        const t = length / tot;
+        const p = segment.getWhichEnd(t);
+        if (p) {
+          this.rounding = p.rounding - offset;
+        }
       }
       return true;
     }
@@ -144,7 +156,11 @@ export class SegmentPosition {
     segment: Segment,
     position: number,
     offset = 10,
+    dontRound = false,
   ): SegmentPosition {
-    return new SegmentPosition('vec', segment.getPoint(position, offset));
+    return new SegmentPosition(
+      'vec',
+      segment.getPoint(position, offset, dontRound),
+    );
   }
 }

@@ -43,7 +43,6 @@ export type SegmentStroke =
 
 export type SegmentStyle = {
   strokes: SegmentStroke[];
-  rounding: [number, number] | number;
 };
 
 export type SpecificSegmentStyle = {
@@ -87,7 +86,6 @@ export class Segment implements Actionable {
         width: 2,
       },
     ],
-    rounding: 20,
   };
   public specificStyle: SpecificSegmentStyle = { ...DEFALUT_SEGMENT_STYLE };
   private dragInfo: SegDragInfo | null = null;
@@ -354,8 +352,8 @@ export class Segment implements Actionable {
   }
 
   /** Gets the point at a given position along the segment */
-  getPoint(position: number, offset: number): Vector2 {
-    const path = this.getPath(offset);
+  getPoint(position: number, offset: number, dontRound = false): Vector2 {
+    const path = this.getPath(offset, dontRound);
     const length = path.getTotalLength();
     return path.getPointAtLength(length * position);
   }
@@ -449,92 +447,73 @@ export class Segment implements Actionable {
     ctx.setStroke(color ?? this.route.color);
   }
 
-  getPath(offset = 0): Path2Dpp {
+  getPath(offset = 0, dontRound = false): Path2Dpp {
     const [start, end] =
       offset === 0
         ? [this.getStart(), this.getEnd()]
         : [this.getOffsetPoint(0, offset), this.getOffsetPoint(1, offset)];
-    const rounding =
-      typeof this.style.rounding === 'number'
-        ? [this.style.rounding, this.style.rounding]
-        : this.style.rounding;
-    // FIXME: rounding must take into account the offset. I don't think adding
-    // the offset will work since we don't know the direction of the rounding.
-    const startRounding = rounding[0];
-    const endRounding = rounding[1];
+    const startRounding = this.start.rounding;
+    const endRounding = this.end.rounding;
     const path = new Path2Dpp();
-    if (rounding) {
-      const midpoint = start.lerp(end, 0.5);
-      const startDep = this.start.getOtherDep(this);
-      if (startDep instanceof Segment) {
-        const depPos = startDep.getOffsetPoint(
-          startDep.start === this.start ? 1 : 0,
-          offset * (startDep.start === this.start ? -1 : 1),
-        );
-        const startAngle = this.start.getAngle(this)!;
-        const stuff = Path2Dpp.calculateArcTo(
-          depPos,
-          start,
-          midpoint,
-          startRounding - offset * Math.sign(startAngle),
-        );
-        if (stuff) {
-          const { start, end, center, sweepFlag, radius } = stuff;
-          const midpoint = midpointShortestArc(start, end, center, radius);
-          path.moveTo(midpoint);
-          path.arcSvg(new Vector2(radius), 0, false, sweepFlag, end);
-          /* debugDraw(ctx => {
-            ctx.save();
-            ctx.strokeStyle = Color.RED.hex();
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.strokeStyle = Color.CYAN.hex();
-            ctx.beginPath();
-            ctx.arc(start.x, start.y, 4, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.strokeStyle = Color.YELLOW.hex();
-            ctx.beginPath();
-            ctx.arc(end.x, end.y, 4, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.restore();
-          }); */
-        } else {
-          path.moveTo(start);
-        }
+
+    if (dontRound || startRounding === 0 || endRounding === 0) {
+      // No rounding, just draw a line
+      path.moveTo(start);
+      path.lineTo(end);
+      return path;
+    }
+
+    const midpoint = start.lerp(end, 0.5);
+    const startDep = this.start.getOtherDep(this);
+    if (startDep instanceof Segment) {
+      const depPos = startDep.getOffsetPoint(
+        startDep.start === this.start ? 1 : 0,
+        offset * (startDep.start === this.start ? -1 : 1),
+      );
+      const startAngle = this.start.getAngle(this)!;
+      const stuff = Path2Dpp.calculateArcTo(
+        depPos,
+        start,
+        midpoint,
+        startRounding - offset * Math.sign(startAngle),
+      );
+      if (stuff) {
+        const { start, end, center, sweepFlag, radius } = stuff;
+        const midpoint = midpointShortestArc(start, end, center, radius);
+        path.moveTo(midpoint);
+        path.arcSvg(new Vector2(radius), 0, false, sweepFlag, end);
       } else {
         path.moveTo(start);
       }
+    } else {
+      path.moveTo(start);
+    }
 
-      const endDep = this.end.getOtherDep(this);
-      if (endDep instanceof Segment) {
-        const depPos = endDep.getOffsetPoint(
-          endDep.end === this.end ? 0 : 1,
-          offset * (endDep.end === this.end ? -1 : 1),
-        );
-        const endAngle = this.end.getAngle(this)!;
-        const stuff = Path2Dpp.calculateArcTo(
-          midpoint,
-          end,
-          depPos,
-          endRounding + offset * Math.sign(endAngle),
-        );
-        if (stuff) {
-          const { start, end, center, sweepFlag, radius } = stuff;
-          const midpoint = midpointShortestArc(start, end, center, radius);
-          path.lineTo(start);
-          path.arcSvg(new Vector2(radius), 0, false, sweepFlag, midpoint);
-        } else {
-          path.lineTo(end);
-        }
+    const endDep = this.end.getOtherDep(this);
+    if (endDep instanceof Segment) {
+      const depPos = endDep.getOffsetPoint(
+        endDep.end === this.end ? 0 : 1,
+        offset * (endDep.end === this.end ? -1 : 1),
+      );
+      const endAngle = this.end.getAngle(this)!;
+      const stuff = Path2Dpp.calculateArcTo(
+        midpoint,
+        end,
+        depPos,
+        endRounding + offset * Math.sign(endAngle),
+      );
+      if (stuff) {
+        const { start, end, center, sweepFlag, radius } = stuff;
+        const midpoint = midpointShortestArc(start, end, center, radius);
+        path.lineTo(start);
+        path.arcSvg(new Vector2(radius), 0, false, sweepFlag, midpoint);
       } else {
         path.lineTo(end);
       }
     } else {
-      path.moveTo(start);
       path.lineTo(end);
     }
+
     return path;
   }
 
@@ -570,7 +549,13 @@ export class Segment implements Actionable {
     ctx.strokePath(path, true);
 
     ctx.setStroke(Color.WHITE);
-    ctx.setStrokeWidth(1);
+    ctx.setStrokeWidth(0.5);
+    ctx.setStrokeDash([5, 2]);
+    ctx.setStrokeDashOffset(0);
+    ctx.strokePath(this.getPath(0, true), false);
+
+    ctx.setStroke(Color.WHITE);
+    ctx.setStrokeDash([]);
     ctx.strokePath(
       Path2Dpp[this.start.type === 'vec' ? 'circle' : 'circleX'](start, 5),
     );
