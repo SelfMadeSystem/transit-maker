@@ -456,7 +456,7 @@ export class Segment implements Actionable {
     const endRounding = this.end.rounding;
     const path = new Path2Dpp();
 
-    if (dontRound || startRounding === 0 || endRounding === 0) {
+    if (dontRound || (startRounding === 0 && endRounding === 0)) {
       // No rounding, just draw a line
       path.moveTo(start);
       path.lineTo(end);
