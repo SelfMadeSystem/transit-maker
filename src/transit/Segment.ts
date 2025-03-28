@@ -126,9 +126,6 @@ export class Segment implements Actionable {
   }
 
   remove(): void {
-    for (const dep of this.segmentPosDeps) {
-      dep.unsnap();
-    }
     this.map.segments.delete(this);
     this.start.removeDep(this);
     this.end.removeDep(this);
@@ -168,12 +165,10 @@ export class Segment implements Actionable {
       this.start.removeDep(this);
       this.start = this.start.clone();
       this.start.deps.add(this);
-      this.start.unsnap();
     } else if (which === 'end') {
       this.end.removeDep(this);
       this.end = this.end.clone();
       this.end.deps.add(this);
-      this.end.unsnap();
     }
   }
 
@@ -241,7 +236,7 @@ export class Segment implements Actionable {
     }
     switch (this.dragInfo.which) {
       case 'start':
-        this.start.moveTo(end, true);
+        this.start.moveTo(end);
         if (shiftKey) {
           this.map.actionablesByZIndex(
             segment =>
@@ -252,7 +247,7 @@ export class Segment implements Actionable {
         }
         break;
       case 'end':
-        this.end.moveTo(end, true);
+        this.end.moveTo(end);
         if (shiftKey) {
           this.map.actionablesByZIndex(
             segment =>
@@ -268,7 +263,7 @@ export class Segment implements Actionable {
     }
   }
 
-  onDragEnd(_: DragInfo): void {
+  onDragEnd(a: DragInfo): void {
     if (this.getStart().equals(this.getEnd())) {
       // convert to a stop
       const stop = new Stop(this.map, this.start);
@@ -276,15 +271,26 @@ export class Segment implements Actionable {
       this.remove();
       return;
     }
-    const handleMerge = (pos: SegmentPosition) => {
-      if (pos.type === 'vec') return;
-      const segment = pos.segment!;
-      const offset = pos.offset!;
-      const position = pos.position!;
-      if (offset === 0) {
-        const p = segment.getWhichEnd(position);
-        if (p) pos.mergeToSegment(p);
-      } /* else if (position === 0 || position === 1) {
+    if (!this.dragInfo) return;
+    const { shiftKey } = a;
+    let end = a.end;
+    if (this.dragInfo.offset) {
+      end = end.sub(this.dragInfo.offset);
+    }
+    if (!shiftKey) return;
+    const p =
+      this.dragInfo.which === 'start'
+        ? this.start
+        : this.dragInfo.which === 'end'
+          ? this.end
+          : null;
+    if (!p) return;
+    this.map.actionablesByZIndex(
+      segment =>
+        segment instanceof Segment && p.trySnap(this, segment, end, 10, true),
+      true,
+    );
+    /* else if (position === 0 || position === 1) {
         const thisPoint = pos.getPoint();
         const deps = [...segment.segmentPosDeps];
         const p = segment.getWhichEnd(position);
@@ -309,10 +315,6 @@ export class Segment implements Actionable {
           }
         }
       } */
-    };
-
-    handleMerge(this.start);
-    handleMerge(this.end);
   }
 
   /** Gets the width of the segment */
@@ -397,24 +399,6 @@ export class Segment implements Actionable {
   }
 
   /**
-   * If a given segment is to snap to this segment, return true if an infinite
-   * loop would be created. We don't like infinite loops as we'd never be able
-   * to find the positions of the segments since they reference each other.
-   */
-  createsLoop(
-    segment: Segment,
-    visited = new Set<Segment>([segment]),
-  ): boolean {
-    if (visited.has(this)) return true;
-    visited.add(this);
-    return (
-      (this.end.segment?.createsLoop(segment, visited) ||
-        this.start.segment?.createsLoop(segment, visited)) ??
-      false
-    );
-  }
-
-  /**
    * Determines if this segment and another segment share the same start or end.
    */
   sharesEnd(segment: Segment): boolean {
@@ -466,27 +450,6 @@ export class Segment implements Actionable {
   }
 
   getPath(offset = 0): Path2Dpp {
-    if (
-      this.start.type === 'snap' &&
-      this.end.type === 'snap' &&
-      this.start.segment &&
-      this.start.segment === this.end.segment &&
-      this.start.offset === this.end.offset
-    ) {
-      const path = this.start.segment.getPath(this.start.offset);
-      const length = path.getTotalLength();
-      const startLength = length * this.start.position!;
-      const endLength = length * this.end.position!;
-      const st = Math.min(startLength, endLength);
-      const en = Math.max(startLength, endLength);
-
-      const svg = path.getSvgPath();
-      let newSvg = svg.dashPath([0, st, en - st], 1);
-      if (startLength > endLength) {
-        newSvg = newSvg.reverse();
-      }
-      return Path2Dpp.fromSvgPath(newSvg);
-    }
     const [start, end] =
       offset === 0
         ? [this.getStart(), this.getEnd()]

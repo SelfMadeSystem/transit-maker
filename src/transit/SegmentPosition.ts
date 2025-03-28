@@ -1,140 +1,88 @@
 import { Vector2 } from '../utils/vec';
 import { Segment } from './Segment';
-import { Stop } from './Stop';
-
-export type SegmentPositionDep = Segment | Stop;
 
 export class SegmentPosition {
-  public deps: Set<SegmentPositionDep> = new Set();
+  public deps: Set<Segment> = new Set();
 
   constructor(
-    public type: 'vec' | 'snap',
-    public pos?: Vector2,
-    public segment?: Segment,
-    public position?: number,
-    public offset?: number,
-  ) {
-    if (segment) {
-      segment.segmentPosDeps.add(this);
-    }
-  }
+    public type: 'vec', // no snapping kuz it's getting kinda (very) messy
+    public pos: Vector2,
+  ) {}
 
-  removeDep(dep: SegmentPositionDep) {
+  removeDep(dep: Segment) {
     this.deps.delete(dep);
-    if (this.deps.size === 0) {
-      this.unsnap();
-    }
   }
 
-  getOtherDep(dep: SegmentPositionDep): SegmentPositionDep | undefined {
+  getOtherDep(dep: Segment): Segment | undefined {
     if (this.deps.size === 2) {
       return [...this.deps].find(s => s !== dep);
     }
     return undefined;
   }
 
-  mergeToSegment(newPos: SegmentPosition) {
-    if (!this.segment) return;
+  mergeAll(newPos: SegmentPosition) {
     [...this.deps].forEach(s => s.changeWhichEnd(this, newPos));
   }
 
-  setVec(pos: Vector2) {
-    if (this.type === 'snap') {
-      this.unsnap();
-    }
-    this.pos = pos;
-  }
-
-  setSnap(segment: Segment, position: number, offset: number) {
-    if (this.type === 'snap') {
-      this.unsnap();
-    }
-    this.segment = segment;
-    segment.segmentPosDeps.add(this);
-    this.position = position;
-    this.offset = offset;
-    this.type = 'snap';
-  }
-
-  unsnap() {
-    if (this.type === 'snap') {
-      this.pos = this.getPoint();
-      this.type = 'vec';
-      if (this.segment) {
-        this.segment.segmentPosDeps.delete(this);
-      }
-      this.segment = undefined;
-      this.position = undefined;
-      this.offset = undefined;
-    }
-  }
-
   trySnap(
-    thisDep: SegmentPositionDep,
+    thisDep: Segment,
     segment: Segment,
     pos: Vector2,
     offset = 10,
+    merge = false,
   ): boolean {
     if (thisDep === segment) {
       return false;
     }
-    if (this.trySnapImpl(thisDep, segment, pos, 0)) {
+    if (this.trySnapImpl(thisDep, segment, pos, 0, merge)) {
+      console.log('snapped', merge);
       return true;
     }
-    if (offset !== 0 && this.trySnapImpl(thisDep, segment, pos, offset)) {
+    if (merge) return false; // never merge with offset
+    if (
+      offset !== 0 &&
+      this.trySnapImpl(thisDep, segment, pos, offset, merge)
+    ) {
       return true;
     }
-    if (offset !== 0 && this.trySnapImpl(thisDep, segment, pos, -offset)) {
+    if (
+      offset !== 0 &&
+      this.trySnapImpl(thisDep, segment, pos, -offset, merge)
+    ) {
       return true;
     }
     return false;
   }
 
   trySnapImpl(
-    thisDep: SegmentPositionDep,
+    _thisDep: Segment, // idk if this is needed
     segment: Segment,
     pos: Vector2,
     offset = 10,
+    merge = false,
   ): boolean {
     if (segment.end === this || segment.start === this) {
       return false;
     }
-    if (this.type === 'vec') {
-      const path = segment.getPath(offset);
-      const length = path.getLengthAtPoint(pos);
-      const newPoint = path.getPointAtLength(length);
-      const dist = newPoint.dist(pos);
-      if (dist < 5) {
-        if (
-          thisDep instanceof Segment &&
-          (segment.createsLoop(thisDep) ||
-            (offset !== 0 && thisDep.sharesEnd(segment)))
-        ) {
-          // If the segment creates a loop, we don't want to snap but we can
-          // move the point to where it would be
-          this.pos = newPoint;
-          return false;
-        }
-        this.setSnap(segment, length / path.getTotalLength(), offset);
-        return true;
+    const path = segment.getPath(offset);
+    const length = path.getLengthAtPoint(pos);
+    const newPoint = path.getPointAtLength(length);
+    const dist = newPoint.dist(pos);
+    if (dist < 5) {
+      this.pos = newPoint;
+      if (merge) {
+        const tot = path.getTotalLength();
+        const p = segment.getWhichEnd(length / tot);
+        console.log(length, tot, length / tot);
+        if (p) this.mergeAll(p);
       }
-      return false;
+      return true;
     }
-    return true;
+    return false;
   }
 
   getPoint(): Vector2 {
-    if (this.type === 'vec' && this.pos) {
-      return this.pos;
-    } else if (
-      this.type === 'snap' &&
-      this.segment &&
-      this.position !== undefined &&
-      this.offset !== undefined
-    ) {
-      return this.segment.getPoint(this.position, this.offset);
-    }
-    throw new Error('Invalid SegmentPosition');
+    return this.pos;
   }
 
   /** If there's only two segments on this position, gets the angle between the two */
@@ -155,44 +103,14 @@ export class SegmentPosition {
     return a * sign;
   }
 
-  moveTo(to: Vector2, unsnap?: boolean) {
-    if (this.type === 'vec' && this.pos) {
-      this.pos = to;
-    } else if (
-      this.type === 'snap' &&
-      this.segment &&
-      this.position !== undefined &&
-      this.offset !== undefined
-    ) {
-      const path = this.segment.getPath(this.offset);
-      const length = path.getLengthAtPoint(to);
-      this.position = length / path.getTotalLength();
-      if (unsnap) {
-        const point = this.getPoint();
-        const dist = point.dist(to);
-        if (dist > 25) {
-          this.unsnap();
-          this.pos = to;
-        }
-      }
-    }
+  moveTo(to: Vector2) {
+    this.pos = to;
   }
 
   moveBy(delta: Vector2, other?: SegmentPosition) {
     if (other) {
-      if (
-        (this.type === 'vec' && other.type === 'vec') ||
-        (this.type === 'snap' && other.type === 'snap')
-      ) {
-        this.moveTo(this.getPoint().add(delta));
-        other.moveTo(other.getPoint().add(delta));
-      } else if (this.type === 'vec' && other.type === 'snap') {
-        const prev = other.getPoint();
-        other.moveBy(delta);
-        this.moveTo(this.getPoint().add(other.getPoint().sub(prev)));
-      } else {
-        other.moveBy(delta, this);
-      }
+      this.moveTo(this.getPoint().add(delta));
+      other.moveTo(other.getPoint().add(delta));
       return;
     }
     this.moveTo(this.getPoint().add(delta));
@@ -215,13 +133,7 @@ export class SegmentPosition {
   }
 
   clone(): SegmentPosition {
-    return new SegmentPosition(
-      this.type,
-      this.pos,
-      this.segment,
-      this.position,
-      this.offset,
-    );
+    return new SegmentPosition(this.type, this.pos);
   }
 
   static vec(pos: Vector2): SegmentPosition {
@@ -231,8 +143,8 @@ export class SegmentPosition {
   static snap(
     segment: Segment,
     position: number,
-    offset: number,
+    offset = 10,
   ): SegmentPosition {
-    return new SegmentPosition('snap', undefined, segment, position, offset);
+    return new SegmentPosition('vec', segment.getPoint(position, offset));
   }
 }
