@@ -25,8 +25,8 @@ export class SegmentPosition {
     [...this.deps].forEach(s => s.changeWhichEnd(this, newPos));
   }
 
-  hasRounding(): boolean {
-    return this.rounding !== 0 && this.deps.size === 2;
+  hasRounding(a = false): boolean {
+    return (this.rounding !== 0 || a) && this.deps.size === 2;
   }
 
   trySnap(
@@ -68,7 +68,7 @@ export class SegmentPosition {
     if (segment.end === this || segment.start === this) {
       return false;
     }
-    const doRound = this.hasRounding();
+    const doRound = this.hasRounding(true);
     const path = segment.getPath(offset, doRound);
     const length = path.getLengthAtPoint(pos);
     const newPoint = path.getPointAtLength(length);
