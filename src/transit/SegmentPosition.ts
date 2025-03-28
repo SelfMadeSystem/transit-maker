@@ -85,7 +85,7 @@ export class SegmentPosition {
         const t = length / tot;
         const p = segment.getWhichEnd(t);
         if (p) {
-          this.rounding = p.rounding - offset;
+          this.rounding = p.rounding - offset * Math.sign(p.getAngle() ?? 0);
         }
       }
       return true;
