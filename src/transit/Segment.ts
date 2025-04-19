@@ -1,10 +1,10 @@
 import { Color } from '../components/color/Color';
 import { Path2Dpp } from '../utils/Path2Dpp';
 import { CanvasDrawingContext, DrawingContext } from '../utils/drawingContext';
-import { Vector2, midpointShortestArc } from '../utils/vec';
+import { Vector2 } from '../utils/vec';
 import { Route } from './Route';
 import { SegmentPosition } from './SegmentPosition';
-import { Stop } from './Stop';
+import { Stop, StopPosition } from './Stop';
 import { TransitMap } from './TransitMap';
 import { Actionable, ClickInfo, DragInfo } from './types';
 
@@ -67,6 +67,8 @@ type SegDragInfo = {
 };
 
 export class Segment implements Actionable {
+  public startSegment?: Segment; // just for converting from segment to stop
+  public startLength?: number; // just for converting from segment to stop
   public style: SegmentStyle = {
     strokes: [
       {
@@ -180,16 +182,19 @@ export class Segment implements Actionable {
         if (a.clickType === 'double') {
           let newStart: SegmentPosition = this.start;
           let newEnd: SegmentPosition = this.end;
+          let startLength = 0;
           if (which === 'start') {
             newEnd = SegmentPosition.vec(this.start.getPoint());
           } else if (which === 'end') {
             newStart = this.end;
             newEnd = SegmentPosition.vec(this.end.getPoint());
+            startLength = 1;
           } else if (which === 'segment') {
             const path = this.getPath();
             const length = path.getLengthAtPoint(a.pos);
             const position = length / path.getTotalLength();
             const point = path.getPointAtLength(length);
+            startLength = position;
 
             newStart = SegmentPosition.snap(this, position, 0);
             newEnd = SegmentPosition.vec(point);
@@ -203,6 +208,8 @@ export class Segment implements Actionable {
           newSegment.style = this.style;
           newSegment.specificStyle = this.specificStyle;
           newSegment.dragInfo = { which: 'end' };
+          newSegment.startSegment = this;
+          newSegment.startLength = startLength;
           this.map.selected = newSegment;
           break;
         }
@@ -264,7 +271,12 @@ export class Segment implements Actionable {
   onDragEnd(a: DragInfo): void {
     if (this.getStart().equals(this.getEnd())) {
       // convert to a stop
-      const stop = new Stop(this.map, this.start);
+      const stop = new Stop(
+        this.map,
+        this.startSegment
+          ? StopPosition.fromSegment(this.startSegment, this.startLength!)
+          : StopPosition.fromVector(this.getStart()),
+      );
       this.map.selected = stop;
       this.remove();
       return;
@@ -351,9 +363,16 @@ export class Segment implements Actionable {
     }
   }
 
+  getClosestPointPosition(pos: Vector2): [Vector2, number] {
+    const path = this.getPath();
+    const totalLength = path.getTotalLength();
+    const length = path.getLengthAtPoint(pos);
+    return [path.getPointAtLength(length), length / totalLength];
+  }
+
   /** Gets the point at a given position along the segment */
-  getPoint(position: number, offset: number, dontRound = false): Vector2 {
-    const path = this.getPath(offset, dontRound);
+  getPoint(position: number, offset: number): Vector2 {
+    const path = this.getPath(offset);
     const length = path.getTotalLength();
     return path.getPointAtLength(length * position);
   }
@@ -447,73 +466,16 @@ export class Segment implements Actionable {
     ctx.setStroke(color ?? this.route.color);
   }
 
-  getPath(offset = 0, dontRound = false): Path2Dpp {
+  getPath(offset = 0): Path2Dpp {
     const [start, end] =
       offset === 0
         ? [this.getStart(), this.getEnd()]
         : [this.getOffsetPoint(0, offset), this.getOffsetPoint(1, offset)];
-    const startRounding = this.start.rounding;
-    const endRounding = this.end.rounding;
     const path = new Path2Dpp();
 
-    if (dontRound || (startRounding === 0 && endRounding === 0)) {
-      // No rounding, just draw a line
-      path.moveTo(start);
-      path.lineTo(end);
-      return path;
-    }
-
-    const midpoint = start.lerp(end, 0.5);
-    const startDep = this.start.getOtherDep(this);
-    if (startDep instanceof Segment) {
-      const depPos = startDep.getOffsetPoint(
-        startDep.start === this.start ? 1 : 0,
-        offset * (startDep.start === this.start ? -1 : 1),
-      );
-      const startAngle = this.start.getAngle(this)!;
-      const stuff = Path2Dpp.calculateArcTo(
-        depPos,
-        start,
-        midpoint,
-        startRounding - offset * Math.sign(startAngle),
-      );
-      if (stuff) {
-        const { start, end, center, sweepFlag, radius } = stuff;
-        const midpoint = midpointShortestArc(start, end, center, radius);
-        path.moveTo(midpoint);
-        path.arcSvg(new Vector2(radius), 0, false, sweepFlag, end);
-      } else {
-        path.moveTo(start);
-      }
-    } else {
-      path.moveTo(start);
-    }
-
-    const endDep = this.end.getOtherDep(this);
-    if (endDep instanceof Segment) {
-      const depPos = endDep.getOffsetPoint(
-        endDep.end === this.end ? 0 : 1,
-        offset * (endDep.end === this.end ? -1 : 1),
-      );
-      const endAngle = this.end.getAngle(this)!;
-      const stuff = Path2Dpp.calculateArcTo(
-        midpoint,
-        end,
-        depPos,
-        endRounding + offset * Math.sign(endAngle),
-      );
-      if (stuff) {
-        const { start, end, center, sweepFlag, radius } = stuff;
-        const midpoint = midpointShortestArc(start, end, center, radius);
-        path.lineTo(start);
-        path.arcSvg(new Vector2(radius), 0, false, sweepFlag, midpoint);
-      } else {
-        path.lineTo(end);
-      }
-    } else {
-      path.lineTo(end);
-    }
-
+    // No rounding, just draw a line
+    path.moveTo(start);
+    path.lineTo(end);
     return path;
   }
 
@@ -552,7 +514,7 @@ export class Segment implements Actionable {
     ctx.setStrokeWidth(0.5);
     ctx.setStrokeDash([5, 2]);
     ctx.setStrokeDashOffset(0);
-    ctx.strokePath(this.getPath(0, true), false);
+    ctx.strokePath(this.getPath(0), false);
 
     ctx.setStroke(Color.WHITE);
     ctx.setStrokeDash([]);
