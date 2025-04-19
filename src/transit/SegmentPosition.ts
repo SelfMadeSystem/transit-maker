@@ -25,49 +25,61 @@ export class SegmentPosition {
   }
 
   trySnap(
+    lowestDistance: number,
     thisDep: Segment,
     segment: Segment,
     pos: Vector2,
     offset = 10,
     merge = false,
-  ): boolean {
+  ): number {
     if (thisDep === segment) {
-      return false;
+      return Infinity;
     }
-    if (this.trySnapImpl(thisDep, segment, pos, 0, merge)) {
-      return true;
-    }
-    if (merge) return false; // never merge with offset
-    if (
-      offset !== 0 &&
-      this.trySnapImpl(thisDep, segment, pos, offset, merge)
-    ) {
-      return true;
-    }
-    if (
-      offset !== 0 &&
-      this.trySnapImpl(thisDep, segment, pos, -offset, merge)
-    ) {
-      return true;
-    }
-    return false;
+    const result1 = this.trySnapImpl(
+      lowestDistance,
+      thisDep,
+      segment,
+      pos,
+      0,
+      merge,
+    );
+    if (merge || offset === 0) return result1; // never merge with offset
+    const result2 = this.trySnapImpl(
+      Math.min(lowestDistance, result1),
+      thisDep,
+      segment,
+      pos,
+      offset,
+      merge,
+    );
+    const result3 = this.trySnapImpl(
+      Math.min(lowestDistance, result1, result2),
+      thisDep,
+      segment,
+      pos,
+      -offset,
+      merge,
+    );
+
+    return Math.min(result1, result2, result3);
   }
 
   trySnapImpl(
+    lowestDistance: number,
     _thisDep: Segment, // idk if this is needed
     segment: Segment,
     pos: Vector2,
     offset = 10,
     merge = false,
-  ): boolean {
+  ): number {
     if (segment.end === this || segment.start === this) {
-      return false;
+      return Infinity;
     }
     const path = segment.getPath(offset);
     const length = path.getLengthAtPoint(pos);
     const newPoint = path.getPointAtLength(length);
     const dist = newPoint.dist(pos);
-    if (dist < 5) {
+    if (dist < lowestDistance) {
       this.pos = newPoint;
       if (merge) {
         const tot = path.getTotalLength();
@@ -75,9 +87,9 @@ export class SegmentPosition {
         const p = segment.getWhichEnd(t);
         if (p) this.mergeAll(p);
       }
-      return true;
+      return dist;
     }
-    return false;
+    return Infinity;
   }
 
   getPoint(): Vector2 {

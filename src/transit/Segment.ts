@@ -232,6 +232,20 @@ export class Segment implements Actionable {
     }
   }
 
+  trySnap(sPos: SegmentPosition, pos: Vector2, startDistance: number = 5) {
+    let lowestDistance = startDistance;
+    this.map.actionablesByZIndex(segment => {
+      if (segment === this) return false;
+      if (segment instanceof Segment) {
+        lowestDistance = Math.min(
+          lowestDistance,
+          sPos.trySnap(lowestDistance, this, segment, pos),
+        );
+      }
+      return false;
+    }, true);
+  }
+
   onDrag(a: DragInfo): void {
     if (!this.dragInfo) return;
     const { delta, shiftKey } = a;
@@ -243,23 +257,13 @@ export class Segment implements Actionable {
       case 'start':
         this.start.moveTo(end);
         if (shiftKey) {
-          this.map.actionablesByZIndex(
-            segment =>
-              segment instanceof Segment &&
-              this.start.trySnap(this, segment, end),
-            true,
-          );
+          this.trySnap(this.start, end);
         }
         break;
       case 'end':
         this.end.moveTo(end);
         if (shiftKey) {
-          this.map.actionablesByZIndex(
-            segment =>
-              segment instanceof Segment &&
-              this.end.trySnap(this, segment, end),
-            true,
-          );
+          this.trySnap(this.end, end);
         }
         break;
       case 'segment':
@@ -295,11 +299,7 @@ export class Segment implements Actionable {
           ? this.end
           : null;
     if (!p) return;
-    this.map.actionablesByZIndex(
-      segment =>
-        segment instanceof Segment && p.trySnap(this, segment, end, 10, true),
-      true,
-    );
+    this.trySnap(p, end);
     /* else if (position === 0 || position === 1) {
         const thisPoint = pos.getPoint();
         const deps = [...segment.segmentPosDeps];
