@@ -5,16 +5,20 @@ import { Vector2 } from '../utils/vec';
 import { TransitMap } from './TransitMap';
 
 export class Grid {
-  public gridSize = 20;
+  public gridSize = 100;
   public gridOffset = new Vector2(0, 0);
-  public minor: number = 3;
+  public minor = 3;
+  public autoAdjust = true;
   constructor(_transitMap: TransitMap) {}
 
   draw(ctx: CanvasDrawingContext, zoom: number, offset: Vector2): void {
     ctx.save();
     ctx.identity();
 
-    const gridSize = this.gridSize * zoom;
+    let gridSize = this.gridSize * zoom;
+    if (this.autoAdjust) {
+      gridSize /= Math.pow(2, Math.floor(Math.log2(zoom)));
+    }
     const gridOffset = this.gridOffset.mult(zoom).add(offset);
     const majorPath = new Path2Dpp();
     const minorPath = new Path2Dpp();
@@ -55,15 +59,13 @@ export class Grid {
       }
     }
 
-    ctx.setStroke(Color.WHITE);
+    ctx.setStroke(Color.WHITE.withAlpha(0.7));
     ctx.setStrokeWidth(1);
     ctx.strokePath(majorPath);
 
-    if (zoom > 1.5) {
-      ctx.setStroke(Color.WHITE.withAlpha(0.5));
-      ctx.setStrokeWidth(1);
-      ctx.strokePath(minorPath);
-    }
+    ctx.setStroke(Color.WHITE.withAlpha(0.4));
+    ctx.setStrokeWidth(1);
+    ctx.strokePath(minorPath);
 
     ctx.restore();
   }
