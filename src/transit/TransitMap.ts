@@ -1,6 +1,7 @@
 import { showContextMenu } from '../components/context-menu';
 import { CanvasDrawingContext, DrawingContext } from '../utils/drawingContext';
 import { Vector2 } from '../utils/vec';
+import { Grid } from './Grid';
 import { Route } from './Route';
 import { Segment } from './Segment';
 import { Stop } from './Stop';
@@ -35,6 +36,7 @@ export class TransitMap {
   public selected: Actionable | null = null;
   public defaultRoute: Route;
   public selectedRoute: Route;
+  public grid: Grid = new Grid(this);
   public ctxMenu: ContextMenuHelper = new ContextMenuHelper(this);
   constructor() {
     this.defaultRoute = new Route(this);
@@ -99,7 +101,9 @@ export class TransitMap {
     return aByZIndex;
   }
 
-  draw(ctx: DrawingContext): void {
+  draw(ctx: DrawingContext, zoom: number, offset: Vector2): void {
+    if (ctx instanceof CanvasDrawingContext) this.grid.draw(ctx, zoom, offset);
+
     const segments = this.actionablesByZIndex();
     for (const layer of segments) {
       const gens = layer.map(segment => segment.draw(ctx));

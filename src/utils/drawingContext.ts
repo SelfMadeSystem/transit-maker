@@ -185,6 +185,14 @@ export class CanvasDrawingContext implements DrawingContext {
     this.currentCtx = ctx;
   }
 
+  get width() {
+    return this.ctx.canvas.width;
+  }
+
+  get height() {
+    return this.ctx.canvas.height;
+  }
+
   getBgCtx() {
     return this.bgCtx;
   }
@@ -378,6 +386,12 @@ export class CanvasDrawingContext implements DrawingContext {
     this.bgCtx.scale(x, y);
     this.ctx.scale(x, y);
     this.fgCtx.scale(x, y);
+  }
+
+  identity() {
+    this.bgCtx.setTransform(1, 0, 0, 1, 0, 0);
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    this.fgCtx.setTransform(1, 0, 0, 1, 0, 0);
   }
 }
 

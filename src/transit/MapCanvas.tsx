@@ -30,17 +30,15 @@ function createMap(): TransitMap {
   const segment3 = new Segment(
     map,
     route2,
-    SegmentPosition.snap(segment1, 0, 10, true),
-    SegmentPosition.snap(segment1, 1, 10, true),
+    SegmentPosition.snap(segment1, 0, 10),
+    SegmentPosition.snap(segment1, 1, 10),
   );
-  segment3.end.rounding = 10;
   const segment4 = new Segment(
     map,
     route2,
-    SegmentPosition.snap(segment1, 0, -10, true),
-    SegmentPosition.snap(segment1, 1, -10, true),
+    SegmentPosition.snap(segment1, 0, -10),
+    SegmentPosition.snap(segment1, 1, -10),
   );
-  segment4.end.rounding = 30;
   new Segment(map, route2, segment3.end, SegmentPosition.snap(segment2, 1, 10));
   new Segment(
     map,
@@ -100,7 +98,7 @@ export function MapCanvas() {
     ctx.save();
     ctx.translate(...offset.a);
     ctx.scale(zoom, zoom);
-    map.draw(ctx);
+    map.draw(ctx, zoom, offset);
     map.selected?.drawSelected(ctx);
     ctx.restore();
 
