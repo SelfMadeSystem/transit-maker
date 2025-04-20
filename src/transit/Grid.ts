@@ -19,7 +19,11 @@ export class Grid {
     const majorPath = new Path2Dpp();
     const minorPath = new Path2Dpp();
 
-    for (let x = gridOffset.x % gridSize; x < ctx.width; x += gridSize) {
+    for (
+      let x = (gridOffset.x % gridSize) - gridSize;
+      x < ctx.width;
+      x += gridSize
+    ) {
       majorPath.moveTo(new Vector2(x, 0));
       majorPath.lineTo(new Vector2(x, ctx.height));
 
@@ -33,7 +37,11 @@ export class Grid {
       }
     }
 
-    for (let y = gridOffset.y % gridSize; y < ctx.height; y += gridSize) {
+    for (
+      let y = (gridOffset.y % gridSize) - gridSize;
+      y < ctx.height;
+      y += gridSize
+    ) {
       majorPath.moveTo(new Vector2(0, y));
       majorPath.lineTo(new Vector2(ctx.width, y));
 
