@@ -249,6 +249,8 @@ export class Segment implements Actionable {
       }
       return false;
     }, true);
+
+    sPos.snapToGrid(this.map.grid);
   }
 
   onDrag(a: DragInfo): void {

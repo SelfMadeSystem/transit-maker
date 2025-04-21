@@ -1,4 +1,5 @@
 import { Vector2 } from '../utils/vec';
+import { Grid } from './Grid';
 import { Segment } from './Segment';
 
 export class SegmentPosition {
@@ -90,6 +91,10 @@ export class SegmentPosition {
       return dist;
     }
     return Infinity;
+  }
+
+  snapToGrid(grid: Grid) {
+    this.pos = grid.snapToGrid(this.pos);
   }
 
   getPoint(): Vector2 {

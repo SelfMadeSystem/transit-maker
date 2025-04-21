@@ -138,6 +138,9 @@ export function MapCanvas() {
     });
 
     const grid = pane.addFolder({ title: 'Grid' });
+    grid.addBinding(map.grid, 'showGrid', {
+      label: 'Show Grid',
+    });
     grid.addBinding(map.grid, 'gridSize', {
       min: 5,
       max: 1000,
@@ -166,7 +169,7 @@ export function MapCanvas() {
         drawRef.current();
       });
     grid
-      .addBinding(map.grid, 'gridRotation', {
+      .addBinding(map.grid, 'gridSkew', {
         label: 'Grid Rotation',
         view: 'vector2',
         min: -45,
@@ -174,7 +177,7 @@ export function MapCanvas() {
         step: 1,
       })
       .on('change', ({ value }) => {
-        map.grid.gridRotation = new Vector2(
+        map.grid.gridSkew = new Vector2(
           (value.x * Math.PI) / 180,
           (value.y * Math.PI) / 180,
         );
