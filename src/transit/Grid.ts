@@ -7,7 +7,7 @@ import { TransitMap } from './TransitMap';
 export class Grid {
   public gridSize = 100;
   public gridOffset = new Vector2(0, 0);
-  public gridRotation = new Vector2(0.2, -0.2);
+  public gridRotation = new Vector2(0, 0); // ]π/2, π/2[
   public minor = 3;
   public autoAdjust = true;
   constructor(_transitMap: TransitMap) {}
@@ -24,8 +24,8 @@ export class Grid {
     const majorPath = new Path2Dpp();
     const minorPath = new Path2Dpp();
 
-    const xdiffT = Math.sin(this.gridRotation.x) * offset.y;
-    const xdiffB = Math.sin(this.gridRotation.x) * (offset.y - ctx.height);
+    const xdiffT = Math.tan(this.gridRotation.x) * offset.y;
+    const xdiffB = Math.tan(this.gridRotation.x) * (offset.y - ctx.height);
     const xadd =
       Math.floor(
         (Math.tan(Math.abs(this.gridRotation.x)) * ctx.height) / gridSize,
@@ -51,8 +51,8 @@ export class Grid {
       }
     }
 
-    const ydiffT = Math.sin(this.gridRotation.y) * offset.x;
-    const ydiffB = Math.sin(this.gridRotation.y) * (offset.x - ctx.width);
+    const ydiffT = Math.tan(this.gridRotation.y) * offset.x;
+    const ydiffB = Math.tan(this.gridRotation.y) * (offset.x - ctx.width);
     const yadd =
       Math.floor(
         (Math.tan(Math.abs(this.gridRotation.y)) * ctx.width) / gridSize,

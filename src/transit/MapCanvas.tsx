@@ -7,6 +7,7 @@ import { SegmentPosition } from './SegmentPosition';
 import { TransitMap } from './TransitMap';
 import { eventToDragInfo, eventToPosWithKeys } from './types';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Pane } from 'tweakpane';
 
 function createMap(): TransitMap {
   const map = new TransitMap();
@@ -68,6 +69,7 @@ export function MapCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fgCanvasRef = useRef<HTMLCanvasElement>(null);
   const debugCanvasRef = useRef<HTMLCanvasElement>(null);
+  const paneRef = useRef<Pane | null>(null);
   const [map, _setMap] = useState(createMap);
   const [camera, setCamera] = useState<Camera>({
     zoom: 1,
@@ -75,6 +77,7 @@ export function MapCanvas() {
   });
   const ctx = useCanvasDrawingContext(bgCanvasRef, canvasRef, fgCanvasRef);
   const frameRef = useRef<number | null>(null);
+  const drawRef = useRef<() => void>(() => {});
 
   const pointToMap = useCallback(
     (point: Vector2) => {
@@ -118,6 +121,66 @@ export function MapCanvas() {
       frameRef.current = requestAnimationFrame(draw);
     }
   }, [camera, ctx, map]);
+
+  useEffect(() => {
+    drawRef.current = draw;
+  }, [draw]);
+
+  useEffect(() => {
+    if (paneRef.current) {
+      paneRef.current.dispose();
+      paneRef.current = null;
+    }
+    const pane = new Pane();
+    paneRef.current = pane;
+    pane.on('change', () => {
+      drawRef.current();
+    });
+
+    const grid = pane.addFolder({ title: 'Grid' });
+    grid.addBinding(map.grid, 'gridSize', {
+      min: 5,
+      max: 1000,
+      step: 1,
+      label: 'Grid Size',
+    });
+    grid.addBinding(map.grid, 'minor', {
+      min: 0,
+      max: 10,
+      step: 1,
+      label: 'Minor',
+    });
+    grid.addBinding(map.grid, 'autoAdjust', {
+      label: 'Auto Adjust',
+    });
+    grid
+      .addBinding(map.grid, 'gridOffset', {
+        label: 'Grid Offset',
+        view: 'vector2',
+        min: -100,
+        max: 100,
+        step: 1,
+      })
+      .on('change', ({ value }) => {
+        map.grid.gridOffset = new Vector2(value.x, value.y);
+        drawRef.current();
+      });
+    grid
+      .addBinding(map.grid, 'gridRotation', {
+        label: 'Grid Rotation',
+        view: 'vector2',
+        min: -45,
+        max: 45,
+        step: 1,
+      })
+      .on('change', ({ value }) => {
+        map.grid.gridRotation = new Vector2(
+          (value.x * Math.PI) / 180,
+          (value.y * Math.PI) / 180,
+        );
+        drawRef.current();
+      });
+  }, [map]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
