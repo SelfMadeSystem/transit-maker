@@ -1,6 +1,7 @@
 import { Color } from '../components/color/Color';
 import { Path2Dpp } from '../utils/Path2Dpp';
 import { CanvasDrawingContext } from '../utils/drawingContext';
+import { mod, round } from '../utils/mathUtils';
 import { Vector2 } from '../utils/vec';
 import { TransitMap } from './TransitMap';
 
@@ -24,15 +25,12 @@ export class Grid {
     const majorPath = new Path2Dpp();
     const minorPath = new Path2Dpp();
 
-    const xdiffT = Math.tan(this.gridRotation.x) * offset.y;
-    const xdiffB = Math.tan(this.gridRotation.x) * (offset.y - ctx.height);
-    const xadd =
-      Math.floor(
-        (Math.tan(Math.abs(this.gridRotation.x)) * ctx.height) / gridSize,
-      ) * gridSize;
+    const xdiffT = mod(Math.tan(this.gridRotation.x) * offset.y, gridSize);
+    const xdiffB = xdiffT - Math.tan(this.gridRotation.x) * ctx.height;
+    const xoff = round(Math.tan(this.gridRotation.x) * ctx.height, gridSize);
     for (
-      let x = (gridOffset.x % gridSize) - gridSize - xadd;
-      x < ctx.width + xadd;
+      let x = (gridOffset.x % gridSize) - gridSize + Math.min(0, xoff);
+      x < ctx.width + Math.max(0, xoff);
       x += gridSize
     ) {
       majorPath.moveTo(new Vector2(x + xdiffT, 0));
@@ -51,15 +49,12 @@ export class Grid {
       }
     }
 
-    const ydiffT = Math.tan(this.gridRotation.y) * offset.x;
-    const ydiffB = Math.tan(this.gridRotation.y) * (offset.x - ctx.width);
-    const yadd =
-      Math.floor(
-        (Math.tan(Math.abs(this.gridRotation.y)) * ctx.width) / gridSize,
-      ) * gridSize;
+    const ydiffT = mod(Math.tan(this.gridRotation.y) * offset.x, gridSize);
+    const ydiffB = ydiffT - Math.tan(this.gridRotation.y) * ctx.width;
+    const yoff = round(Math.tan(this.gridRotation.y) * ctx.width, gridSize);
     for (
-      let y = (gridOffset.y % gridSize) - gridSize - yadd;
-      y < ctx.height + yadd;
+      let y = (gridOffset.y % gridSize) - gridSize + Math.min(0, yoff);
+      y < ctx.height + Math.max(0, yoff);
       y += gridSize
     ) {
       majorPath.moveTo(new Vector2(0, y + ydiffT));
