@@ -7,6 +7,7 @@ import { TransitMap } from './TransitMap';
 export class Grid {
   public gridSize = 100;
   public gridOffset = new Vector2(0, 0);
+  public gridRotation = new Vector2(0, 0);
   public minor = 3;
   public autoAdjust = true;
   constructor(_transitMap: TransitMap) {}
@@ -23,38 +24,54 @@ export class Grid {
     const majorPath = new Path2Dpp();
     const minorPath = new Path2Dpp();
 
+    const xdiffT = Math.sin(this.gridRotation.x) * offset.y;
+    const xdiffB = Math.sin(this.gridRotation.x) * (offset.y - ctx.height);
+    const xadd =
+      Math.floor((Math.tan(this.gridRotation.x) * ctx.height) / gridSize) *
+      gridSize;
     for (
-      let x = (gridOffset.x % gridSize) - gridSize;
-      x < ctx.width;
+      let x = (gridOffset.x % gridSize) - gridSize - xadd;
+      x < ctx.width + xadd;
       x += gridSize
     ) {
-      majorPath.moveTo(new Vector2(x, 0));
-      majorPath.lineTo(new Vector2(x, ctx.height));
+      majorPath.moveTo(new Vector2(x + xdiffT, 0));
+      majorPath.lineTo(new Vector2(x + xdiffB, ctx.height));
 
       for (let x1 = 1; x1 <= this.minor; x1++) {
         minorPath.moveTo(
-          new Vector2(x + (gridSize / (this.minor + 1)) * x1, 0),
+          new Vector2(x + (gridSize / (this.minor + 1)) * x1 + xdiffT, 0),
         );
         minorPath.lineTo(
-          new Vector2(x + (gridSize / (this.minor + 1)) * x1, ctx.height),
+          new Vector2(
+            x + (gridSize / (this.minor + 1)) * x1 + xdiffB,
+            ctx.height,
+          ),
         );
       }
     }
 
+    const ydiffT = Math.sin(this.gridRotation.y) * offset.x;
+    const ydiffB = Math.sin(this.gridRotation.y) * (offset.x - ctx.width);
+    const yadd =
+      Math.floor((Math.tan(this.gridRotation.y) * ctx.width) / gridSize) *
+      gridSize;
     for (
-      let y = (gridOffset.y % gridSize) - gridSize;
-      y < ctx.height;
+      let y = (gridOffset.y % gridSize) - gridSize - yadd;
+      y < ctx.height + yadd;
       y += gridSize
     ) {
-      majorPath.moveTo(new Vector2(0, y));
-      majorPath.lineTo(new Vector2(ctx.width, y));
+      majorPath.moveTo(new Vector2(0, y + ydiffT));
+      majorPath.lineTo(new Vector2(ctx.width, y + ydiffB));
 
       for (let y1 = 1; y1 <= this.minor; y1++) {
         minorPath.moveTo(
-          new Vector2(0, y + (gridSize / (this.minor + 1)) * y1),
+          new Vector2(0, y + (gridSize / (this.minor + 1)) * y1 + ydiffT),
         );
         minorPath.lineTo(
-          new Vector2(ctx.width, y + (gridSize / (this.minor + 1)) * y1),
+          new Vector2(
+            ctx.width,
+            y + (gridSize / (this.minor + 1)) * y1 + ydiffB,
+          ),
         );
       }
     }
