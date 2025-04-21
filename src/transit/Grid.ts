@@ -7,7 +7,7 @@ import { TransitMap } from './TransitMap';
 export class Grid {
   public gridSize = 100;
   public gridOffset = new Vector2(0, 0);
-  public gridRotation = new Vector2(0, 0);
+  public gridRotation = new Vector2(0.2, -0.2);
   public minor = 3;
   public autoAdjust = true;
   constructor(_transitMap: TransitMap) {}
@@ -27,8 +27,9 @@ export class Grid {
     const xdiffT = Math.sin(this.gridRotation.x) * offset.y;
     const xdiffB = Math.sin(this.gridRotation.x) * (offset.y - ctx.height);
     const xadd =
-      Math.floor((Math.tan(this.gridRotation.x) * ctx.height) / gridSize) *
-      gridSize;
+      Math.floor(
+        (Math.tan(Math.abs(this.gridRotation.x)) * ctx.height) / gridSize,
+      ) * gridSize;
     for (
       let x = (gridOffset.x % gridSize) - gridSize - xadd;
       x < ctx.width + xadd;
@@ -53,8 +54,9 @@ export class Grid {
     const ydiffT = Math.sin(this.gridRotation.y) * offset.x;
     const ydiffB = Math.sin(this.gridRotation.y) * (offset.x - ctx.width);
     const yadd =
-      Math.floor((Math.tan(this.gridRotation.y) * ctx.width) / gridSize) *
-      gridSize;
+      Math.floor(
+        (Math.tan(Math.abs(this.gridRotation.y)) * ctx.width) / gridSize,
+      ) * gridSize;
     for (
       let y = (gridOffset.y % gridSize) - gridSize - yadd;
       y < ctx.height + yadd;
