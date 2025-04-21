@@ -194,7 +194,7 @@ export function MapCanvas() {
         const deltaY = e.deltaY;
         const delta = 1 + deltaY / 1000;
         const newZoom = Math.max(0.1, zoom * delta);
-        const newOffset = mouse.sub(mouse.sub(offset).mult(delta));
+        const newOffset = mouse.sub(mouse.sub(offset).mult(newZoom / zoom));
         return { zoom: newZoom, offset: newOffset };
       });
     };
