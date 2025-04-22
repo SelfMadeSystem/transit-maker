@@ -250,7 +250,7 @@ export class Segment implements Actionable {
       return false;
     }, true);
 
-    sPos.snapToGrid(this.map.grid);
+    sPos.snapToGrid(this.map.grid, pos, lowestDistance);
   }
 
   onDrag(a: DragInfo): void {

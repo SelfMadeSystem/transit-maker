@@ -93,8 +93,14 @@ export class SegmentPosition {
     return Infinity;
   }
 
-  snapToGrid(grid: Grid) {
-    this.pos = grid.snapToGrid(this.pos);
+  snapToGrid(grid: Grid, pos: Vector2, lowestDistance: number): number {
+    const snapped = grid.snapToGrid(this.pos);
+    const dist = snapped.dist(pos);
+    if (dist < lowestDistance) {
+      this.pos = snapped;
+      return dist;
+    }
+    return Infinity;
   }
 
   getPoint(): Vector2 {
