@@ -38,6 +38,7 @@ export class TransitMap {
   public selectedRoute: Route;
   public grid: Grid = new Grid(this);
   public ctxMenu: ContextMenuHelper = new ContextMenuHelper(this);
+  public snapDistance = 10;
   constructor() {
     this.defaultRoute = new Route(this);
     this.defaultRoute.name = 'Default';

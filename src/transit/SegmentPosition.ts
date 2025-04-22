@@ -30,7 +30,7 @@ export class SegmentPosition {
     thisDep: Segment,
     segment: Segment,
     pos: Vector2,
-    offset = 10,
+    offset: number,
     merge = false,
   ): number {
     if (thisDep === segment) {
@@ -70,7 +70,7 @@ export class SegmentPosition {
     _thisDep: Segment, // idk if this is needed
     segment: Segment,
     pos: Vector2,
-    offset = 10,
+    offset: number,
     merge = false,
   ): number {
     if (segment.end === this || segment.start === this) {
@@ -165,7 +165,7 @@ export class SegmentPosition {
   static snap(
     segment: Segment,
     position: number,
-    offset = 10,
+    offset: number,
   ): SegmentPosition {
     return new SegmentPosition('vec', segment.getPoint(position, offset));
   }
