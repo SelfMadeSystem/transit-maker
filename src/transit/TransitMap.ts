@@ -40,6 +40,7 @@ export class TransitMap {
   public grid: Grid = new Grid(this);
   public ctxMenu: ContextMenuHelper = new ContextMenuHelper(this);
   public snapDistance = 10;
+  public snapFromLine = 10;
   public selectedFolder: FolderApi | null = null;
   constructor() {
     this.defaultRoute = new Route(this);

@@ -238,7 +238,7 @@ export class Segment implements Actionable {
     sPos: SegmentPosition,
     pos: Vector2,
     merge = false,
-    startDistance: number = 5,
+    startDistance: number = this.map.snapDistance,
   ) {
     let lowestDistance = startDistance;
     this.map.actionablesByZIndex(segment => {
@@ -246,7 +246,14 @@ export class Segment implements Actionable {
       if (segment instanceof Segment) {
         lowestDistance = Math.min(
           lowestDistance,
-          sPos.trySnap(lowestDistance, this, segment, pos, 10, merge),
+          sPos.trySnap(
+            lowestDistance,
+            this,
+            segment,
+            pos,
+            this.map.snapFromLine,
+            merge,
+          ),
         );
       }
       return false;
@@ -308,7 +315,7 @@ export class Segment implements Actionable {
           ? this.end
           : null;
     if (!p) return;
-    this.trySnap(p, end, true);
+    this.trySnap(p, end, true, 2);
     /* else if (position === 0 || position === 1) {
         const thisPoint = pos.getPoint();
         const deps = [...segment.segmentPosDeps];

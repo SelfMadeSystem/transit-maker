@@ -138,52 +138,70 @@ export function MapCanvas() {
       drawRef.current();
     });
 
-    const grid = pane.addFolder({ title: 'Grid', expanded: false });
-    grid.addBinding(map.grid, 'showGrid', {
-      label: 'Show Grid',
-    });
-    grid.addBinding(map.grid, 'gridSize', {
-      min: 5,
-      max: 1000,
-      step: 1,
-      label: 'Grid Size',
-    });
-    grid.addBinding(map.grid, 'minor', {
-      min: 0,
-      max: 10,
-      step: 1,
-      label: 'Minor',
-    });
-    grid.addBinding(map.grid, 'autoAdjust', {
-      label: 'Auto Adjust',
-    });
-    grid
-      .addBinding(map.grid, 'gridOffset', {
-        label: 'Grid Offset',
-        view: 'vector2',
-        min: -100,
+    {
+      const grid = pane.addFolder({ title: 'Grid', expanded: false });
+      grid.addBinding(map.grid, 'showGrid', {
+        label: 'Show Grid',
+      });
+      grid.addBinding(map.grid, 'gridSize', {
+        min: 5,
+        max: 1000,
+        step: 1,
+        label: 'Grid Size',
+      });
+      grid.addBinding(map.grid, 'minor', {
+        min: 0,
+        max: 10,
+        step: 1,
+        label: 'Minor',
+      });
+      grid.addBinding(map.grid, 'autoAdjust', {
+        label: 'Auto Adjust',
+      });
+      grid
+        .addBinding(map.grid, 'gridOffset', {
+          label: 'Grid Offset',
+          view: 'vector2',
+          min: -100,
+          max: 100,
+          step: 1,
+        })
+        .on('change', ({ value }) => {
+          map.grid.gridOffset = new Vector2(value.x, value.y);
+          drawRef.current();
+        });
+      grid
+        .addBinding(map.grid, 'gridSkew', {
+          label: 'Grid Rotation',
+          view: 'vector2',
+          min: -45,
+          max: 45,
+          step: 1,
+        })
+        .on('change', ({ value }) => {
+          map.grid.gridSkew = new Vector2(
+            (value.x * Math.PI) / 180,
+            (value.y * Math.PI) / 180,
+          );
+          drawRef.current();
+        });
+    }
+
+    {
+      const snapping = pane.addFolder({ title: 'Snapping', expanded: false });
+      snapping.addBinding(map, 'snapDistance', {
+        label: 'Snap Distance',
+        min: 0,
         max: 100,
         step: 1,
-      })
-      .on('change', ({ value }) => {
-        map.grid.gridOffset = new Vector2(value.x, value.y);
-        drawRef.current();
       });
-    grid
-      .addBinding(map.grid, 'gridSkew', {
-        label: 'Grid Rotation',
-        view: 'vector2',
-        min: -45,
-        max: 45,
+      snapping.addBinding(map, 'snapFromLine', {
+        label: 'Snap From Line',
+        min: 0,
+        max: 100,
         step: 1,
-      })
-      .on('change', ({ value }) => {
-        map.grid.gridSkew = new Vector2(
-          (value.x * Math.PI) / 180,
-          (value.y * Math.PI) / 180,
-        );
-        drawRef.current();
       });
+    }
 
     const selected = pane.addFolder({ title: 'Selected' });
     selectedFolderRef.current = selected;
