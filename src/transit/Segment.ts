@@ -51,6 +51,8 @@ export type SpecificSegmentStyle = {
   spacingOffset: number; // [0, 1]
   lateralOffset: number;
   hidden: boolean;
+  rounded: boolean;
+  roundRadius: number;
   zIndex: number;
 };
 
@@ -59,6 +61,8 @@ export const DEFALUT_SEGMENT_STYLE: SpecificSegmentStyle = {
   spacingOffset: 0,
   lateralOffset: 0,
   hidden: false,
+  rounded: false,
+  roundRadius: 0,
   zIndex: 0,
 };
 
@@ -93,7 +97,6 @@ export class Segment implements Actionable {
   public specificStyle: SpecificSegmentStyle = { ...DEFALUT_SEGMENT_STYLE };
   private dragInfo: SegDragInfo | null = null;
   public segmentPosDeps: Set<SegmentPosition> = new Set();
-  public rounded = false;
   constructor(
     public readonly map: TransitMap,
     public route: Route,
@@ -208,7 +211,7 @@ export class Segment implements Actionable {
             newEnd,
           );
           newSegment.style = this.style;
-          newSegment.specificStyle = this.specificStyle;
+          newSegment.specificStyle = { ...this.specificStyle };
           newSegment.dragInfo = { which: 'end' };
           newSegment.startSegment = this;
           newSegment.startLength = startLength;
@@ -483,7 +486,7 @@ export class Segment implements Actionable {
   }
 
   getPath(offset = 0): Path2Dpp {
-    if (this.rounded) {
+    if (this.specificStyle.rounded) {
       // idc about offset for now
       console.log(1, this.start.deps.size, this.end.deps.size);
       OWO: if (this.start.deps.size === 2 && this.end.deps.size === 2) {
@@ -506,7 +509,7 @@ export class Segment implements Actionable {
         path.arcToButBetter(
           sect,
           end,
-          999999999,
+          this.specificStyle.roundRadius || 999999999,
           Math.min(start.dist(sect), end.dist(sect)),
         );
         path.lineTo(end);
@@ -527,6 +530,9 @@ export class Segment implements Actionable {
 
   /** Draws the segment */
   *draw(ctx: DrawingContext): Generator<void> {
+    if (this.specificStyle.hidden) {
+      return;
+    }
     const path = this.getPath();
 
     for (const stroke of this.style.strokes) {
@@ -605,6 +611,17 @@ export class Segment implements Actionable {
       },
     );
 
-    folder.addBinding(this, 'rounded');
+    folder.addBinding(this.specificStyle, 'rounded');
+    folder.addBinding(this.specificStyle, 'roundRadius', {
+      min: 0,
+      max: 100,
+      step: 0.1,
+    });
+    folder.addBinding(this.specificStyle, 'zIndex', {
+      min: -100,
+      max: 100,
+      step: 1,
+    });
+    folder.addBinding(this.specificStyle, 'hidden');
   }
 }

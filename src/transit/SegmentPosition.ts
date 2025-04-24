@@ -80,7 +80,7 @@ export class SegmentPosition {
     const length = path.getLengthAtPoint(pos);
     const newPoint = path.getPointAtLength(length);
     const dist = newPoint.dist(pos);
-    if (dist < lowestDistance) {
+    if (dist < lowestDistance || (dist === lowestDistance && merge)) {
       this.pos = newPoint;
       if (merge) {
         const tot = path.getTotalLength();
