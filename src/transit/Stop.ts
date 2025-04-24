@@ -2,10 +2,11 @@ import { Color } from '../components/color/Color';
 import { Path2Dpp } from '../utils/Path2Dpp';
 import { CanvasDrawingContext, DrawingContext } from '../utils/drawingContext';
 import { Vector2 } from '../utils/vec';
-import { Route } from './Route';
+import { Route, createRouteSelector } from './Route';
 import { Segment } from './Segment';
 import { TransitMap } from './TransitMap';
 import { Actionable, ClickInfo, DragInfo } from './types';
+import { FolderApi } from 'tweakpane';
 
 type SnapResult = [Vector2, Segment, number, number];
 
@@ -74,6 +75,7 @@ export class StopPosition {
 }
 
 export class Stop implements Actionable {
+  public route: Route | null = null;
   constructor(
     public map: TransitMap,
     public pos: StopPosition,
@@ -109,6 +111,9 @@ export class Stop implements Actionable {
   }
 
   getRoute(): Route {
+    if (this.route) {
+      return this.route;
+    }
     const candidates: Set<Route> = new Set();
     if (this.pos.segment) {
       candidates.add(this.pos.segment.route);
@@ -165,4 +170,10 @@ export class Stop implements Actionable {
     }
   }
   onDragEnd(_: DragInfo): void {}
+
+  tweakpaneFolder(folder: FolderApi): void {
+    createRouteSelector(folder, this.map, this.route, value => {
+      this.route = value;
+    });
+  }
 }

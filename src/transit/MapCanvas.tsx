@@ -7,7 +7,7 @@ import { SegmentPosition } from './SegmentPosition';
 import { TransitMap } from './TransitMap';
 import { eventToDragInfo, eventToPosWithKeys } from './types';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pane } from 'tweakpane';
+import { FolderApi, Pane } from 'tweakpane';
 
 function createMap(): TransitMap {
   const map = new TransitMap();
@@ -70,6 +70,7 @@ export function MapCanvas() {
   const fgCanvasRef = useRef<HTMLCanvasElement>(null);
   const debugCanvasRef = useRef<HTMLCanvasElement>(null);
   const paneRef = useRef<Pane | null>(null);
+  const selectedFolderRef = useRef<FolderApi | null>(null);
   const [map, _setMap] = useState(createMap);
   const [camera, setCamera] = useState<Camera>({
     zoom: 1,
@@ -137,7 +138,7 @@ export function MapCanvas() {
       drawRef.current();
     });
 
-    const grid = pane.addFolder({ title: 'Grid' });
+    const grid = pane.addFolder({ title: 'Grid', expanded: false });
     grid.addBinding(map.grid, 'showGrid', {
       label: 'Show Grid',
     });
@@ -183,6 +184,10 @@ export function MapCanvas() {
         );
         drawRef.current();
       });
+
+    const selected = pane.addFolder({ title: 'Selected' });
+    selectedFolderRef.current = selected;
+    map.selectedFolder = selected;
   }, [map]);
 
   useEffect(() => {
@@ -211,11 +216,11 @@ export function MapCanvas() {
       const newSelected = map.getSelectedAt(prevPos, ctx);
 
       if (newSelected) {
-        map.selected = newSelected;
+        map.setSelected(newSelected);
         newSelected.onClick?.(eventToPosWithKeys(e, prevPos));
         draw();
       } else if (map.selected) {
-        map.selected = null;
+        map.setSelected(null);
         draw();
       }
 
@@ -263,13 +268,13 @@ export function MapCanvas() {
         case 'Backspace':
           if (map.selected) {
             map.selected.remove();
-            map.selected = null;
+            map.setSelected(null);
             draw();
           }
           break;
         case 'Escape':
           if (map.selected) {
-            map.selected = null;
+            map.setSelected(null);
             draw();
           }
           break;

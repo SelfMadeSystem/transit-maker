@@ -6,6 +6,7 @@ import { Route } from './Route';
 import { Segment } from './Segment';
 import { Stop } from './Stop';
 import { Actionable } from './types';
+import { FolderApi } from 'tweakpane';
 
 class ContextMenuHelper {
   constructor(public map: TransitMap) {}
@@ -39,10 +40,21 @@ export class TransitMap {
   public grid: Grid = new Grid(this);
   public ctxMenu: ContextMenuHelper = new ContextMenuHelper(this);
   public snapDistance = 10;
+  public selectedFolder: FolderApi | null = null;
   constructor() {
     this.defaultRoute = new Route(this);
     this.defaultRoute.name = 'Default';
     this.selectedRoute = this.defaultRoute;
+  }
+
+  setSelected(actionable: Actionable | null): void {
+    if (this.selectedFolder) {
+      this.selectedFolder.children.forEach(child => child.dispose());
+      if (actionable) {
+        actionable.tweakpaneFolder(this.selectedFolder);
+      }
+    }
+    this.selected = actionable;
   }
 
   getSelectedAt(pos: Vector2, ctx: CanvasDrawingContext): Actionable | null {

@@ -1,5 +1,6 @@
 import { CanvasDrawingContext, DrawingContext } from '../utils/drawingContext';
 import { Vector2 } from '../utils/vec';
+import { FolderApi } from 'tweakpane';
 
 export type ClickType = 'single' | 'double';
 export type ClickButton = 'left' | 'middle' | 'right';
@@ -76,4 +77,5 @@ export interface Actionable {
   onDrag?(a: DragInfo): void;
   onDragEnd?(a: DragInfo): void;
   draw(ctx: DrawingContext): Generator<void>;
+  tweakpaneFolder(folder: FolderApi): void;
 }

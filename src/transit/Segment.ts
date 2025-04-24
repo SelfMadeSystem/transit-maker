@@ -2,11 +2,12 @@ import { Color } from '../components/color/Color';
 import { Path2Dpp } from '../utils/Path2Dpp';
 import { CanvasDrawingContext, DrawingContext } from '../utils/drawingContext';
 import { Vector2 } from '../utils/vec';
-import { Route } from './Route';
+import { Route, createRouteSelector } from './Route';
 import { SegmentPosition } from './SegmentPosition';
 import { Stop, StopPosition } from './Stop';
 import { TransitMap } from './TransitMap';
 import { Actionable, ClickInfo, DragInfo } from './types';
+import { FolderApi } from 'tweakpane';
 
 export type SegmentStrokeType = 'solid' | 'dotted' | 'dashed';
 
@@ -210,7 +211,7 @@ export class Segment implements Actionable {
           newSegment.dragInfo = { which: 'end' };
           newSegment.startSegment = this;
           newSegment.startLength = startLength;
-          this.map.selected = newSegment;
+          this.map.setSelected(newSegment);
           break;
         }
         break;
@@ -222,9 +223,9 @@ export class Segment implements Actionable {
           this.map.ctxMenu.selectRoute(a.screenPos).then(route => {
             if (route) {
               this.route = route;
-              this.map.selected = this;
+              this.map.setSelected(this);
             } else {
-              this.map.selected = null;
+              this.map.setSelected(null);
             }
           });
         }
@@ -288,7 +289,7 @@ export class Segment implements Actionable {
           ? StopPosition.fromSegment(this.startSegment, this.startLength!)
           : StopPosition.fromVector(this.getStart()),
       );
-      this.map.selected = stop;
+      this.map.setSelected(stop);
       this.remove();
       return;
     }
@@ -551,5 +552,19 @@ export class Segment implements Actionable {
     ctx.arc(...this.getEnd().a, 5, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
+  }
+
+  tweakpaneFolder(folder: FolderApi): void {
+    createRouteSelector(
+      folder,
+      this.map,
+      this.route,
+      value => {
+        this.route = value;
+      },
+      {
+        includeAuto: false,
+      },
+    );
   }
 }
