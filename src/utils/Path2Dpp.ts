@@ -207,6 +207,31 @@ export class Path2Dpp {
   }
 
   /**
+   * Like arcTo, but with a maximum distance from the line segment
+   */
+  arcToButBetter(
+    p1: Vector2,
+    p2: Vector2,
+    radius: number,
+    maxDist: number = 0,
+  ): void {
+    const arc = Path2Dpp.calculateArcTo(
+      this.getEndPoint(),
+      p1,
+      p2,
+      radius,
+      maxDist,
+    );
+    if (arc) {
+      this
+        .append`L${(this.x1 = arc.start.x)},${(this.y1 = arc.start.y)}A${arc.radius},${arc.radius},0,${+arc.largeArcFlag},${+arc.sweepFlag},${arc.end.x},${arc.end.y}`;
+    } else {
+      this.lineTo(p1);
+      this.lineTo(p2);
+    }
+  }
+
+  /**
    * Draw an arc with center (x, y), radius, startAngle, endAngle, and optional anticlockwise direction
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/arc}
    */

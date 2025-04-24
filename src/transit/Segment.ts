@@ -1,7 +1,7 @@
 import { Color } from '../components/color/Color';
 import { Path2Dpp } from '../utils/Path2Dpp';
 import { CanvasDrawingContext, DrawingContext } from '../utils/drawingContext';
-import { Vector2 } from '../utils/vec';
+import { Vector2, lineLineIntersection } from '../utils/vec';
 import { Route, createRouteSelector } from './Route';
 import { SegmentPosition } from './SegmentPosition';
 import { Stop, StopPosition } from './Stop';
@@ -93,6 +93,7 @@ export class Segment implements Actionable {
   public specificStyle: SpecificSegmentStyle = { ...DEFALUT_SEGMENT_STYLE };
   private dragInfo: SegDragInfo | null = null;
   public segmentPosDeps: Set<SegmentPosition> = new Set();
+  public rounded = false;
   constructor(
     public readonly map: TransitMap,
     public route: Route,
@@ -475,6 +476,36 @@ export class Segment implements Actionable {
   }
 
   getPath(offset = 0): Path2Dpp {
+    if (this.rounded) {
+      // idc about offset for now
+      console.log(1, this.start.deps.size, this.end.deps.size);
+      OWO: if (this.start.deps.size === 2 && this.end.deps.size === 2) {
+        const otherStart = this.start.getOtherDep(this)!;
+        const otherEnd = this.end.getOtherDep(this)!;
+        const start = this.getStart();
+        const end = this.getEnd();
+        const startOther = otherStart.getOtherEnd(this.start).getPoint();
+        const endOther = otherEnd.getOtherEnd(this.end).getPoint();
+
+        const sect = lineLineIntersection(start, startOther, end, endOther);
+
+        if (!sect) {
+          break OWO; // labels are fun
+        }
+
+        const path = new Path2Dpp();
+
+        path.moveTo(start);
+        path.arcToButBetter(
+          sect,
+          end,
+          999999999,
+          Math.min(start.dist(sect), end.dist(sect)),
+        );
+        path.lineTo(end);
+        return path;
+      }
+    }
     const [start, end] =
       offset === 0
         ? [this.getStart(), this.getEnd()]
@@ -566,5 +597,7 @@ export class Segment implements Actionable {
         includeAuto: false,
       },
     );
+
+    folder.addBinding(this, 'rounded');
   }
 }
