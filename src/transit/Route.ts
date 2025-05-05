@@ -1,6 +1,6 @@
 import { Color } from '../components/color/Color';
 import { TransitMap } from './TransitMap';
-import { ContainerApi } from '@tweakpane/core';
+import { ContainerApi, FolderApi } from '@tweakpane/core';
 import { ListBladeApi, ListBladeParams } from 'tweakpane';
 
 /**
@@ -17,10 +17,64 @@ export interface RouteSelectorOptions<Auto extends boolean> {
   includeDefaultRoute?: boolean;
   /** Custom text for the default route option */
   defaultRouteText?: string;
-  /** Filter function for which routes to include */
-  routeFilter?: (route: Route) => boolean;
-  /** Sort function for the routes */
-  routeSort?: (a: Route, b: Route) => number;
+}
+
+/**
+ * Gets the routes for the route selector
+ *
+ * @param map The transit map containing routes
+ * @param options Configuration options
+ * @returns The list of routes for the selector
+ */
+export function getRouteSelectorOptions<
+  Auto extends boolean,
+  Result extends Route | (Auto extends true ? null : never) =
+    | Route
+    | (Auto extends true ? null : never),
+>(
+  map: TransitMap,
+  options: RouteSelectorOptions<Auto>,
+): Array<{ text: string; value: Result }> {
+  const {
+    includeAuto = true,
+    autoText = 'Auto',
+    includeDefaultRoute = true,
+    defaultRouteText = 'Default Route',
+  } = options;
+
+  // Build options array
+  const listOptions: Array<{ text: string; value: Result }> = [];
+
+  // Add Auto option if requested
+  if (includeAuto) {
+    listOptions.push({
+      text: autoText,
+      value: null as Result,
+    });
+  }
+
+  // Add Default Route if requested
+  if (includeDefaultRoute) {
+    listOptions.push({
+      text: defaultRouteText,
+      value: map.defaultRoute as Result,
+    });
+  }
+
+  // Get filtered routes (excluding default if it was already added)
+  const filteredRoutes = map.routes.filter(r =>
+    includeDefaultRoute ? r !== map.defaultRoute : true,
+  );
+
+  // Add filtered routes to options
+  listOptions.push(
+    ...filteredRoutes.map(route => ({
+      text: route.name,
+      value: route as Result,
+    })),
+  );
+
+  return listOptions;
 }
 
 /**
@@ -44,53 +98,13 @@ export function createRouteSelector<
   currentValue: Result,
   onChange: (route: Result) => void,
   options: RouteSelectorOptions<Auto> = {},
-): ListBladeApi<Result> {
-  const {
-    label = 'Route',
-    includeAuto = true,
-    autoText = 'Auto',
-    includeDefaultRoute = true,
-    defaultRouteText = 'Default Route',
-    routeFilter = () => true,
-    routeSort,
-  } = options;
+): ListBladeApi<Result> & {
+  refresh: () => void;
+} {
+  const { label } = options;
 
-  // Build options array
-  const listOptions: Array<{ text: string; value: Route | null }> = [];
-
-  // Add Auto option if requested
-  if (includeAuto) {
-    listOptions.push({
-      text: autoText,
-      value: null,
-    });
-  }
-
-  // Add Default Route if requested
-  if (includeDefaultRoute) {
-    listOptions.push({
-      text: defaultRouteText,
-      value: map.defaultRoute,
-    });
-  }
-
-  // Get filtered routes (excluding default if it was already added)
-  let filteredRoutes = map.routes
-    .filter(r => (includeDefaultRoute ? r !== map.defaultRoute : true))
-    .filter(routeFilter);
-
-  // Sort routes if sort function provided
-  if (routeSort) {
-    filteredRoutes = [...filteredRoutes].sort(routeSort);
-  }
-
-  // Add filtered routes to options
-  listOptions.push(
-    ...filteredRoutes.map(route => ({
-      text: route.name,
-      value: route,
-    })),
-  );
+  // Get the route selector options
+  const listOptions = getRouteSelectorOptions(map, options);
 
   // Create and return the blade
   const blade = folder.addBlade({
@@ -104,16 +118,95 @@ export function createRouteSelector<
     onChange(e.value);
   });
 
-  return blade;
+  // Refresh function to update the options
+  (
+    blade as ListBladeApi<Result> & {
+      refresh: () => void;
+    }
+  ).refresh = () => {
+    const newOptions = getRouteSelectorOptions(map, options);
+    blade.options = newOptions as Array<{ text: string; value: Result }>;
+  };
+
+  return blade as ListBladeApi<Result> & {
+    refresh: () => void;
+  };
 }
 
 export class Route {
   public color: Color = Color.WHITE;
   public name: string;
-  public readonly index: number;
+  public index: number;
   constructor(public readonly map: TransitMap) {
     this.index = map.routes.length;
     this.name = `Route ${this.index + 1}`;
     map.routes.push(this);
+  }
+
+  tweakpaneFolder(folder: FolderApi): void {
+    folder
+      .addBinding(this, 'name', {
+        label: 'Name',
+        view: 'input',
+        input: 'text',
+      })
+      .on('change', () => {
+        this.map.routeSelector?.refresh();
+      });
+    folder
+      .addBinding({ color: this.color.clone() }, 'color', {
+        view: 'color',
+        label: 'Color',
+        color: {
+          r: this.color.r,
+          g: this.color.g,
+          b: this.color.b,
+          a: this.color.a,
+        },
+      })
+      .on('change', e => {
+        this.color = e.value;
+      });
+    folder
+      .addButton({
+        title: 'Move Up',
+        disabled: this.index === 0,
+      })
+      .on('click', () => {
+        const other = this.map.routes[this.index - 1];
+        this.map.routes[this.index - 1] = this;
+        this.map.routes[this.index] = other;
+        this.index--;
+        other.index++;
+        this.map.routeSelector?.refresh();
+      });
+    folder
+      .addButton({
+        title: 'Move Down',
+        disabled: this.index === this.map.routes.length - 1,
+      })
+      .on('click', () => {
+        const other = this.map.routes[this.index + 1];
+        this.map.routes[this.index + 1] = this;
+        this.map.routes[this.index] = other;
+        this.index++;
+        other.index--;
+        this.map.routeSelector?.refresh();
+      });
+    if (this === this.map.defaultRoute) {
+      return;
+    }
+    const deleteBtn = folder
+      .addButton({
+        title: 'Delete',
+      })
+      .on('click', () => {
+        this.map.routes.splice(this.index, 1);
+        this.map.routeSelector?.refresh();
+        folder.dispose();
+      });
+    (
+      deleteBtn.element.querySelector('.tp-btnv_b') as HTMLButtonElement
+    ).style.backgroundColor = '#e33636';
   }
 }

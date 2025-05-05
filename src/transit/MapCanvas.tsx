@@ -1,13 +1,13 @@
 import { Color } from '../components/color/Color';
 import { useCanvasDrawingContext } from '../utils/drawingContext';
 import { Vector2 } from '../utils/vec';
-import { Route } from './Route';
+import { Route, createRouteSelector } from './Route';
 import { Segment } from './Segment';
 import { SegmentPosition } from './SegmentPosition';
 import { TransitMap } from './TransitMap';
 import { eventToDragInfo, eventToPosWithKeys } from './types';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FolderApi, Pane } from 'tweakpane';
+import { Pane } from 'tweakpane';
 
 function createMap(): TransitMap {
   const map = new TransitMap();
@@ -70,7 +70,6 @@ export function MapCanvas() {
   const fgCanvasRef = useRef<HTMLCanvasElement>(null);
   const debugCanvasRef = useRef<HTMLCanvasElement>(null);
   const paneRef = useRef<Pane | null>(null);
-  const selectedFolderRef = useRef<FolderApi | null>(null);
   const [map, _setMap] = useState(createMap);
   const [camera, setCamera] = useState<Camera>({
     zoom: 1,
@@ -203,8 +202,37 @@ export function MapCanvas() {
       });
     }
 
+    {
+      const routes = pane.addFolder({ title: 'Routes', expanded: false });
+      routes.addButton({ title: 'Add Route' }).on('click', () => {
+        const route = new Route(map);
+        route.color = Color.random({ saturation: 0.5, value: 0.75 });
+        drawRef.current();
+
+        map.routeSelector?.refresh();
+      });
+      const routeSelector = createRouteSelector<true>(
+        routes,
+        map,
+        null,
+        route => {
+          if (route) {
+            map.selectedRoute = route;
+            map.setSelected(null);
+            drawRef.current();
+            route.tweakpaneFolder(map.selectedFolder!);
+            routeSelector.value = null;
+          }
+        },
+        {
+          autoText: 'Select Route',
+        },
+      );
+
+      map.routeSelector = routeSelector;
+    }
+
     const selected = pane.addFolder({ title: 'Selected' });
-    selectedFolderRef.current = selected;
     map.selectedFolder = selected;
   }, [map]);
 

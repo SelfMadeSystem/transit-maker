@@ -164,7 +164,7 @@ export class Color implements Clonable {
   }
 
   clone(): Color {
-    return this; // Color is immutable
+    return new Color(this.r, this.g, this.b, this.a, this.hue);
   }
 
   static TRANSPARENT = new Color(0, 0, 0, 0);

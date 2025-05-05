@@ -6,7 +6,7 @@ import { Route } from './Route';
 import { Segment } from './Segment';
 import { Stop } from './Stop';
 import { Actionable } from './types';
-import { FolderApi } from 'tweakpane';
+import { FolderApi, ListBladeApi } from 'tweakpane';
 
 class ContextMenuHelper {
   constructor(public map: TransitMap) {}
@@ -42,6 +42,11 @@ export class TransitMap {
   public snapDistance = 10;
   public snapFromLine = 10;
   public selectedFolder: FolderApi | null = null;
+  public routeSelector:
+    | (ListBladeApi<Route | null> & {
+        refresh: () => void;
+      })
+    | null = null;
   constructor() {
     this.defaultRoute = new Route(this);
     this.defaultRoute.name = 'Default';
