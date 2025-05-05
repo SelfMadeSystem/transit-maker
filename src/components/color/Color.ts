@@ -180,7 +180,8 @@ export class Color implements Clonable {
   static TW = Object.fromEntries(
     Object.entries(colors).map(([colorName, shades]) => [
       colorName,
-      shades === 'inherit' || shades === 'currentColor'
+      shades.toString().toLowerCase() === 'inherit' ||
+      shades.toString().toLowerCase() === 'currentcolor'
         ? undefined
         : typeof shades === 'string'
           ? Color.fromColorJS(new ColorJS(shades))
