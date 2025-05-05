@@ -203,7 +203,7 @@ export class Route {
       .on('click', () => {
         this.map.routes.splice(this.index, 1);
         this.map.routeSelector?.refresh();
-        folder.dispose();
+        folder.children.forEach(child => child.dispose());
       });
     (
       deleteBtn.element.querySelector('.tp-btnv_b') as HTMLButtonElement
