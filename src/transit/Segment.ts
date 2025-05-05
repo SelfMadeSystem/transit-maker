@@ -488,7 +488,6 @@ export class Segment implements Actionable {
   getPath(offset = 0): Path2Dpp {
     if (this.specificStyle.rounded) {
       // idc about offset for now
-      console.log(1, this.start.deps.size, this.end.deps.size);
       OWO: if (this.start.deps.size === 2 && this.end.deps.size === 2) {
         const otherStart = this.start.getOtherDep(this)!;
         const otherEnd = this.end.getOtherDep(this)!;
