@@ -171,7 +171,7 @@ export function MapCanvas() {
         });
       grid
         .addBinding(map.grid, 'gridSkew', {
-          label: 'Grid Rotation',
+          label: 'Grid Skew',
           view: 'vector2',
           min: -45,
           max: 45,

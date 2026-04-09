@@ -165,8 +165,11 @@ export class Vector2 implements Clonable {
     return new Vector2(Math.sign(this.x), Math.sign(this.y));
   }
 
-  round(n: number = 1): Vector2 {
-    return new Vector2(round(this.x, n), round(this.y, n));
+  round(x: number | Vector2, y?: number): Vector2 {
+    if (x instanceof Vector2) {
+      return new Vector2(round(this.x, x.x), round(this.y, x.y));
+    }
+    return new Vector2(round(this.x, x), round(this.y, y ?? x));
   }
 
   clone(): Vector2 {

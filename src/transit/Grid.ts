@@ -7,7 +7,7 @@ import { TransitMap } from './TransitMap';
 
 export class Grid {
   public showGrid = true;
-  public gridSize = 100;
+  public gridSize = new Vector2(100, 100);
   public gridOffset = new Vector2(0, 0);
   public gridSkew = new Vector2(0, 0); // ]π/2, π/2[
   public minor = 3;
@@ -21,54 +21,54 @@ export class Grid {
     ctx.save();
     ctx.identity();
 
-    const gridSize = this.getGridSize(zoom) * zoom;
+    const gridSize = this.getGridSize(zoom).mult(zoom);
     const gridOffset = this.gridOffset.mult(zoom).add(offset);
     const majorPath = new Path2Dpp();
     const minorPath = new Path2Dpp();
 
-    const xdiffT = mod(Math.tan(this.gridSkew.x) * offset.y, gridSize);
+    const xdiffT = mod(Math.tan(this.gridSkew.x) * offset.y, gridSize.x);
     const xdiffB = xdiffT - Math.tan(this.gridSkew.x) * ctx.height;
-    const xoff = round(Math.tan(this.gridSkew.x) * ctx.height, gridSize);
+    const xoff = round(Math.tan(this.gridSkew.x) * ctx.height, gridSize.x);
     for (
-      let x = (gridOffset.x % gridSize) - gridSize * 2 + Math.min(0, xoff);
-      x < ctx.width + gridSize + Math.max(0, xoff);
-      x += gridSize
+      let x = (gridOffset.x % gridSize.x) - gridSize.x * 2 + Math.min(0, xoff);
+      x < ctx.width + gridSize.x + Math.max(0, xoff);
+      x += gridSize.x
     ) {
       majorPath.moveTo(new Vector2(x + xdiffT, 0));
       majorPath.lineTo(new Vector2(x + xdiffB, ctx.height));
 
       for (let x1 = 1; x1 <= this.minor; x1++) {
         minorPath.moveTo(
-          new Vector2(x + (gridSize / (this.minor + 1)) * x1 + xdiffT, 0),
+          new Vector2(x + (gridSize.x / (this.minor + 1)) * x1 + xdiffT, 0),
         );
         minorPath.lineTo(
           new Vector2(
-            x + (gridSize / (this.minor + 1)) * x1 + xdiffB,
+            x + (gridSize.x / (this.minor + 1)) * x1 + xdiffB,
             ctx.height,
           ),
         );
       }
     }
 
-    const ydiffT = mod(Math.tan(this.gridSkew.y) * offset.x, gridSize);
+    const ydiffT = mod(Math.tan(this.gridSkew.y) * offset.x, gridSize.y);
     const ydiffB = ydiffT - Math.tan(this.gridSkew.y) * ctx.width;
-    const yoff = round(Math.tan(this.gridSkew.y) * ctx.width, gridSize);
+    const yoff = round(Math.tan(this.gridSkew.y) * ctx.width, gridSize.y);
     for (
-      let y = (gridOffset.y % gridSize) - gridSize * 2 + Math.min(0, yoff);
-      y < ctx.height + gridSize + Math.max(0, yoff);
-      y += gridSize
+      let y = (gridOffset.y % gridSize.y) - gridSize.y * 2 + Math.min(0, yoff);
+      y < ctx.height + gridSize.y + Math.max(0, yoff);
+      y += gridSize.y
     ) {
       majorPath.moveTo(new Vector2(0, y + ydiffT));
       majorPath.lineTo(new Vector2(ctx.width, y + ydiffB));
 
       for (let y1 = 1; y1 <= this.minor; y1++) {
         minorPath.moveTo(
-          new Vector2(0, y + (gridSize / (this.minor + 1)) * y1 + ydiffT),
+          new Vector2(0, y + (gridSize.y / (this.minor + 1)) * y1 + ydiffT),
         );
         minorPath.lineTo(
           new Vector2(
             ctx.width,
-            y + (gridSize / (this.minor + 1)) * y1 + ydiffB,
+            y + (gridSize.y / (this.minor + 1)) * y1 + ydiffB,
           ),
         );
       }
@@ -85,9 +85,9 @@ export class Grid {
     ctx.restore();
   }
 
-  getGridSize(zoom: number = this.prevZoom): number {
+  getGridSize(zoom: number = this.prevZoom): Vector2 {
     if (this.autoAdjust) {
-      return this.gridSize / Math.pow(2, Math.floor(Math.log2(zoom)));
+      return this.gridSize.div(Math.pow(2, Math.floor(Math.log2(zoom))));
     }
     return this.gridSize;
   }
@@ -132,7 +132,7 @@ export class Grid {
 
   snapToGrid(coords: Vector2): Vector2 {
     if (!this.showGrid) return coords;
-    const gridSize = this.getGridSize() / (this.minor + 1);
+    const gridSize = this.getGridSize().div(this.minor + 1);
     const gridCoords = this.toWorldCoords(coords);
     const rounded = gridCoords.round(gridSize);
     const worldCoords = this.toGridCoords(rounded);
